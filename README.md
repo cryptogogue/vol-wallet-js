@@ -4,11 +4,11 @@ VOLWAL is a browser-based React JS reference wallet implementation for the Volit
 
 ### How it Works
 
-Private keys are encrypted with a user-supplied password and held in browser local storage. These keys are only decrypted as needed. VOLWAL does not store your password or any unencrypted keys on your device or send them to a server. (Which is not same thing as being secure; see below).
+Private keys are encrypted with a user-supplied password and held in browser local storage. These keys are only decrypted as needed. VOLWAL does not store your password or any unencrypted keys on your device or send them to a server. (Which is not same thing as being secure; see below.)
 
-VOLWAL handily supports consensus network multi-tenancy, so add as many networks as you like.
+VOLWAL supports consensus network multi-tenancy, so add as many networks as you like.
 
-If your browser local storage is deleted, then your encrypted private keys will be lost. So back up your keys!
+If your browser local storage is deleted, then your encrypted private keys will be lost. Back up your keys!
 
 ### Try it Out
 
@@ -29,7 +29,7 @@ A winner is you.
 
 TL;DR: No.
 
-Browser local storage is inherently *insecure*. VOLWAL also uses a ton of public, 3rd party Javascript modules (including crypto libraries), wantonly installed from npm. We haven't made even the slightest effort to audit these modules and rely on them for even the most trivial concerns.
+Browser local storage is inherently *insecure*. VOLWAL also uses a ton of public, 3rd party Javascript modules (including crypto libraries), wantonly installed from npm. We haven't made even the slightest effort to audit these modules and we rely on them for even the most trivial concerns.
 
 While we do encrypt your private keys with whatever password you give us, that is no substitute for a secure key store. Unfortunately, to the best of our knowledge, there is no viable implementation of a secure key store available for a browser-based Javascript environment.
 
@@ -77,7 +77,7 @@ There are a number of strategies for using these permissions to mitigate risk. T
 - Limit the amount of currency or number of assets a key can transfer in a given time period.
 - Use a key that can only transfer to a "cooling off" account, where assets and currency must "rest" before being transferred again. Store offline a "revocation" key that can reverse or override the transfer.
 
-In other words, be mindful of the spectrum between security and convenience and assume that your keys living at the "convenience" end of that spectrum will eventually be compromised. Volition can't solve that for you, but it *can* give you tools to mitigate the problem and even recover from certain kinds of attack... if you design your key permissioning strategy carefully.
+Be mindful of the spectrum between security and convenience and assume that your keys living at the "convenience" end of that spectrum will eventually be compromised. Volition can't solve that for you, but it *can* give you tools to mitigate the problem and even recover from certain kinds of attack... if you design your key permissioning strategy carefully.
 
 ### License
 
