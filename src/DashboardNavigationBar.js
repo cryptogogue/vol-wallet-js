@@ -56,6 +56,12 @@ export const DashboardNavigationBar = observer (( props ) => {
                             <Dropdown.Item icon = "wrench"          text = 'Schema Util'            as = { Link } to = { `/util/schema` }/>
                             <Dropdown.Item icon = "lock"            text = 'Change Password'        onClick = {() => { setChangePasswordModalOpen ( true )}}/>
                             { deleteStorageModal }
+                            <Dropdown.Divider />
+                            <Dropdown.Item
+                                text = 'Help'
+                                href = 'https://github.com/cryptogogue/vol-wallet-js#volwal---the-volition-reference-wallet'
+                                target = '_blank'
+                            />
                         </Dropdown.Menu>
                     </Dropdown>
                 </Menu.Menu>
