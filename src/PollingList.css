@@ -1,0 +1,10 @@
+
+.ui.message:hover .close {
+    display: block;
+}
+
+.ui.message .close {
+    display: none;
+    float: right;
+    color: black;
+}
