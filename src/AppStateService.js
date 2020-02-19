@@ -171,9 +171,11 @@ export class AppStateService {
 
         if ( !this.hasAccount ) return false;
         if ( this.nextNonce < 0 ) return false;
-        if ( this.account.stagedTransactions.length === 0 ) return false;
 
-        return true;
+        if ( this.stagedTransactions.length > 0 ) return true;
+        if (( this.pendingTransactions.length > 0 ) && ( this.hasTransactionError )) return true;
+
+        return false;
     }
 
     //----------------------------------------------------------------//
@@ -234,7 +236,7 @@ export class AppStateService {
 
         if ( this.hasAccount ) {
             this.account.pendingTransactions = [];
-            this.account.showRejectedWarning = false;
+            this.account.transactionError = false;
         }
     }
 
@@ -255,7 +257,7 @@ export class AppStateService {
             let pendingTransactions = this.account.pendingTransactions;
             while (( pendingTransactions.length > 0 ) && ( pendingTransactions [ 0 ].nonce < nonce )) {
                 pendingTransactions.shift ();
-                this.account.showRejectedWarning = false;
+                this.account.transactionError = false;
             }
         }
     }
@@ -474,6 +476,12 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @computed get
+    hasTransactionError () {
+        return this.transactionError !== false;
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
     hasUser () {
         return ( this.passwordHash.length > 0 );
     }
@@ -557,37 +565,41 @@ export class AppStateService {
 
         if ( !this.hasAccount ) return;
 
-        let pendingTransactions     = this.account.pendingTransactions;
+        if ( !this.hasTransactionError ) {
 
-        for ( let memo of this.pendingTransactions ) {
+            let pendingTransactions = this.account.pendingTransactions;
+            for ( let memo of this.pendingTransactions ) {
 
-            const accountName   = memo.body.maker.accountName;
-            const nonce         = memo.nonce; 
-            
-            try {
+                const accountName   = memo.body.maker.accountName;
+                const nonce         = memo.nonce; 
+                
+                try {
 
-                const url = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ nonce }`;
+                    const url = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ nonce }`;
+                    const checkResult = await this.revocable.fetchJSON ( url );
 
-                const checkResult = await this.revocable.fetchJSON ( url );
+                    switch ( checkResult.status ) {
 
-                // TODO: handle mismatched notes
-                if ( !checkResult.note ) {
+                        case 'REJECTED':
+                            runInAction (() => {
+                                this.account.transactionError = {
+                                    message:    checkResult.message,
+                                    note:       checkResult.note,
+                                }
+                            });
+                        break;
 
-                    if ( checkResult.status === 'REJECTED' ) {
-                        runInAction (() => {
-                            this.account.showRejectedWarning = true;
-                        });
+                        case 'UNKNOWN':
+                            await this.putTransactionAsync ( memo );
+                            break;
+
+                        default:
+                            break;
                     }
-
-                    await this.revocable.fetchJSON ( url, {
-                        method :    'PUT',
-                        headers :   { 'content-type': 'application/json' },
-                        body :      JSON.stringify ( memo.envelope, null, 4 ),
-                    });
                 }
-            }
-            catch ( error ) {
-                console.log ( 'AN ERROR!', error );
+                catch ( error ) {
+                    console.log ( 'AN ERROR!', error );
+                }
             }
         }
         
@@ -611,6 +623,20 @@ export class AppStateService {
         this.account.stagedTransactions.push ( memo );
         this.setNextTransactionCost ( 0 );
         this.flags.promptFirstTransaction = false;
+    }
+
+    //----------------------------------------------------------------//
+    async putTransactionAsync ( memo ) {
+
+        const accountName   = memo.body.maker.accountName;
+        const nonce         = memo.nonce; 
+        const url           = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ nonce }`;
+
+        await this.revocable.fetchJSON ( url, {
+            method :    'PUT',
+            headers :   { 'content-type': 'application/json' },
+            body :      JSON.stringify ( memo.envelope, null, 4 ),
+        });
     }
 
     //----------------------------------------------------------------//
@@ -714,8 +740,8 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @computed get
-    showRejectedWarning () {
-        return this.account.showRejectedWarning || false;
+    transactionError () {
+        return this.account.transactionError || false;
     }
 
     //----------------------------------------------------------------//
@@ -733,6 +759,8 @@ export class AppStateService {
 
         let stagedTransactions      = this.account.stagedTransactions;
         let pendingTransactions     = this.account.pendingTransactions;
+
+        this.account.transactionError = false;
 
         try {
 
@@ -770,6 +798,15 @@ export class AppStateService {
         }
         catch ( error ) {
              console.log ( 'AN ERROR!', error );
+        }
+
+        try {
+            for ( let memo of pendingTransactions ) {
+                await this.putTransactionAsync ( memo );
+            }
+        }
+        catch ( error ) {
+            console.log ( 'AN ERROR!', error );
         }
     }
 

@@ -117,7 +117,6 @@ export class TransactionFormController {
         this.isComplete = true;
         for ( let field of this.fieldsArray ) {
             if ( !field.isComplete ) {
-                console.log ( 'MISSING REQUIRED FIELD', field.fieldName );
                 this.isComplete = false;
                 break;
             }

@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import * as bitcoin from 'bitcoinjs-lib';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, storage, util } from 'fgc';
 import { action, computed, extendObservable, observe, observable } from 'mobx';
 
@@ -50,7 +51,13 @@ export class AccountInfoService {
     static async update ( service, appState ) {
 
         const accountID = appState.accountID;
-        const data = await service.revocable.fetchJSON ( `${ appState.network.nodeURL }/accounts/${ accountID }` );
+        let data = await service.revocable.fetchJSON ( `${ appState.network.nodeURL }/accounts/${ accountID }` );
+
+        if ( !data.account ) {
+            const key = Object.values ( appState.account.keys )[ 0 ];
+            const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
+            data = await service.revocable.fetchJSON ( `${ appState.network.nodeURL }/keys/${ keyID }/account` );
+        }
 
         const account = data.account;
         const entitlements = data.entitlements;

@@ -27,7 +27,7 @@ export class TransactionFormController_OpenAccount extends TransactionFormContro
         const fieldsArray = [
             new FIELD_CLASS.CONST           ( 'suffix',         'Suffix', suffix ),
             new FIELD_CLASS.CRYPTO_KEY      ( 'request',        'New Account Request', 6 ),
-            new FIELD_CLASS.INTEGER         ( 'grant',          'Grant', 0, 0 ),
+            new FIELD_CLASS.INTEGER         ( 'grant',          'Grant', 0 ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.OPEN_ACCOUNT, fieldsArray );
     }

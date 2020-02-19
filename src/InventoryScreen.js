@@ -107,18 +107,19 @@ const InventoryMenu = observer (( props ) => {
 });
 
 //================================================================//
-// InventoryScreen
+// InventoryScreenBody
 //================================================================//
-export const InventoryScreen = observer (( props ) => {
+const InventoryScreenBody = observer (( props ) => {
 
-    const networkIDFromEndpoint = util.getMatch ( props, 'networkID' );
-    const accountIDFromEndpoint = util.getMatch ( props, 'accountID' );
+    const { appState }          = props;
 
     const [ progressMessage, setProgressMessage ]   = useState ( '' );
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
-    const appState              = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
-    const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
-    const inventory             = hooks.useFinalizable (() => new InventoryService ( setProgressMessage, appState.network.nodeURL, appState.accountID ));
+    const [ assetsUtilized, setAssetsUtilized ]     = useState ( false );
+
+    const nodeURL = appState.hasAccountInfo ? appState.network.nodeURL : false;
+
+    const inventory             = hooks.useFinalizable (() => new InventoryService ( setProgressMessage, nodeURL, appState.accountID ));
     const controller            = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
     const tags                  = hooks.useFinalizable (() => new InventoryTagController ());
 
@@ -211,5 +212,22 @@ export const InventoryScreen = observer (( props ) => {
 
             </Choose>
         </div>
+    );
+});
+
+//================================================================//
+// InventoryScreen
+//================================================================//
+export const InventoryScreen = observer (( props ) => {
+
+    const networkIDFromEndpoint = util.getMatch ( props, 'networkID' );
+    const accountIDFromEndpoint = util.getMatch ( props, 'accountID' );
+
+    const appState              = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+    const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
+
+    // TODO: this is a nasty hack to force a reload when the nonce changes. do this right instead.
+    return (
+        <InventoryScreenBody key = { appState.nonce } appState = { appState }/>
     );
 });

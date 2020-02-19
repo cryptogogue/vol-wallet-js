@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PollingList }                      from './PollingList';
+import * as bitcoin                         from 'bitcoinjs-lib';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
@@ -27,7 +28,16 @@ export const AccountList = observer (( props ) => {
     const { appState } = props;
 
     const asyncGetInfo = async ( revocable, accountID ) => {
-        return await revocable.fetchJSON ( `${ appState.network.nodeURL }/accounts/${ accountID }` );
+        
+        let json = await revocable.fetchJSON ( `${ appState.network.nodeURL }/accounts/${ accountID }` );
+
+        if ( !json.account ) {
+            const account = appState.getAccount ( accountID );
+            const key = Object.values ( account.keys )[ 0 ];
+            const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
+            json = await revocable.fetchJSON ( `${ appState.network.nodeURL }/keys/${ keyID }/account` );
+        }
+        return json;
     }
 
     const checkIdentifier = ( accountID ) => {
@@ -48,7 +58,7 @@ export const AccountList = observer (( props ) => {
                 >
                     { `Account: ${ accountID }` }
                 </UI.Message.Header>
-                { info ? `Balance: ${ info.account.balance }` : '' }
+                { `Balance: ${( info && info.account ) ? info.account.balance : '--' }` }
             </React.Fragment>
         );
     }

@@ -44,20 +44,20 @@ export const TransactionQueueModal = observer (( props ) => {
             onClose = {() => { onClose ()}}
             open = { open }
         >
-            <UI.Modal.Header>Staged Transactions</UI.Modal.Header>
+            <UI.Modal.Header>Transaction Queue</UI.Modal.Header>
 
             <UI.Modal.Content>
                 
-                <If condition = { appState.showRejectedWarning }>
+                <If condition = { appState.hasTransactionError }>
                     <UI.Message
-                        warning
-                        icon = 'warning sign'
-                        header = 'Transactions Were Rejected'
-                        content = 'One or more transactions have been rejected, possibly due to errors. You may need to clear and resubmit.'
+                        error
+                        icon = 'exclamation triangle'
+                        header = 'Transactions Error Occured'
+                        content = { appState.transactionError.message }
                     />
                 </If>
 
-                <TransactionQueueView transactions = { allTransactions }/>
+                <TransactionQueueView transactions = { allTransactions } error = { appState.transactionError }/>
 
                 <UI.Form>
                     <PasswordInputField

@@ -8,6 +8,8 @@ import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 
+const ACCOUNT_NAME_REGEX = /^[^~]\S*$/;
+
 //================================================================//
 // TransactionFormController_RenameAccount
 //================================================================//
@@ -69,8 +71,12 @@ export class TransactionFormController_RenameAccount extends TransactionFormCont
 
         const fieldErrors = this.fieldErrors;
 
+        if (( revealedName.length > 0 ) && !ACCOUNT_NAME_REGEX.test ( revealedName )) {
+            this.fields.revealedName.error = 'New name contains illegal characters.';
+        }
+
         if ( this.makerAccountName === revealedName ) {
-            this.fields.revealedName.error = 'Revealed name should be different from current account name.';
+            this.fields.revealedName.error = 'New name should be different from current account name.';
         }
 
         if ( secretName && ( secretName.length > 0 )) {

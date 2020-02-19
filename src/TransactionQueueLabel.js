@@ -18,6 +18,7 @@ export const TransactionQueueLabel = observer (( props ) => {
         setOpen ( false );
     }
 
+    const error             = appState.hasTransactionError;
     const stagedCount       = appState.stagedTransactions.length;
     const pendingCount      = appState.pendingTransactions.length;
 
@@ -31,10 +32,10 @@ export const TransactionQueueLabel = observer (( props ) => {
             />
 
             <UI.Label
-                color = { stagedCount > 0 ? 'green' : 'grey' }
+                color = { error ? 'red' : ( stagedCount > 0 ? 'green' : 'grey' )}
                 onClick = {() => { setOpen ( true )}}
             >
-                <UI.Icon name = 'cloud upload'/>
+                <UI.Icon name = { error ? 'exclamation triangle' : 'cloud upload' }/>
                 { pendingCount ? `${ stagedCount }/${ pendingCount }` : `${ stagedCount }` }
             </UI.Label>
 

@@ -29,4 +29,13 @@ export class TransactionFormController_SendAssets extends TransactionFormControl
 
         transaction.setAssetsUtilized ( this.fields.assetIdentifiers.value );
     }
+
+    //----------------------------------------------------------------//
+    @action
+    virtual_validate () {
+
+        if ( this.makerAccountName === this.fields.accountName.value ) {
+            this.fields.accountName.error = 'Maker cannot also be recipient.';
+        }
+    }
 }

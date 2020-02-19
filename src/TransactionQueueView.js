@@ -13,6 +13,7 @@ import * as UI              from 'semantic-ui-react';
 export const TransactionQueueView = observer (( props ) => {
     
     const { transactions } = props;
+    const error = props.error || false;
     const showNonce = props.showNonce || false;
 
     let transactionList = [];
@@ -33,7 +34,8 @@ export const TransactionQueueView = observer (( props ) => {
         transactionList.push (
             <UI.Table.Row
                 key = { i }
-                positive = { Boolean ( transaction.envelope )}
+                positive = {( error === false ) ? Boolean ( transaction.envelope ) : undefined }
+                error = {(( error !== false ) && ( error.note === transaction.body.note ))}
             >
                 <UI.Table.Cell collapsing>
                     <UI.Modal
