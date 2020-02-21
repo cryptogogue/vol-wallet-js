@@ -43,6 +43,13 @@ export class TransactionFormFieldController {
 
     //----------------------------------------------------------------//
     @action
+    setError ( error ) {
+
+        this.error = error;
+    }
+
+    //----------------------------------------------------------------//
+    @action
     setInputString ( inputString ) {
 
         this.inputString = String ( inputString ) || '';

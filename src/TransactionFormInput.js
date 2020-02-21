@@ -109,41 +109,107 @@ const KeySelector = observer (( props ) => {
 //================================================================//
 const SchemaFileInput = observer (( props ) => {
 
-    const { field, controller } = props;
+    const { field, controller }         = props;
+    const [ errors, setErrors ]         = useState ([]);
+    const [ schema, setSchema ]         = useState ( false );
+    const [ isLoading, setIsLoading ]   = useState ( false );
 
-    const [ scanner, setScanner ]   = useState ( false );
-    const [ schema, setSchema ]     = useState ( false );
+    const filterCollisions = ( tableName, scanner, current, update ) => {
 
-    const loadFile = ( binary ) => {
+        for ( let key in update ) {
+            if ( _.has ( current, key )) {
+                if ( !_.isEqual ( current [ key ], update [ key ])) {
+                    console.log ( 'HAS COLLISION!', key );
+                    console.log ( 'CURRENT:', JSON.stringify ( current [ key ]));
+                    console.log ( 'UPDATE:', JSON.stringify ( update [ key ]));
+                    scanner.reportError ( `Collision in ${ tableName }: ${ key }` );
+                }
+                delete update [ key ];
+            }
+        }
+    }
+
+    const loadFile = async ( binary ) => {
 
         setSchema ( false );
+        setIsLoading ( true );
         field.setInputString ( '' );
+        let errorMessages = [];
 
         const book = new excel.Workbook ( binary, { type: 'binary' });
         if ( book ) {
-            const scanner = new SchemaScannerXLSX ( book );
-            setSchema ( scanner.schema );
-            field.setInputString ( JSON.stringify ( scanner.schema ));
-            if ( scanner.hasMessages ()) {
-                setScanner ( scanner );
+
+            const appState      = controller.appState;
+            const nodeURL       = appState.network.nodeURL;
+
+            try {
+
+                const current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
+                const scanner = new SchemaScannerXLSX ( book );
+                if ( !( scanner && scanner.schema )) throw 'Could not download current schema.'
+
+                filterCollisions ( 'definitions', scanner, current.schema.definitions, scanner.schema.definitions );
+                filterCollisions ( 'fonts', scanner, current.schema.fonts, scanner.schema.fonts );
+                filterCollisions ( 'icons', scanner, current.schema.icons, scanner.schema.icons );
+                filterCollisions ( 'layouts', scanner, current.schema.layouts, scanner.schema.layouts );
+                filterCollisions ( 'upgrades', scanner, current.schema.upgrades, scanner.schema.upgrades );
+                filterCollisions ( 'methods', scanner, current.schema.methods, scanner.schema.methods );
+
+                if ( scanner.hasErrors ()) {
+                    errorMessages = errorMessages.concat ( scanner.errors );
+                }
+                setSchema ( scanner.schema );
+                field.setInputString ( JSON.stringify ( scanner.schema ));
+            }
+            catch ( error ) {
+                errorMessages.push ({ header: 'Network Error', body: 'Could not fetch current schema. Node may be offline.' });
             }
         }
         controller.validate ();
+        if ( field.error ) {
+            errorMessages.push ({ header: 'Field Error', body: field.error });
+        }
+        setIsLoading ( false );
+        setErrors ( errorMessages );
+    }
+
+    const errorMessages = []
+    for ( let error of errors ) {
+        errorMessages.push (
+            <UI.Message icon negative key = { errorMessages.length }>
+                <UI.Icon name = 'bug' />
+                <UI.Message.Content>
+                    <UI.Message.Header>{ error.header }</UI.Message.Header>
+                    { error.body }
+                </UI.Message.Content>
+            </UI.Message>
+        );
     }
 
     return (
         <React.Fragment>
+
             <UI.Menu fluid>
                 <FilePickerMenuItem
                     loadFile = { loadFile }
                     format = 'binary'
                     accept = { '.xls, .xlsx' }
+                    loading = { isLoading }
                 />
-                <ScannerReportModal scanner = { scanner }/>
             </UI.Menu>
-            <If condition = { schema }>
-                <JSONTree hideRoot data = { schema } theme = 'bright'/>
-            </If>
+
+            <Choose>
+                <When condition = { errorMessages.length > 0 }>
+                    { errorMessages }
+                </When>
+
+                <Otherwise>
+                    <If condition = { schema }>
+                        <JSONTree hideRoot data = { schema } theme = 'bright'/>
+                    </If>
+                </Otherwise>
+            </Choose>
+
         </React.Fragment>
     );
 });

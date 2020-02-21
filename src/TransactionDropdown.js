@@ -20,11 +20,12 @@ import * as UI                                      from 'semantic-ui-react';
 //----------------------------------------------------------------//
 export const gTransactionTypes = [
     TRANSACTION_TYPE.SEND_VOL,
+    TRANSACTION_TYPE.OPEN_ACCOUNT,
     // TRANSACTION_TYPE.ACCOUNT_POLICY,
     TRANSACTION_TYPE.BETA_GET_ASSETS,
     TRANSACTION_TYPE.BETA_GET_DECK,
     // TRANSACTION_TYPE.KEY_POLICY,
-    TRANSACTION_TYPE.OPEN_ACCOUNT,
+    
     TRANSACTION_TYPE.PUBLISH_SCHEMA,
     // TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,

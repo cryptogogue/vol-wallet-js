@@ -42,7 +42,25 @@ export class TransactionFormController_PublishSchema extends TransactionFormCont
     virtual_validate () {
 
         try {
-            this.fields.schema.value && JSON.parse ( this.fields.schema.value );
+
+            if ( this.fields.schema.value ) {
+
+                const schema = JSON.parse ( this.fields.schema.value );
+            
+                const size =
+                    Object.keys ( schema.decks ).length +
+                    Object.keys ( schema.definitions ).length +
+                    Object.keys ( schema.fonts ).length +
+                    Object.keys ( schema.icons ).length +
+                    Object.keys ( schema.layouts ).length +
+                    Object.keys ( schema.upgrades ).length +
+                    Object.keys ( schema.methods ).length
+                ;
+
+                if ( size === 0 ) {
+                    this.fields.schema.error = 'Schema contains no new content.';
+                }
+            }
         }
         catch ( error ) {
             this.fields.schema.error  = 'Error parsing JSON.';
