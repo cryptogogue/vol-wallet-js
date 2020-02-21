@@ -9,17 +9,17 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import { observer }                         from 'mobx-react';
 
 //================================================================//
-// TransactionFormController_BetaGetAssets
+// TransactionFormController_BetaGetDeck
 //================================================================//
-export class TransactionFormController_BetaGetAssets extends TransactionFormController {
+export class TransactionFormController_BetaGetDeck extends TransactionFormController {
 
     //----------------------------------------------------------------//
     constructor ( appState ) {
         super ();
 
         const fieldsArray = [
-            new FIELD_CLASS.INTEGER     ( 'numAssets',      'Copies', 1 ),
+            new FIELD_CLASS.STRING  ( 'deckName', 'Deck Name' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.BETA_GET_ASSETS, fieldsArray );
+        this.initialize ( appState, TRANSACTION_TYPE.BETA_GET_DECK, fieldsArray );
     }
 }

@@ -5,12 +5,15 @@ import _                    from 'lodash';
 //----------------------------------------------------------------//
 export function check ( entitlements, path, value ) {
 
+    if ( !path ) return false;
+
     path = path.split ( '.' );
     for ( let i in path ) {
         const name = path [ i ];
         if ( !( entitlements.children && _.has ( entitlements.children, name ))) return false;
         entitlements = entitlements.children [ name ];
     }
+
     switch ( entitlements.type ) {
         
         case 'path':        return true;

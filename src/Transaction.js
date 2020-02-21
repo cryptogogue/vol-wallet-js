@@ -7,6 +7,7 @@ export const TRANSACTION_TYPE = {
     ACCOUNT_POLICY:     'ACCOUNT_POLICY',
     AFFIRM_KEY:         'AFFIRM_KEY',
     BETA_GET_ASSETS:    'BETA_GET_ASSETS',
+    BETA_GET_DECK:      'BETA_GET_DECK',
     KEY_POLICY:         'KEY_POLICY',
     OPEN_ACCOUNT:       'OPEN_ACCOUNT',
     PUBLISH_SCHEMA:     'PUBLISH_SCHEMA',
@@ -42,6 +43,7 @@ export class Transaction {
         switch ( type ) {
             case TRANSACTION_TYPE.ACCOUNT_POLICY:   return 'Account Policy';
             case TRANSACTION_TYPE.AFFIRM_KEY:       return 'Affirm Key';
+            case TRANSACTION_TYPE.BETA_GET_DECK:    return 'BETA Get Deck';
             case TRANSACTION_TYPE.BETA_GET_ASSETS:  return 'BETA Get Assets';
             case TRANSACTION_TYPE.KEY_POLICY:       return 'Key Policy';
             case TRANSACTION_TYPE.OPEN_ACCOUNT:     return 'Sponsor Account';

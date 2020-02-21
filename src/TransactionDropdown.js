@@ -4,6 +4,7 @@ import { Transaction, TRANSACTION_TYPE }            from './Transaction';
 import { TransactionFormController_AccountPolicy }  from './TransactionFormController_AccountPolicy';
 import { TransactionFormController_AffirmKey }      from './TransactionFormController_AffirmKey';
 import { TransactionFormController_BetaGetAssets }  from './TransactionFormController_BetaGetAssets';
+import { TransactionFormController_BetaGetDeck }    from './TransactionFormController_BetaGetDeck';
 import { TransactionFormController_KeyPolicy }      from './TransactionFormController_KeyPolicy';
 import { TransactionFormController_OpenAccount }    from './TransactionFormController_OpenAccount';
 import { TransactionFormController_PublishSchema }  from './TransactionFormController_PublishSchema';
@@ -21,6 +22,7 @@ export const gTransactionTypes = [
     TRANSACTION_TYPE.SEND_VOL,
     // TRANSACTION_TYPE.ACCOUNT_POLICY,
     TRANSACTION_TYPE.BETA_GET_ASSETS,
+    TRANSACTION_TYPE.BETA_GET_DECK,
     // TRANSACTION_TYPE.KEY_POLICY,
     TRANSACTION_TYPE.OPEN_ACCOUNT,
     TRANSACTION_TYPE.PUBLISH_SCHEMA,
@@ -35,6 +37,7 @@ function makeControllerForTransactionType ( appState, transactionType ) {
         case TRANSACTION_TYPE.ACCOUNT_POLICY:   return new TransactionFormController_AccountPolicy ( appState );
         case TRANSACTION_TYPE.AFFIRM_KEY:       return new TransactionFormController_AffirmKey ( appState );
         case TRANSACTION_TYPE.BETA_GET_ASSETS:  return new TransactionFormController_BetaGetAssets ( appState );
+        case TRANSACTION_TYPE.BETA_GET_DECK:    return new TransactionFormController_BetaGetDeck ( appState );
         case TRANSACTION_TYPE.KEY_POLICY:       return new TransactionFormController_KeyPolicy ( appState );
         case TRANSACTION_TYPE.OPEN_ACCOUNT:     return new TransactionFormController_OpenAccount ( appState );
         case TRANSACTION_TYPE.PUBLISH_SCHEMA:   return new TransactionFormController_PublishSchema ( appState );
