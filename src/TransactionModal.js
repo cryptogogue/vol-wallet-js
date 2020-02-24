@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { PasswordInputField }                   from './PasswordInputField';
 import { Transaction, TRANSACTION_TYPE }        from './Transaction';
 import { TransactionForm }                      from './TransactionForm';
 import * as controllers                         from './TransactionFormController';
@@ -16,18 +17,27 @@ import * as UI                                  from 'semantic-ui-react';
 const TransactionModalBody = observer (( props ) => {
 
     const { appState, open, onClose }                               = props;
+    const [ password, setPassword ]                                 = useState ( '' );
     const [ controllerFromDropdown, setControllerFromDropdown ]     = useState ( false );
 
     const controller = props.controller || controllerFromDropdown;
 
-    const submitTransaction = () => {
+    const stageTransaction = () => {
         appState.pushTransaction ( controller.transaction );
+        onClose ();
+    }
+
+    const submitTransactions = () => {
+        appState.pushTransaction ( controller.transaction );
+        appState.submitTransactions ( password );
         onClose ();
     }
 
     const showDropdown      = !props.controller;
     const title             = showDropdown ? 'New Transaction' : controller.friendlyName;
-    const submitEnabled     = appState.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
+    const stageEnabled      = appState.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
+    const submitEnabled     = stageEnabled && appState.checkPassword ( password );
+    const submitLabel       = appState.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
 
     return (
         <UI.Modal
@@ -52,15 +62,29 @@ const TransactionModalBody = observer (( props ) => {
                 <If condition = { controller }>
                     <TransactionForm controller = { controller }/>
                 </If>
+
+                <UI.Form>
+                    <PasswordInputField
+                        appState = { appState }
+                        setPassword = { setPassword }
+                    />
+                </UI.Form>
             </UI.Modal.Content>
 
             <UI.Modal.Actions>
                 <UI.Button
                     positive
-                    disabled = { !submitEnabled }
-                    onClick = {() => { submitTransaction ()}}
+                    disabled = { submitEnabled || !stageEnabled }
+                    onClick = {() => { stageTransaction ()}}
                 >
-                    Submit Transaction
+                    Stage Transaction
+                </UI.Button>
+                <UI.Button
+                    positive
+                    disabled = { !submitEnabled }
+                    onClick = {() => { submitTransactions ()}}
+                >
+                    { submitLabel }
                 </UI.Button>
             </UI.Modal.Actions>
         </UI.Modal>

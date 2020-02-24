@@ -34,6 +34,7 @@ const App = () => {
     const location = useLocation ();
 
     if ( !isLatestVersion ) {
+        console.log ( 'NEW VERSION DETECTED; EMPTYING CACHE' );
         emptyCacheStorage ();
     }
 
