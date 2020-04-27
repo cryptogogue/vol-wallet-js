@@ -54,6 +54,7 @@ export class TransactionFormController_PublishSchema extends TransactionFormCont
                     Object.keys ( schema.icons ).length +
                     Object.keys ( schema.layouts ).length +
                     Object.keys ( schema.upgrades ).length +
+                    Object.keys ( schema.sets ).sets +
                     Object.keys ( schema.methods ).length
                 ;
 

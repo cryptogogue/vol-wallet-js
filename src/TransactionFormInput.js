@@ -154,6 +154,7 @@ const SchemaFileInput = observer (( props ) => {
                 filterCollisions ( 'layouts', scanner, current.schema.layouts, scanner.schema.layouts );
                 filterCollisions ( 'upgrades', scanner, current.schema.upgrades, scanner.schema.upgrades );
                 filterCollisions ( 'methods', scanner, current.schema.methods, scanner.schema.methods );
+                filterCollisions ( 'sets', scanner, current.schema.sets, scanner.schema.sets );
 
                 if ( _.isEqual ( current.schema.decks, scanner.schema.decks )) {
                     scanner.schema.decks = {};
