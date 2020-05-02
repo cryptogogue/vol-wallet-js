@@ -84,6 +84,7 @@ export class UpgradesController {
     getFriendlyName ( option ) {
 
         if ( this.inventory ) {
+            console.log ( 'OPTION', option, this.inventory.schema.definitions );
             const definition = this.inventory.schema.definitions [ option ];
             return definition.fields.name ? definition.fields.name.value : option;
         }
@@ -339,6 +340,7 @@ export const UpgradesScreen = observer (( props ) => {
                 <TransactionModal
                     appState    = { appState }
                     controller  = { transactionController }
+                    open        = { transactionController !== false }
                     onClose     = { onCloseTransactionModal }
                 />
 

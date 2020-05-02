@@ -42,7 +42,7 @@ const App = () => {
         <div>
             <Switch key = { location.pathname }>
                 <Route exact path = "/net/:networkID/account/:accountID"                component = { AccountScreen }/>
-                <Route exact path = "/net/:networkID/account/:accountID/crafting/:methodName" component = { CraftingScreen }/>
+                <Route exact path = "/net/:networkID/account/:accountID/crafting"       component = { CraftingScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/crafting"       component = { CraftingScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>

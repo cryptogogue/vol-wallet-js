@@ -5,6 +5,7 @@ import './InventoryScreen.css';
 import { AccountInfoService }                               from './AccountInfoService';
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { AppStateService }                                  from './AppStateService';
+import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryTagController }                           from './InventoryTagController';
 import { InventoryTagDropdown }                             from './InventoryTagDropdown';
@@ -25,24 +26,9 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 const InventoryMenu = observer (( props ) => {
 
-    const { appState, controller, tags } = props;
+    const { appState, controller, craftingFormController, tags } = props;
 
-    const [ transactionController, setTransactionController ]   = useState ( false );
-
-    let methodListItems = [];
-    const methodBindings = controller.inventory.getCraftingMethodBindings ();
-    for ( let methodName in methodBindings ) {
-        const binding = methodBindings [ methodName ];
-        const disabled = !binding.valid;
-        
-        methodListItems.push (<Dropdown.Item
-            key = { methodName }
-            text = { methodName }
-            disabled = { disabled }
-            as = { Link }
-            to = { `/accounts/${ appState.accountID }/crafting/${ methodName }` }
-        />);
-    }
+    const [ transactionController, setTransactionController ] = useState ( false );
 
     const onClickSendAssets = () => {
         setTransactionController (
@@ -53,9 +39,32 @@ const InventoryMenu = observer (( props ) => {
         );
     }
 
+    const onClickCraftingMethod = ( methodName ) => {
+        console.log ( 'SHOWING TRANSACTION FORM', methodName );
+        craftingFormController.addInvocation ( methodName );
+        setTransactionController ( craftingFormController );
+    }
+
     const onCloseTransactionModal = () => {
         setTransactionController ( false );
         controller.clearSelection ();
+        craftingFormController.reset ();
+    }
+
+    let methodListItems = [];
+    if ( craftingFormController.binding ) {
+        const methodBindings = craftingFormController.binding.getCraftingMethodBindings ();
+        for ( let methodName in methodBindings ) {
+            const binding = methodBindings [ methodName ];
+            const disabled = !binding.valid;
+            
+            methodListItems.push (<Dropdown.Item
+                key         = { methodName }
+                text        = { methodName }
+                disabled    = { disabled }
+                onClick     = {() => { onClickCraftingMethod ( methodName )}}
+            />);
+        }
     }
 
     return (
@@ -88,7 +97,7 @@ const InventoryMenu = observer (( props ) => {
                         disabled    = { !controller.hasSelection }
                         onClick     = {() => { onClickSendAssets ()}}
                     />
-                    <Dropdown item icon = "industry" disabled>
+                    <Dropdown item icon = "industry">
                         <Dropdown.Menu>
                             { methodListItems }
                         </Dropdown.Menu>
@@ -99,6 +108,7 @@ const InventoryMenu = observer (( props ) => {
             <TransactionModal
                 appState    = { appState }
                 controller  = { transactionController }
+                open        = { transactionController !== false }
                 onClose     = { onCloseTransactionModal }
             />
 
@@ -119,9 +129,10 @@ const InventoryScreenBody = observer (( props ) => {
 
     const nodeURL = appState.hasAccountInfo ? appState.network.nodeURL : false;
 
-    const inventory             = hooks.useFinalizable (() => new InventoryService ( setProgressMessage, nodeURL, appState.accountID ));
-    const controller            = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
-    const tags                  = hooks.useFinalizable (() => new InventoryTagController ());
+    const inventory                 = hooks.useFinalizable (() => new InventoryService ( setProgressMessage, nodeURL, appState.accountID ));
+    const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
+    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory, true ));
+    const tags                      = hooks.useFinalizable (() => new InventoryTagController ());
 
     controller.setFilterFunc (( assetID ) => {
         return tags.isAssetVisible ( assetID ) && !appState.assetsUtilized.includes ( assetID );
@@ -158,9 +169,10 @@ const InventoryScreenBody = observer (( props ) => {
                         tab         = { ACCOUNT_TABS.INVENTORY }
                     />
                     <InventoryMenu
-                        appState = { appState }
-                        controller = { controller }
-                        tags = { tags }
+                        appState                = { appState }
+                        controller              = { controller }
+                        craftingFormController  = { craftingFormController }
+                        tags                    = { tags }
                     />
                 </SingleColumnContainerView>
             </div>

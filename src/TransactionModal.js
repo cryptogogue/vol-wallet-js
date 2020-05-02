@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { CraftingForm }                         from './CraftingForm';
 import { PasswordInputField }                   from './PasswordInputField';
 import { Transaction, TRANSACTION_TYPE }        from './Transaction';
 import { TransactionForm }                      from './TransactionForm';
@@ -12,6 +13,35 @@ import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
+// TransactionFormFactory
+//================================================================//
+const TransactionFormFactory = observer (({ controller }) => {
+
+    switch ( controller.type ) {
+        case TRANSACTION_TYPE.ACCOUNT_POLICY:
+        case TRANSACTION_TYPE.AFFIRM_KEY:
+        case TRANSACTION_TYPE.BETA_GET_ASSETS:
+        case TRANSACTION_TYPE.BETA_GET_DECK:
+        case TRANSACTION_TYPE.KEY_POLICY:
+        case TRANSACTION_TYPE.OPEN_ACCOUNT:
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA:
+        case TRANSACTION_TYPE.REGISTER_MINER:
+        case TRANSACTION_TYPE.RENAME_ACCOUNT:
+        case TRANSACTION_TYPE.SEND_VOL:
+            return (
+                <TransactionForm controller = { controller }/>
+            );
+        case TRANSACTION_TYPE.RUN_SCRIPT:
+            return (
+                <CraftingForm controller = { controller }/>
+            );
+    }
+    return (
+        <div/>
+    );
+});
+
+//================================================================//
 // TransactionModalBody
 //================================================================//
 const TransactionModalBody = observer (( props ) => {
@@ -22,22 +52,19 @@ const TransactionModalBody = observer (( props ) => {
 
     const controller = props.controller || controllerFromDropdown;
 
-    const stageTransaction = () => {
-        appState.pushTransaction ( controller.transaction );
-        onClose ();
-    }
-
-    const submitTransactions = () => {
-        appState.pushTransaction ( controller.transaction );
-        appState.submitTransactions ( password );
-        onClose ();
-    }
-
     const showDropdown      = !props.controller;
     const title             = showDropdown ? 'New Transaction' : controller.friendlyName;
     const stageEnabled      = appState.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
     const submitLabel       = appState.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
+
+    const submit = () => {
+        appState.pushTransaction ( controller.transaction );
+        if ( submitEnabled ) {
+            appState.submitTransactions ( password );
+        }
+        onClose ();
+    }
 
     return (
         <UI.Modal
@@ -60,7 +87,7 @@ const TransactionModalBody = observer (( props ) => {
                 </If>
                 
                 <If condition = { controller }>
-                    <TransactionForm controller = { controller }/>
+                    <TransactionFormFactory controller = { controller }/>
                 </If>
 
                 <UI.Form>
@@ -99,8 +126,6 @@ export const TransactionModal = observer (( props ) => {
     const { appState } = props;
     const [ counter, setCounter ] = useState ( 0 );
 
-    const open = Boolean ( props.open || props.controller );
-
     const onClose = () => {
         setCounter ( counter + 1 );
         props.onClose ();
@@ -110,7 +135,7 @@ export const TransactionModal = observer (( props ) => {
         <div key = { `${ counter }` }>
             <TransactionModalBody
                 appState                = { appState }
-                open                    = { open }
+                open                    = { props.open }
                 onClose                 = { onClose }
                 controller              = { props.controller || false }
             />

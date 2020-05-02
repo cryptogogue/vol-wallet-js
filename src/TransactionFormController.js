@@ -114,7 +114,7 @@ export class TransactionFormController {
         this.cost           = this.transaction.getCost ();
 
         // check for completion
-        this.isComplete = true;
+        this.isComplete = this.virtual_checkComplete ();
         for ( let field of this.fieldsArray ) {
             if ( !field.isComplete ) {
                 this.isComplete = false;
@@ -142,6 +142,12 @@ export class TransactionFormController {
         if ( this.appState.balance < cost ) {
             this.isErrorFree = false;
         }
+    }
+
+    //----------------------------------------------------------------//
+    virtual_checkComplete () {
+
+        return true;
     }
 
     //----------------------------------------------------------------//

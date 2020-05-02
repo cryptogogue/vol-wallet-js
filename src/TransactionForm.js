@@ -9,15 +9,31 @@ import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
-// TransactionForm
+// TransactionBalanceHeader
 //================================================================//
-export const TransactionForm = observer (( props ) => {
+export const TransactionBalanceHeader = observer (( props ) => {
 
     const { controller } = props;
 
-    const onChange = () => {
-        controller.validate ();
-    }
+    const balance       = controller.balance > 0 ? controller.balance : 0;
+    const textColor     = balance > 0 ? 'black' : 'red';
+
+    return (
+        <UI.Header
+            as = 'h4'
+            style = {{ color: textColor }}
+        >
+            Balance: { balance }
+        </UI.Header>
+    );
+});
+
+//================================================================//
+// TransactionFormFields
+//================================================================//
+export const TransactionFormFields = observer (( props ) => {
+
+    const { controller } = props;
 
     // add the fields in order
     let fields = [];
@@ -31,19 +47,25 @@ export const TransactionForm = observer (( props ) => {
         );
     }
 
-    const balance       = controller.balance > 0 ? controller.balance : 0;
-    const textColor     = balance > 0 ? 'black' : 'red';
+    return (
+        <React.Fragment>
+            { fields }
+        </React.Fragment>
+    );
+});
+
+//================================================================//
+// TransactionForm
+//================================================================//
+export const TransactionForm = observer (( props ) => {
+
+    const { controller } = props;
 
     return (
         <UI.Segment>
-            <UI.Header
-                as = 'h4'
-                style = {{ color: textColor }}
-            >
-                Balance: { balance }
-            </UI.Header>
+            <TransactionBalanceHeader controller = { controller }/>
             <UI.Form>    
-                { fields }
+                <TransactionFormFields controller = { controller }/>
             </UI.Form>
         </UI.Segment>
     );
