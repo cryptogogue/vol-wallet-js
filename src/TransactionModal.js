@@ -102,14 +102,14 @@ const TransactionModalBody = observer (( props ) => {
                 <UI.Button
                     positive
                     disabled = { submitEnabled || !stageEnabled }
-                    onClick = {() => { stageTransaction ()}}
+                    onClick = {() => { submit ()}}
                 >
                     Stage Transaction
                 </UI.Button>
                 <UI.Button
                     positive
                     disabled = { !submitEnabled }
-                    onClick = {() => { submitTransactions ()}}
+                    onClick = {() => { submit ()}}
                 >
                     { submitLabel }
                 </UI.Button>
