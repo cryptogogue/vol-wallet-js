@@ -7,8 +7,10 @@ import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavig
 import { AppStateService }                                  from './AppStateService';
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
+import { InventoryMenu }                                    from './InventoryMenu';
 import { InventoryTagController }                           from './InventoryTagController';
 import { InventoryTagDropdown }                             from './InventoryTagDropdown';
+import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryService, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
@@ -22,107 +24,13 @@ import { Link }                                             from 'react-router-d
 import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-react';
 
 //================================================================//
-// InventoryMenu
-//================================================================//
-const InventoryMenu = observer (( props ) => {
-
-    const { appState, controller, craftingFormController, tags } = props;
-
-    const [ transactionController, setTransactionController ] = useState ( false );
-
-    const onClickSendAssets = () => {
-        setTransactionController (
-            new TransactionFormController_SendAssets (
-                appState,
-                controller.selection
-            )
-        );
-    }
-
-    const onClickCraftingMethod = ( methodName ) => {
-        console.log ( 'SHOWING TRANSACTION FORM', methodName );
-        craftingFormController.addInvocation ( methodName );
-        setTransactionController ( craftingFormController );
-    }
-
-    const onCloseTransactionModal = () => {
-        setTransactionController ( false );
-        controller.clearSelection ();
-        craftingFormController.reset ();
-    }
-
-    let methodListItems = [];
-    if ( craftingFormController.binding ) {
-        const methodBindings = craftingFormController.binding.getCraftingMethodBindings ();
-        for ( let methodName in methodBindings ) {
-            const binding = methodBindings [ methodName ];
-            const disabled = !binding.valid;
-            
-            methodListItems.push (<Dropdown.Item
-                key         = { methodName }
-                text        = { methodName }
-                disabled    = { disabled }
-                onClick     = {() => { onClickCraftingMethod ( methodName )}}
-            />);
-        }
-    }
-
-    return (
-        <React.Fragment>
-
-            <Menu attached = 'top'>
-                <inventoryMenuItems.SortModeFragment        controller = { controller }/>
-                <inventoryMenuItems.LayoutOptionsDropdown   controller = { controller }/>
-                
-                <Choose>
-                    <When condition = { controller.isPrintLayout }>
-                        <Menu.Item name = "Print" onClick = {() => { window.print ()}}>
-                            <Icon name = 'print'/>
-                        </Menu.Item>
-                    </When>
-
-                    <Otherwise>
-                        <inventoryMenuItems.ZoomOptionsDropdown     controller = { controller }/>
-                    </Otherwise>
-                </Choose>
-            </Menu>
-
-            <Menu borderless attached = 'bottom'>
-                <InventoryTagDropdown                       controller = { controller } tags = { tags }/>
-                <InventoryFilterDropdown                    tags = { tags }/>
-
-                <Menu.Menu position = "right">
-                    <Menu.Item
-                        icon        = 'envelope'
-                        disabled    = { !controller.hasSelection }
-                        onClick     = {() => { onClickSendAssets ()}}
-                    />
-                    <Dropdown item icon = "industry">
-                        <Dropdown.Menu>
-                            { methodListItems }
-                        </Dropdown.Menu>
-                    </Dropdown>
-                </Menu.Menu>
-            </Menu>
-
-            <TransactionModal
-                appState    = { appState }
-                controller  = { transactionController }
-                open        = { transactionController !== false }
-                onClose     = { onCloseTransactionModal }
-            />
-
-        </React.Fragment>
-    );
-});
-
-//================================================================//
 // InventoryScreenBody
 //================================================================//
 const InventoryScreenBody = observer (( props ) => {
 
     const { appState }          = props;
 
+    const [ batchSelect, setBatchSelect ]           = useState ( false );
     const [ progressMessage, setProgressMessage ]   = useState ( '' );
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
     const [ assetsUtilized, setAssetsUtilized ]     = useState ( false );
@@ -138,7 +46,7 @@ const InventoryScreenBody = observer (( props ) => {
         return tags.isAssetVisible ( assetID ) && !appState.assetsUtilized.includes ( assetID );
     });
 
-    const onAssetSelect = ( asset ) => {
+    const onAssetSelect = ( asset, toggle ) => {
         controller.toggleAssetSelection ( asset );
     }
 
@@ -151,7 +59,9 @@ const InventoryScreenBody = observer (( props ) => {
     // }
 
     const onDeselect = () => {
-        controller.clearSelection ();
+        if ( !batchSelect ) {
+            controller.clearSelection ();
+        }
     }
 
     const hasAssets = (( inventory.loading === false ) && ( inventory.availableAssetsArray.length > 0 ));
@@ -201,12 +111,28 @@ const InventoryScreenBody = observer (( props ) => {
                             />
                         </When>
                         <Otherwise>
+                            <KeyboardEventHandler
+                                handleKeys      = {[ 'shift', 'alt' ]}
+                                handleEventType = 'keydown'
+                                onKeyEvent      = {( key, e ) => {
+                                    console.log ( 'DOWN' );
+                                    setBatchSelect ( true );
+                                }}
+                            />
+                            <KeyboardEventHandler
+                                handleKeys      = {[ 'shift', 'alt' ]}
+                                handleEventType = 'keyup'
+                                onKeyEvent      = {( key, e ) => {
+                                    console.log ( 'UP' );
+                                    setBatchSelect ( false );
+                                }}
+                            />
                             <div style = {{ flex: 1 }}>
                                 <InventoryView
                                     key         = { `${ controller.sortMode } ${ controller.zoom }` }
                                     controller  = { controller }
                                     onSelect    = { onAssetSelect }
-                                    onMagnify   = { onAssetMagnify }
+                                    onMagnify   = { batchSelect ? undefined : onAssetMagnify }
                                     onDeselect  = { onDeselect }
                                 />
                             </div>
