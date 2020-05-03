@@ -27,8 +27,8 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 export const InventoryMenu = observer (( props ) => {
 
     const { appState, controller, craftingFormController, tags } = props;
-
     const [ transactionController, setTransactionController ] = useState ( false );
+    const binding = craftingFormController.binding;
 
     const onClickSendAssets = () => {
         setTransactionController (
@@ -40,8 +40,20 @@ export const InventoryMenu = observer (( props ) => {
     }
 
     const onClickCraftingMethod = ( methodName ) => {
-        console.log ( 'SHOWING TRANSACTION FORM', methodName );
-        craftingFormController.addInvocation ( methodName );
+
+        if ( controller.hasSelection ) {
+
+            const method = binding.methodsByName [ methodName ];
+            const paramName = Object.keys ( method.assetArgs )[ 0 ];
+
+            for ( let assetID in controller.selection ) {
+                const invocation = craftingFormController.addInvocation ( methodName );
+                craftingFormController.setAssetParam ( invocation, paramName, assetID );
+            }
+        }
+        else {
+            craftingFormController.addInvocation ( methodName );
+        }
         setTransactionController ( craftingFormController );
     }
 
@@ -51,19 +63,42 @@ export const InventoryMenu = observer (( props ) => {
         craftingFormController.reset ();
     }
 
+    let hasValidMethods = false;
     let methodListItems = [];
     if ( craftingFormController.binding ) {
-        const methodBindings = craftingFormController.binding.getCraftingMethodBindings ();
+        
+        const methodBindings = binding.getCraftingMethodBindings ();
         for ( let methodName in methodBindings ) {
-            const binding = methodBindings [ methodName ];
-            const disabled = !binding.valid;
             
+            let disabled = !binding.methodIsValid ( methodName );
+            
+            if ( controller.hasSelection && !disabled ) {
+
+                const method = binding.methodsByName [ methodName ];
+
+                if ( method.totalAssetsArgs === 1 ) {
+                    disabled = false;
+
+                    for ( let assetID in controller.selection ) {
+                        if ( !binding.methodIsValid ( methodName, assetID )) {
+                            disabled = true;
+                            break;
+                        }
+                    }
+                }
+                else {
+                    disabled = true;
+                }
+            }
+
             methodListItems.push (<Dropdown.Item
                 key         = { methodName }
                 text        = { methodName }
                 disabled    = { disabled }
                 onClick     = {() => { onClickCraftingMethod ( methodName )}}
             />);
+
+            hasValidMethods = hasValidMethods || !disabled;
         }
     }
 
@@ -97,7 +132,7 @@ export const InventoryMenu = observer (( props ) => {
                         disabled    = { !controller.hasSelection }
                         onClick     = {() => { onClickSendAssets ()}}
                     />
-                    <Dropdown item icon = "industry">
+                    <Dropdown item icon = "industry" disabled = { !hasValidMethods }>
                         <Dropdown.Menu>
                             { methodListItems }
                         </Dropdown.Menu>

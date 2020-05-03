@@ -39,6 +39,7 @@ export class CraftingFormController extends TransactionFormController {
 
         this.invocations.push ( invocation );
         this.validate ();
+        return this.invocations [ this.invocations.length - 1 ]; // because mobX
     }
 
     //----------------------------------------------------------------//
@@ -131,7 +132,6 @@ export class CraftingFormController extends TransactionFormController {
             delete this.assetsUtilized [ paramValue ];
         }
         this.invocations.splice ( index, 1 );
-        // this.refreshBinding ();
         this.validate ();
     }
 
@@ -158,7 +158,6 @@ export class CraftingFormController extends TransactionFormController {
         if ( assetID !== false ) {
             this.assetsUtilized [ assetID ] = true;
         }
-        // this.refreshBinding ();
         this.validate ();
     }
 
