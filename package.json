@@ -36,6 +36,7 @@
         "jest-resolve": "24.9.0",
         "jest-watch-typeahead": "0.4.0",
         "js-crypto-key-utils": "^0.5.15",
+        "jwt-decode": "^2.2.0",
         "mini-css-extract-plugin": "0.8.0",
         "mobx": "^5.10.1",
         "mobx-react": "^6.0.3",
@@ -200,6 +201,7 @@
                         "./src"
                     ],
                     "alias": {
+                        "consts": "./src/consts/consts",
                         "fgc": "./src/packages/fgc-common-js-src/export",
                         "cardmotron": "./src/packages/vol-cardmotron-js-src/export"
                     }

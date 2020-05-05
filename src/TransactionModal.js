@@ -29,6 +29,7 @@ const TransactionFormFactory = observer (({ controller }) => {
         case TRANSACTION_TYPE.RENAME_ACCOUNT:
         case TRANSACTION_TYPE.SEND_ASSETS:
         case TRANSACTION_TYPE.SEND_VOL:
+        case TRANSACTION_TYPE.UPGRADE_ASSETS:
             return (
                 <TransactionForm controller = { controller }/>
             );

@@ -8,13 +8,14 @@ import { AppStateService }                                  from './AppStateServ
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
+import { InventoryService }                                 from './InventoryService';
 import { InventoryTagController }                           from './InventoryTagController';
 import { InventoryTagDropdown }                             from './InventoryTagDropdown';
 import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryService, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { assert, hooks, ProgressController, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
@@ -31,13 +32,12 @@ const InventoryScreenBody = observer (( props ) => {
     const { appState }          = props;
 
     const [ batchSelect, setBatchSelect ]           = useState ( false );
-    const [ progressMessage, setProgressMessage ]   = useState ( '' );
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
     const [ assetsUtilized, setAssetsUtilized ]     = useState ( false );
 
-    const nodeURL = appState.hasAccountInfo ? appState.network.nodeURL : false;
-
-    const inventory                 = hooks.useFinalizable (() => new InventoryService ( setProgressMessage, nodeURL, appState.accountID ));
+    const progress                  = hooks.useFinalizable (() => new ProgressController ());
+    const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
+    const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory, true ));
     const tags                      = hooks.useFinalizable (() => new InventoryTagController ());
@@ -64,7 +64,7 @@ const InventoryScreenBody = observer (( props ) => {
         }
     }
 
-    const hasAssets = (( inventory.loading === false ) && ( inventory.availableAssetsArray.length > 0 ));
+    const hasAssets = (( progress.loading === false ) && ( inventory.availableAssetsArray.length > 0 ));
 
     return (
         <div style = {{
@@ -87,20 +87,9 @@ const InventoryScreenBody = observer (( props ) => {
                 </SingleColumnContainerView>
             </div>
 
-            <Choose>
+            <ProgressSpinner loading = { progress.loading } message = { progress.message }>
 
-                <When condition = { inventory.loading }>
-                    <Loader
-                        active
-                        inline = 'centered'
-                        size = 'massive'
-                        style = {{ marginTop:'5%' }}
-                    >
-                        { progressMessage }
-                    </Loader>
-                </When>
-
-                <When condition = { hasAssets }>
+                <If condition = { hasAssets }>
                     <Choose>
                         <When condition = { controller.isPrintLayout }>
                             <InventoryPrintView
@@ -143,12 +132,9 @@ const InventoryScreenBody = observer (( props ) => {
                             />
                         </Otherwise>
                     </Choose>
-                </When>
+                </If>
 
-                <Otherwise>
-                </Otherwise>
-
-            </Choose>
+            </ProgressSpinner>
         </div>
     );
 });

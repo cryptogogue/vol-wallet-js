@@ -11,7 +11,7 @@ import { InventoryTagController }                           from './InventoryTag
 import { InventoryTagDropdown }                             from './InventoryTagDropdown';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryService, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
@@ -106,8 +106,8 @@ export const InventoryMenu = observer (( props ) => {
         <React.Fragment>
 
             <Menu attached = 'top'>
-                <inventoryMenuItems.SortModeFragment        controller = { controller }/>
-                <inventoryMenuItems.LayoutOptionsDropdown   controller = { controller }/>
+                <inventoryMenuItems.SortModeFragment controller = { controller }/>
+                <inventoryMenuItems.LayoutOptionsDropdown controller = { controller }/>
                 
                 <Choose>
                     <When condition = { controller.isPrintLayout }>
@@ -117,18 +117,18 @@ export const InventoryMenu = observer (( props ) => {
                     </When>
 
                     <Otherwise>
-                        <inventoryMenuItems.ZoomOptionsDropdown     controller = { controller }/>
+                        <inventoryMenuItems.ZoomOptionsDropdown controller = { controller }/>
                     </Otherwise>
                 </Choose>
             </Menu>
 
             <Menu borderless attached = 'bottom'>
-                <InventoryTagDropdown                       controller = { controller } tags = { tags }/>
-                <InventoryFilterDropdown                    tags = { tags }/>
+                <InventoryTagDropdown controller = { controller } tags = { tags }/>
+                <InventoryFilterDropdown tags = { tags }/>
 
                 <Menu.Menu position = "right">
                     <Menu.Item
-                        icon        = 'envelope'
+                        icon        = 'share'
                         disabled    = { !controller.hasSelection }
                         onClick     = {() => { onClickSendAssets ()}}
                     />

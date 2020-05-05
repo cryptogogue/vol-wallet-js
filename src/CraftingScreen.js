@@ -6,8 +6,9 @@ import { AppStateService }                              from './AppStateService'
 import { CraftingForm }                                 from './CraftingForm';
 import { CraftingFormController }                       from './CraftingFormController';
 import { PasswordInputField }                           from './PasswordInputField';
-import { InventoryService }                             from 'cardmotron';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { InventoryController }                          from 'cardmotron';
+import { InventoryService }                             from './InventoryService';
+import { assert, hooks, ProgressController, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable } from 'mobx';
 import { observer }                                     from 'mobx-react';
 import { AccountNavigationBar, ACCOUNT_TABS }           from './AccountNavigationBar';
@@ -22,20 +23,12 @@ const CraftingScreenBody = observer (( props ) => {
 
     const { appState, selectedMethod, onFinish } = props;
     
-    const [ progressMessage, setProgressMessage ] = useState ( '' );
     const [ password, setPassword ] = useState ( '' );
 
-    const nodeURL                   = appState.hasAccountInfo ? appState.network.nodeURL : false;
-    const inventory                 = hooks.useFinalizable (() => new InventoryService ( setProgressMessage, nodeURL, appState.accountID ));
+    const progress                  = hooks.useFinalizable (() => new ProgressController ());
+    const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
+    const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
-
-    if ( inventory.loading === true ) {
-        return (
-            <div>
-                <UI.Loader active inline='centered' size='massive' style={{marginTop:'5%'}}>{ progressMessage }</UI.Loader>
-            </div>
-        );
-    }
 
     const stageEnabled      = appState.hasAccountInfo && craftingFormController.isCompleteAndErrorFree;
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
@@ -58,42 +51,46 @@ const CraftingScreenBody = observer (( props ) => {
                     tab         = { ACCOUNT_TABS.CRAFTING }
                 />
 
-                <CraftingForm
-                    controller  = { craftingFormController }
-                />
+                <ProgressSpinner loading = { progress.loading } message = { progress.message }>
 
-                <UI.Segment>
-                    <UI.Form>
+                    <CraftingForm
+                        controller  = { craftingFormController }
+                    />
 
-                        <PasswordInputField
-                            appState = { appState }
-                            setPassword = { setPassword }
-                        />
+                    <UI.Segment>
+                        <UI.Form>
 
-                        <UI.Form.Field>
-                            <UI.Button
-                                fluid
-                                color = 'teal'
-                                attached = 'top'
-                                disabled = { submitEnabled || !stageEnabled }
-                                onClick = {() => { submit ()}}
-                            >
-                                Stage Transaction
-                            </UI.Button>
+                            <PasswordInputField
+                                appState = { appState }
+                                setPassword = { setPassword }
+                            />
 
-                            <UI.Button
-                                fluid
-                                color = 'teal'
-                                attached = 'bottom'
-                                disabled = { !submitEnabled }
-                                onClick = {() => { submit ()}}
-                            >
-                                { submitLabel }
-                            </UI.Button>
-                        </UI.Form.Field>
+                            <UI.Form.Field>
+                                <UI.Button
+                                    fluid
+                                    color = 'teal'
+                                    attached = 'top'
+                                    disabled = { submitEnabled || !stageEnabled }
+                                    onClick = {() => { submit ()}}
+                                >
+                                    Stage Transaction
+                                </UI.Button>
 
-                    </UI.Form>
-                </UI.Segment>
+                                <UI.Button
+                                    fluid
+                                    color = 'teal'
+                                    attached = 'bottom'
+                                    disabled = { !submitEnabled }
+                                    onClick = {() => { submit ()}}
+                                >
+                                    { submitLabel }
+                                </UI.Button>
+                            </UI.Form.Field>
+
+                        </UI.Form>
+                    </UI.Segment>
+
+                </ProgressSpinner>
 
             </SingleColumnContainerView>
         </div>

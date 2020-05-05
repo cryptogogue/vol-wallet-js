@@ -18,7 +18,7 @@ export class TransactionFormController_UpgradeAssets extends TransactionFormCont
         super ();
 
         const fieldsArray = [
-            new FIELD_CLASS.CONST       ( 'upgrades', 'Upgrades', upgradeMap ),
+            new FIELD_CLASS.CONST ( 'upgrades', 'Upgrades', upgradeMap ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.UPGRADE_ASSETS, fieldsArray );
     }
