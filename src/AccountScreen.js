@@ -41,7 +41,7 @@ const AccountDetailsView = observer (( props ) => {
                 <a href = { accountURL } target = '_blank'>{ appState.accountID }</a>
             </UI.Header>
 
-            <div style = {{ display: hasInfo ? 'visible' : 'hidden' }}>
+            <div style = {{ visibility: hasInfo ? 'visible' : 'hidden' }}>
                 <UI.Header as = 'h3'>
                     { `Balance: ${ appState.balance }` }
                 </UI.Header>

@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { InboxLabel }                       from './InboxLabel';
 import { NavigationBar }                    from './NavigationBar';
 import { TransactionQueueLabel }            from './TransactionQueueLabel';
 import { observer }                         from 'mobx-react';
@@ -83,6 +84,7 @@ export const AccountNavigationBar = observer (( props ) => {
 
                 <Menu.Menu position = 'right'>
                     <Menu.Item>
+                        <InboxLabel appState = { appState }/>
                         <TransactionQueueLabel appState = { appState }/>
                     </Menu.Item>
                 </Menu.Menu>

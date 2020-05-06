@@ -273,7 +273,7 @@ export class AppStateService {
         extendObservable ( this, {
             networkID:              '',
             accountID:              '',
-            accountInfo:            null,
+            accountInfo:            false,
             nextTransactionCost:    0,
         });
 
@@ -465,7 +465,7 @@ export class AppStateService {
     //----------------------------------------------------------------//
     @computed get
     hasAccountInfo () {
-        return ( this.accountInfo.nonce >= 0 );
+        return ( this.accountInfo !== false );
     }
 
     //----------------------------------------------------------------//
@@ -657,12 +657,25 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @action
-    setAccountInfo ( balance, nonce ) {
+    setAccountInfo ( accountInfo ) {
 
-        this.accountInfo = {
-            balance:    typeof ( balance ) === 'number' ? balance : -1,
-            nonce:      typeof ( nonce ) === 'number' ? nonce : -1,
-        };
+        if ( accountInfo ) {
+            this.accountInfo = this.accountInfo || {};
+            this.accountInfo.balance = accountInfo.balance;
+            this.accountInfo.nonce = accountInfo.nonce;
+            this.accountInfo.inventoryNonce = accountInfo.inventoryNonce;
+            this.accountInfo.newAssets = accountInfo.newAssets || {};
+        }
+        else {
+            this.accountInfo = false;
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setAccountInventoryNonce ( inventoryNonce ) {
+
+        this.account.inventoryNonce = inventoryNonce;
     }
 
     //----------------------------------------------------------------//

@@ -42,14 +42,15 @@ const AssetSelectionModal = observer (( props ) => {
             }
 
             ingredients.push (
-                <AssetCardView
-                    key         = { assetID }
-                    assetID     = { assetID }
-                    inventory   = { controller.inventory }
-                    isSelected  = { isSelected }
-                    disabled    = { isUtilized && !isSelected }
-                    onSelect    = { onSelect }
-                />
+                <div style = {{ display: 'block' }} key = { assetID }>
+                    <AssetCardView
+                        assetID     = { assetID }
+                        inventory   = { controller.inventory }
+                        isSelected  = { isSelected }
+                        disabled    = { isUtilized && !isSelected }
+                        onSelect    = { onSelect }
+                    />
+                </div>
             );
         }
     }

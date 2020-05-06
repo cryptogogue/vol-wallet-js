@@ -116,7 +116,7 @@ export const CraftingScreen = observer (( props ) => {
 
     return (
         <CraftingScreenBody
-            key                 = { `${ counter }:${ appState.nonce }` }
+            key                 = { `${ counter }` }
             appState            = { appState }
             onFinish            = { onFinish }
         />

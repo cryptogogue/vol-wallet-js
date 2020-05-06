@@ -27,13 +27,19 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 // InventoryScreenBody
 //================================================================//
-const InventoryScreenBody = observer (( props ) => {
+export const InventoryScreen = observer (( props ) => {
 
-    const { appState }          = props;
+    // const { appState }          = props;
 
     const [ batchSelect, setBatchSelect ]           = useState ( false );
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
     const [ assetsUtilized, setAssetsUtilized ]     = useState ( false );
+
+    const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
+    const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
+
+    const appState                  = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+    const accountInfoService        = hooks.useFinalizable (() => new AccountInfoService ( appState ));
 
     const progress                  = hooks.useFinalizable (() => new ProgressController ());
     const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
@@ -139,19 +145,19 @@ const InventoryScreenBody = observer (( props ) => {
     );
 });
 
-//================================================================//
-// InventoryScreen
-//================================================================//
-export const InventoryScreen = observer (( props ) => {
+// //================================================================//
+// // InventoryScreen
+// //================================================================//
+// export const InventoryScreen = observer (( props ) => {
 
-    const networkIDFromEndpoint = util.getMatch ( props, 'networkID' );
-    const accountIDFromEndpoint = util.getMatch ( props, 'accountID' );
+//     const networkIDFromEndpoint = util.getMatch ( props, 'networkID' );
+//     const accountIDFromEndpoint = util.getMatch ( props, 'accountID' );
 
-    const appState              = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
-    const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
+//     const appState              = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+//     const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
 
-    // TODO: this is a nasty hack to force a reload when the nonce changes. do this right instead.
-    return (
-        <InventoryScreenBody key = { appState.nonce } appState = { appState }/>
-    );
-});
+//     // TODO: this is a nasty hack to force a reload when the nonce changes. do this right instead.
+//     return (
+//         <InventoryScreenBody key = { appState.nonce } appState = { appState }/>
+//     );
+// });

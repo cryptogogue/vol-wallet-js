@@ -220,7 +220,7 @@ export const UpgradesScreen = observer (( props ) => {
 
     return (
         <UpgradesScreenBody
-            key                 = { `${ counter }:${ appState.nonce }` }
+            key                 = { `${ counter }` }
             appState            = { appState }
             onFinish            = { onFinish }
         />

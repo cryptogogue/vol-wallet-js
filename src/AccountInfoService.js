@@ -3,6 +3,7 @@
 import * as bitcoin from 'bitcoinjs-lib';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, storage, util } from 'fgc';
 import { action, computed, extendObservable, observe, observable } from 'mobx';
+import _ from 'lodash';
 
 //================================================================//
 // AppStateService
@@ -64,7 +65,32 @@ export class AccountInfoService {
 
         if ( account ) {
 
-            appState.setAccountInfo ( account.balance, account.nonce );
+            const accountInfo = _.cloneDeep ( appState.accountInfo || {});
+
+            accountInfo.balance         = account.balance;
+            accountInfo.nonce           = account.nonce;
+
+            const prevInventoryNonce = appState.account.inventoryNonce || 0;
+            const prevInfoInventoryNonce = accountInfo.inventoryNonce || prevInventoryNonce;
+
+            if ( prevInfoInventoryNonce < account.inventoryNonce ) {
+
+                const count = account.inventoryNonce - prevInventoryNonce;
+                const url = `${ appState.network.nodeURL }/accounts/${ accountID }/inventory/log/${ prevInventoryNonce }?count=${ count }`;
+                data = await service.revocable.fetchJSON ( url );
+
+                if ( data.additions && ( data.additions.length > 0 )) {
+                    accountInfo.inventoryNonce = account.inventoryNonce;
+                    accountInfo.newAssets = data.assets;
+                }
+                else {
+                    appState.setAccountInventoryNonce ( accountInfo.inventoryNonce );
+                }
+            }
+
+            console.log ( 'ACCOUNT INFO:', JSON.stringify ( accountInfo, null, 4 ));
+
+            appState.setAccountInfo ( accountInfo );
             appState.updateAccount ( account, entitlements );
             appState.confirmTransactions ( account.nonce );
 
