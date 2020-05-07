@@ -1,72 +1,45 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { Transaction, TRANSACTION_TYPE }    from './Transaction';
-import { TransactionFormInput }             from './TransactionFormInput';
+import { BasicTransactionForm }                 from './BasicTransactionForm';
+import { CraftingForm }                         from './CraftingForm';
+import { UpgradesForm }                         from './UpgradesForm';
+import { TRANSACTION_TYPE }                     from './Transaction';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
-import { observer }                         from 'mobx-react';
-import React, { useState }                  from 'react';
-import * as UI                              from 'semantic-ui-react';
-
-//================================================================//
-// TransactionBalanceHeader
-//================================================================//
-export const TransactionBalanceHeader = observer (( props ) => {
-
-    const { controller } = props;
-
-    const balance       = controller.balance > 0 ? controller.balance : 0;
-    const textColor     = balance > 0 ? 'black' : 'red';
-
-    return (
-        <UI.Header
-            as = 'h4'
-            style = {{ color: textColor }}
-        >
-            Balance: { balance }
-        </UI.Header>
-    );
-});
-
-//================================================================//
-// TransactionFormFields
-//================================================================//
-export const TransactionFormFields = observer (( props ) => {
-
-    const { controller } = props;
-
-    // add the fields in order
-    let fields = [];
-    for ( let field of controller.fieldsArray ) {
-        fields.push (
-            <TransactionFormInput
-                key             = { field.fieldName }
-                field           = { field }
-                controller      = { controller }
-            />
-        );
-    }
-
-    return (
-        <React.Fragment>
-            { fields }
-        </React.Fragment>
-    );
-});
+import { observer }                             from 'mobx-react';
+import React, { useState }                      from 'react';
+import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
 // TransactionForm
 //================================================================//
-export const TransactionForm = observer (( props ) => {
+export const TransactionForm = observer (({ controller }) => {
 
-    const { controller } = props;
-
+    switch ( controller.type ) {
+        case TRANSACTION_TYPE.ACCOUNT_POLICY:
+        case TRANSACTION_TYPE.AFFIRM_KEY:
+        case TRANSACTION_TYPE.BETA_GET_ASSETS:
+        case TRANSACTION_TYPE.BETA_GET_DECK:
+        case TRANSACTION_TYPE.KEY_POLICY:
+        case TRANSACTION_TYPE.OPEN_ACCOUNT:
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA:
+        case TRANSACTION_TYPE.REGISTER_MINER:
+        case TRANSACTION_TYPE.RENAME_ACCOUNT:
+        case TRANSACTION_TYPE.SEND_ASSETS:
+        case TRANSACTION_TYPE.SEND_VOL:
+            return (
+                <BasicTransactionForm controller = { controller }/>
+            );
+        case TRANSACTION_TYPE.RUN_SCRIPT:
+            return (
+                <CraftingForm controller = { controller }/>
+            );
+        case TRANSACTION_TYPE.UPGRADE_ASSETS:
+            return (
+                <UpgradesForm controller = { controller }/>
+            );
+    }
     return (
-        <UI.Segment>
-            <TransactionBalanceHeader controller = { controller }/>
-            <UI.Form>    
-                <TransactionFormFields controller = { controller }/>
-            </UI.Form>
-        </UI.Segment>
+        <div/>
     );
 });

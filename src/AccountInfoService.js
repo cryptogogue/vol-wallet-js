@@ -88,8 +88,6 @@ export class AccountInfoService {
                 }
             }
 
-            console.log ( 'ACCOUNT INFO:', JSON.stringify ( accountInfo, null, 4 ));
-
             appState.setAccountInfo ( accountInfo );
             appState.updateAccount ( account, entitlements );
             appState.confirmTransactions ( account.nonce );

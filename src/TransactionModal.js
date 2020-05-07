@@ -13,37 +13,6 @@ import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
-// TransactionFormFactory
-//================================================================//
-const TransactionFormFactory = observer (({ controller }) => {
-
-    switch ( controller.type ) {
-        case TRANSACTION_TYPE.ACCOUNT_POLICY:
-        case TRANSACTION_TYPE.AFFIRM_KEY:
-        case TRANSACTION_TYPE.BETA_GET_ASSETS:
-        case TRANSACTION_TYPE.BETA_GET_DECK:
-        case TRANSACTION_TYPE.KEY_POLICY:
-        case TRANSACTION_TYPE.OPEN_ACCOUNT:
-        case TRANSACTION_TYPE.PUBLISH_SCHEMA:
-        case TRANSACTION_TYPE.REGISTER_MINER:
-        case TRANSACTION_TYPE.RENAME_ACCOUNT:
-        case TRANSACTION_TYPE.SEND_ASSETS:
-        case TRANSACTION_TYPE.SEND_VOL:
-        case TRANSACTION_TYPE.UPGRADE_ASSETS:
-            return (
-                <TransactionForm controller = { controller }/>
-            );
-        case TRANSACTION_TYPE.RUN_SCRIPT:
-            return (
-                <CraftingForm controller = { controller }/>
-            );
-    }
-    return (
-        <div/>
-    );
-});
-
-//================================================================//
 // TransactionModalBody
 //================================================================//
 const TransactionModalBody = observer (( props ) => {
@@ -89,7 +58,7 @@ const TransactionModalBody = observer (( props ) => {
                 </If>
                 
                 <If condition = { controller }>
-                    <TransactionFormFactory controller = { controller }/>
+                    <TransactionForm controller = { controller }/>
                 </If>
 
                 <UI.Form>

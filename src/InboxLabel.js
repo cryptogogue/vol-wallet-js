@@ -22,8 +22,6 @@ export const InboxLabel = observer (( props ) => {
     const newAssets = appState.accountInfo && appState.accountInfo.newAssets || [];
     const showLabel = (( accountInventoryNonce < accountInfoInventoryNonce ) && ( newAssets.length > 0 ));
 
-    console.log ( 'LABEL:', accountInventoryNonce, accountInfoInventoryNonce );
-
     return (
         <React.Fragment>
 

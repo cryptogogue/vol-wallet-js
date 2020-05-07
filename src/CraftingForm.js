@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionBalanceHeader, TransactionFormFields } from './TransactionForm';
+import { TransactionBalanceHeader, TransactionFormFields } from './BasicTransactionForm';
 import { TransactionFormInput }             from './TransactionFormInput';
 import { AssetCardView }                    from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
