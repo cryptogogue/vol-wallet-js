@@ -23,7 +23,7 @@ export class UpgradesFormController extends TransactionFormController {
         this.inventory = inventory;
         this.initialize ( appState, TRANSACTION_TYPE.UPGRADE_ASSETS );
 
-        this.cancelBindingReaction = reaction (
+        this.cancelRebuildReaction = reaction (
             () => {
                 return {
                     assets: inventory.availableAssetsArray,
@@ -49,7 +49,7 @@ export class UpgradesFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     finalize () {
 
-        this.cancelBindingReaction ();
+        this.cancelRebuildReaction ();
     }
 
     //----------------------------------------------------------------//

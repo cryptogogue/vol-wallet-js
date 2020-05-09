@@ -365,6 +365,7 @@ export class AppStateService {
     //----------------------------------------------------------------//
     finalize () {
 
+        this.storage.finalize ();
         this.revocable.finalize ();
     }
 
@@ -503,6 +504,12 @@ export class AppStateService {
             request.publicKeyHex,
         );
         delete this.pendingAccounts [ requestID ];
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    inventoryNonce () {
+        return this.account.inventoryNonce || 0;
     }
 
     //----------------------------------------------------------------//
@@ -660,11 +667,11 @@ export class AppStateService {
     setAccountInfo ( accountInfo ) {
 
         if ( accountInfo ) {
-            this.accountInfo = this.accountInfo || {};
-            this.accountInfo.balance = accountInfo.balance;
-            this.accountInfo.nonce = accountInfo.nonce;
+            this.accountInfo            = this.accountInfo || {};
+            this.accountInfo.balance    = accountInfo.balance;
+            this.accountInfo.nonce      = accountInfo.nonce;
             this.accountInfo.inventoryNonce = accountInfo.inventoryNonce;
-            this.accountInfo.newAssets = accountInfo.newAssets || {};
+            this.accountInfo.newAssets  = accountInfo.newAssets || {};
         }
         else {
             this.accountInfo = false;

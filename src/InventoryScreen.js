@@ -45,7 +45,7 @@ export const InventoryScreen = observer (( props ) => {
     const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
     const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
-    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory, true ));
+    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
     const tags                      = hooks.useFinalizable (() => new InventoryTagController ());
 
     controller.setFilterFunc (( assetID ) => {

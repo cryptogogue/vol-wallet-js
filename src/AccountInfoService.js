@@ -69,18 +69,15 @@ export class AccountInfoService {
 
             accountInfo.balance         = account.balance;
             accountInfo.nonce           = account.nonce;
+            accountInfo.inventoryNonce  = account.inventoryNonce;
 
-            const prevInventoryNonce = appState.account.inventoryNonce || 0;
-            const prevInfoInventoryNonce = accountInfo.inventoryNonce || prevInventoryNonce;
+            if ( appState.inventoryNonce < accountInfo.inventoryNonce ) {
 
-            if ( prevInfoInventoryNonce < account.inventoryNonce ) {
-
-                const count = account.inventoryNonce - prevInventoryNonce;
-                const url = `${ appState.network.nodeURL }/accounts/${ accountID }/inventory/log/${ prevInventoryNonce }?count=${ count }`;
+                const count = accountInfo.inventoryNonce - appState.inventoryNonce;
+                const url = `${ appState.network.nodeURL }/accounts/${ accountID }/inventory/log/${ appState.inventoryNonce }?count=${ count }`;
                 data = await service.revocable.fetchJSON ( url );
 
                 if ( data.additions && ( data.additions.length > 0 )) {
-                    accountInfo.inventoryNonce = account.inventoryNonce;
                     accountInfo.newAssets = data.assets;
                 }
                 else {

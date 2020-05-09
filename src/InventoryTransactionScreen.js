@@ -10,7 +10,7 @@ import { InventoryController }                          from 'cardmotron';
 import { assert, hooks, ProgressController, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable } from 'mobx';
 import { observer }                                     from 'mobx-react';
-import { AccountNavigationBar, ACCOUNT_TABS }           from './AccountNavigationBar';
+import { AccountNavigationBar }                         from './AccountNavigationBar';
 import React, { useState }                              from 'react';
 import { Redirect }                                     from 'react-router';
 import * as UI                                          from 'semantic-ui-react';
@@ -20,7 +20,7 @@ import * as UI                                          from 'semantic-ui-react'
 //================================================================//
 const InventoryTransactionScreenBody = observer (( props ) => {
 
-    const { controllerFactory, onFinish } = props;
+    const { controllerFactory, onFinish, tab } = props;
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
@@ -51,7 +51,7 @@ const InventoryTransactionScreenBody = observer (( props ) => {
 
                 <AccountNavigationBar
                     appState    = { appState }
-                    tab         = { ACCOUNT_TABS.CRAFTING }
+                    tab         = { tab }
                 />
 
                 <ProgressSpinner loading = { progress.loading } message = { progress.message }>

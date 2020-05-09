@@ -22,7 +22,7 @@ export class InventoryService {
                 return {
                     hasAccountInfo:     appState.hasAccountInfo,
                     transactionNonce:   appState.nonce || 0,
-                    inventoryNonce:     appState.account.inventoryNonce || 0,
+                    inventoryNonce:     appState.inventoryNonce,
                 };
             },
             ({ hasAccountInfo, inventoryNonce }) => {

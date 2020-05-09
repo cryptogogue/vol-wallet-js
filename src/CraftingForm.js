@@ -122,7 +122,7 @@ const InvocationField = observer (( props ) => {
                 setParamModalState  = { setParamModalState }
             />
 
-            <UI.Menu attached = 'top' color = 'grey' borderless inverted compact>
+            <UI.Menu attached = 'top' color = 'teal' borderless inverted compact>
                 <UI.Menu.Item header>
                     { invocation.methodName }
                 </UI.Menu.Item>
@@ -210,6 +210,7 @@ export const CraftingForm = observer (( props ) => {
         <UI.Segment>
             <TransactionBalanceHeader controller = { controller }/>
             <UI.Form>
+                { invocationFields }
                 <If condition = { showDropdown }>
                     <MethodDropdown
                         key             = { controller.invocations.length }
@@ -217,7 +218,6 @@ export const CraftingForm = observer (( props ) => {
                         addInvocation   = { addInvocation }
                     />
                 </If>
-                { invocationFields }
                 <TransactionFormFields controller = { controller }/>
             </UI.Form>
         </UI.Segment>
