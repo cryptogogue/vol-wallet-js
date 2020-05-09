@@ -55,6 +55,7 @@ export class Transaction {
             case TRANSACTION_TYPE.SEND_VOL:         return 'Send VOL';
             case TRANSACTION_TYPE.UPGRADE_ASSETS:   return 'Upgrade Assets';
         }
+        return 'UNKNOWN';
     }
 
     //----------------------------------------------------------------//

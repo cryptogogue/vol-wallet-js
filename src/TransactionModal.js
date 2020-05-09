@@ -24,7 +24,7 @@ const TransactionModalBody = observer (( props ) => {
     const controller = props.controller || controllerFromDropdown;
 
     const showDropdown      = !props.controller;
-    const title             = showDropdown ? 'New Transaction' : controller.friendlyName;
+    const title             = controller ? controller.friendlyName : 'New Transaction';
     const stageEnabled      = appState.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
     const submitLabel       = appState.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
