@@ -46,8 +46,14 @@ const UpgradeItem = observer (( props ) => {
                 onClick = {() => { showModal ( upgradeID )}}
                 style = {{ cursor: 'pointer' }}
             >
-                { name }
+                <div style = {{ fontWeight: 'bold' }}>
+                    { name }
+                </div>
+                <div style = {{ fontSize: '12px' }}>
+                    { upgrade.asset.assetID }
+                </div>
             </UI.Table.Cell>
+
             <UI.Table.Cell>
                 <UI.Dropdown
                     fluid
