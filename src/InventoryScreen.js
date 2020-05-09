@@ -14,6 +14,7 @@ import { InventoryTagDropdown }                             from './InventoryTag
 import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
+import { UpgradesFormController }                           from './UpgradesFormController';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, hooks, ProgressController, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
@@ -46,10 +47,15 @@ export const InventoryScreen = observer (( props ) => {
     const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
+    const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, inventory ));
     const tags                      = hooks.useFinalizable (() => new InventoryTagController ());
 
     controller.setFilterFunc (( assetID ) => {
         return tags.isAssetVisible ( assetID ) && !appState.assetsUtilized.includes ( assetID );
+    });
+
+    upgradesFormController.setFilterFunc (( assetID ) => {
+        return controller.filterFunc ( assetID ) && ( controller.hasSelection ? controller.isSelected ( assetID ) : true );
     });
 
     const onAssetSelect = ( asset, toggle ) => {
@@ -88,6 +94,7 @@ export const InventoryScreen = observer (( props ) => {
                         appState                = { appState }
                         controller              = { controller }
                         craftingFormController  = { craftingFormController }
+                        upgradesFormController  = { upgradesFormController }
                         tags                    = { tags }
                     />
                 </SingleColumnContainerView>

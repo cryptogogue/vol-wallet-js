@@ -164,7 +164,9 @@ export const UpgradesForm = observer (( props ) => {
     const { controller } = props;
     const [ upgradeForModal, setUpgradeForModal ] = useState ( false );
 
-    if ( controller.upgrades.length === 0 ) {
+    const upgrades = controller.upgradesWithFilter;
+
+    if ( upgrades.length === 0 ) {
         return (
             <UI.Message>
                 <UI.Message.Header>No Upgrades Available</UI.Message.Header>
@@ -177,13 +179,13 @@ export const UpgradesForm = observer (( props ) => {
     }
 
     const upgradeList = [];
-    for ( let index in controller.upgrades ) {
+    for ( let upgrade of upgrades ) {
 
         upgradeList.push (
             <UpgradeItem
-                key         = { index }
+                key         = { upgrade.upgradeID }
                 controller  = { controller }
-                upgradeID   = { index }
+                upgradeID   = { upgrade.upgradeID }
                 showModal   = { setUpgradeForModal }
             />
         );

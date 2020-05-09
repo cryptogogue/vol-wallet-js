@@ -26,7 +26,7 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 export const InventoryMenu = observer (( props ) => {
 
-    const { appState, controller, craftingFormController, tags } = props;
+    const { appState, controller, craftingFormController, upgradesFormController, tags } = props;
     const [ transactionController, setTransactionController ] = useState ( false );
     const binding = craftingFormController.binding;
 
@@ -55,6 +55,11 @@ export const InventoryMenu = observer (( props ) => {
             craftingFormController.addInvocation ( methodName );
         }
         setTransactionController ( craftingFormController );
+    }
+
+    const onClickUpgrades = () => {
+
+        setTransactionController ( upgradesFormController );
     }
 
     const onCloseTransactionModal = () => {
@@ -126,11 +131,16 @@ export const InventoryMenu = observer (( props ) => {
                 <InventoryTagDropdown controller = { controller } tags = { tags }/>
                 <InventoryFilterDropdown tags = { tags }/>
 
-                <Menu.Menu position = "right">
+                <Menu.Menu position = 'right'>
                     <Menu.Item
                         icon        = 'share'
                         disabled    = { !controller.hasSelection }
                         onClick     = {() => { onClickSendAssets ()}}
+                    />
+                    <Menu.Item
+                        icon        = 'gift'
+                        disabled    = { upgradesFormController.upgradesWithFilter.length === 0 }
+                        onClick     = {() => { onClickUpgrades ()}}
                     />
                     <Dropdown item icon = "industry" disabled = { !hasValidMethods }>
                         <Dropdown.Menu>

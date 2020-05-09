@@ -58,7 +58,6 @@ export const AccountNavigationBar = observer (( props ) => {
     const accountsURL           = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
-    const upgradesURL           = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.UPGRADES )}`;
 
     return (
         <React.Fragment>
@@ -76,7 +75,6 @@ export const AccountNavigationBar = observer (( props ) => {
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )} as = { Link } to = { accountsURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )} as = { Link } to = { keysURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )} as = { Link } to = { inventoryURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.UPGRADES )} as = { Link } to = { upgradesURL }/>
                     </Dropdown.Menu>
                 </Dropdown>
 

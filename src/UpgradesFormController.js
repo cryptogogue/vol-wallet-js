@@ -120,6 +120,12 @@ export class UpgradesFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
+    setFilterFunc ( filter ) {
+
+        this.filter = typeof ( filter ) === 'function' ? filter : false;
+    }
+
+    //----------------------------------------------------------------//
     @action
     toggle ( upgradeID ) {
 
@@ -166,6 +172,23 @@ export class UpgradesFormController extends TransactionFormController {
             }
         }
         return map;
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    upgradesWithFilter () {
+
+        if ( this.filter ) {
+
+            const upgrades = [];
+            for ( let upgrade of this.upgrades ) {
+                if ( this.filter ( upgrade.assetID )) {
+                    upgrades.push ( upgrade );
+                }
+            }
+            return upgrades;
+        }
+        return this.upgrades;
     }
 
     //----------------------------------------------------------------//
