@@ -139,7 +139,7 @@ export const InventoryScreen = observer (( props ) => {
                                 />
                             </div>
                             <AssetModal
-                                inventory       = { controller.inventory }
+                                controller      = { controller }
                                 assetID         = { zoomedAssetID }
                                 onClose         = {() => { setZoomedAssetID ( false )}}
                             />
