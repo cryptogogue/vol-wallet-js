@@ -113,6 +113,11 @@ export const InventoryMenu = observer (( props ) => {
 
             <Menu attached = 'top'>
                 <inventoryMenuItems.SortModeFragment controller = { controller }/>
+                <Menu.Item
+                    icon        = { controller.isPrintLayout ? 'circle outline' : ( controller.hideDuplicates ? 'plus square' : 'minus square' )}
+                    disabled    = { controller.isPrintLayout }
+                    onClick     = {() => { controller.setHideDuplicates ( !controller.hideDuplicates )}}
+                />
                 <inventoryMenuItems.LayoutOptionsDropdown controller = { controller }/>
                 
                 <Choose>
