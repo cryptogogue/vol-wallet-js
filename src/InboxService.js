@@ -27,14 +27,19 @@ export class InboxService {
     }
 
     //----------------------------------------------------------------//
-    async fetchSchema ( nodeURL, accountID, assets ) {
+    async fetchSchema ( nodeURL, accountID, newAssetList ) {
 
         try {
             this.progress.setLoading ( true );
 
             this.progress.onProgress ( 'Fetching Schema' );
-            const schemaJSON        = await this.revocable.fetchJSON ( nodeURL + '/schema' );
+            const schemaJSON = await this.revocable.fetchJSON ( nodeURL + '/schema' );
             console.log ( schemaJSON );
+
+            const assets = {};
+            for ( let asset of newAssetList ) {
+                assets [ asset.assetID ] = asset;
+            }
 
             await this.inventory.update ( schemaJSON.schema, assets );
         }

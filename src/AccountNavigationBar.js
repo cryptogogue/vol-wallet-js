@@ -80,7 +80,7 @@ export const AccountNavigationBar = observer (( props ) => {
 
                 <Menu.Menu position = 'right'>
                     <Menu.Item>
-                        <InboxLabel appState = { appState }/>
+                        <InboxLabel appState = { appState } tags = { props.tags }/>
                         <TransactionQueueLabel appState = { appState }/>
                     </Menu.Item>
                 </Menu.Menu>

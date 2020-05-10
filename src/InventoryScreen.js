@@ -9,8 +9,8 @@ import { CraftingFormController }                           from './CraftingForm
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
 import { InventoryService }                                 from './InventoryService';
-import { InventoryTagController }                           from './InventoryTagController';
-import { InventoryTagDropdown }                             from './InventoryTagDropdown';
+import { InventoryTagsController }                          from './InventoryTagsController';
+import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
@@ -48,7 +48,7 @@ export const InventoryScreen = observer (( props ) => {
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
     const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, inventory ));
-    const tags                      = hooks.useFinalizable (() => new InventoryTagController ());
+    const tags                      = hooks.useFinalizable (() => new InventoryTagsController ());
 
     controller.setFilterFunc (( assetID ) => {
         return tags.isAssetVisible ( assetID ) && !appState.assetsUtilized.includes ( assetID );
@@ -89,6 +89,7 @@ export const InventoryScreen = observer (( props ) => {
                     <AccountNavigationBar
                         appState    = { appState }
                         tab         = { ACCOUNT_TABS.INVENTORY }
+                        tags        = { tags }
                     />
                     <InventoryMenu
                         appState                = { appState }

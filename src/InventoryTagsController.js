@@ -9,9 +9,9 @@ const STORE_TAGS                = '.vol_tags';
 const STORE_ASSET_TAGS          = '.vol_asset_tags';
 
 //================================================================//
-// InventoryTagController
+// InventoryTagsController
 //================================================================//
-export class InventoryTagController {
+export class InventoryTagsController {
 
     @observable filter              = '';
 
@@ -74,6 +74,10 @@ export class InventoryTagController {
             const tagsForAsset = this.assetTags [ assetID ];
             delete tagsForAsset [ tag ];
         }
+
+        if ( this.filter === tag ) {
+            this.filter = '';
+        }
     }
 
     //----------------------------------------------------------------//
@@ -123,6 +127,8 @@ export class InventoryTagController {
     @action
     tagSelection ( selection, tagName, value ) {
 
+        if ( !( tagName && ( tagName.length > 0 ))) return;
+        this.affirmTag ( tagName );
         value = value || false;
 
         for ( let assetID in selection ) {

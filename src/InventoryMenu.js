@@ -7,8 +7,8 @@ import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavig
 import { AppStateService }                                  from './AppStateService';
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
-import { InventoryTagController }                           from './InventoryTagController';
-import { InventoryTagDropdown }                             from './InventoryTagDropdown';
+import { InventoryTagsController }                          from './InventoryTagsController';
+import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
@@ -122,7 +122,7 @@ export const InventoryMenu = observer (( props ) => {
                 
                 <Choose>
                     <When condition = { controller.isPrintLayout }>
-                        <Menu.Item name = "Print" onClick = {() => { window.print ()}}>
+                        <Menu.Item name = 'Print' onClick = {() => { window.print ()}}>
                             <Icon name = 'print'/>
                         </Menu.Item>
                     </When>
@@ -134,7 +134,7 @@ export const InventoryMenu = observer (( props ) => {
             </Menu>
 
             <Menu borderless attached = 'bottom'>
-                <InventoryTagDropdown controller = { controller } tags = { tags }/>
+                <InventoryTagsDropdown controller = { controller } tags = { tags }/>
                 <InventoryFilterDropdown tags = { tags }/>
 
                 <Menu.Menu position = 'right'>
@@ -148,7 +148,7 @@ export const InventoryMenu = observer (( props ) => {
                         disabled    = { upgradesFormController.upgradesWithFilter.length === 0 }
                         onClick     = {() => { onClickUpgrades ()}}
                     />
-                    <Dropdown item icon = "industry" disabled = { !hasValidMethods }>
+                    <Dropdown item icon = 'industry' disabled = { !hasValidMethods }>
                         <Dropdown.Menu>
                             { methodListItems }
                         </Dropdown.Menu>

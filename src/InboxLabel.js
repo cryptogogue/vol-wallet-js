@@ -12,9 +12,11 @@ export const InboxLabel = observer (( props ) => {
 
     const { appState } = props;
     const [ open, setOpen ] = useState ( false );
+    const [ count, setCount ] = useState ( 0 );
 
     const onClose = () => {
         setOpen ( false );
+        setCount ( count + 1 )
     }
 
     const accountInventoryNonce = appState.account.inventoryNonce || 0;
@@ -28,14 +30,16 @@ export const InboxLabel = observer (( props ) => {
             <If condition = { showLabel }>
 
                 <InboxModal
-                    appState = { appState }
-                    open = { open }
-                    onClose = { onClose }
+                    key         = { `InboxModal:${ count }` }
+                    appState    = { appState }
+                    open        = { open }
+                    onClose     = { onClose }
+                    tags        = { props.tags }
                 />
 
                 <UI.Label
-                    color = 'green'
-                    onClick = {() => { setOpen ( true )}}
+                    color       = 'green'
+                    onClick     = {() => { setOpen ( true )}}
                 >
                     <UI.Icon name = 'mail'/>
                     { `${ newAssets.length }` }

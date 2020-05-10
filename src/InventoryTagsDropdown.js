@@ -9,9 +9,9 @@ import { Button, Checkbox, Dropdown, Grid, Icon, Input, List, Menu, Modal, Loade
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 
 //================================================================//
-// InventoryTagDropdown
+// InventoryTagsDropdown
 //================================================================//
-export const InventoryTagDropdown = observer (( props ) => {
+export const InventoryTagsDropdown = observer (( props ) => {
 
     const [ tagInput, setTagInput ]     = useState ( '' );
     const [ isOpen, setIsOpen ]         = useState ( false );
@@ -28,6 +28,8 @@ export const InventoryTagDropdown = observer (( props ) => {
     const tagNames          = tags.tagNames;
     const selectionSize     = controller.selectionSize;
 
+    console.log ( 'TAG NAMES:', tagNames );
+
     let tagList = [];
     for ( let tagName of tagNames ) {
 
@@ -36,7 +38,7 @@ export const InventoryTagDropdown = observer (( props ) => {
         const noneTagged        = (( withTag > 0 ) && ( withTag === 0 ));
         const indeterminate     = (( withTag > 0 ) && !( allTagged || noneTagged ));
 
-        console.log ( 'TAGS', tagName, selectionSize, withTag, allTagged, noneTagged, indeterminate );
+        // console.log ( 'TAGS', tagName, selectionSize, withTag, allTagged, noneTagged, indeterminate );
 
         tagList.push (
             <div
