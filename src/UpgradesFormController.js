@@ -141,7 +141,7 @@ export class UpgradesFormController extends TransactionFormController {
     @computed get
     total () {
 
-        return this.upgrades ? this.upgrades.length : 0;
+        return this.upgradesWithFilter.length;
     }
 
     //----------------------------------------------------------------//
@@ -151,7 +151,7 @@ export class UpgradesFormController extends TransactionFormController {
         if ( !this.upgrades ) return 0;
         
         let enabled = 0;
-        for ( let upgrade of this.upgrades ) {
+        for ( let upgrade of this.upgradesWithFilter ) {
             if ( upgrade.asset.type !== upgrade.selected ) {
                 ++enabled;
             }
@@ -164,11 +164,9 @@ export class UpgradesFormController extends TransactionFormController {
     upgradeMap () {
 
         const map = {};
-        if ( this.upgrades ) {
-            for ( let upgrade of this.upgrades ) {
-                if ( upgrade.asset.type !== upgrade.selected ) {
-                    map [ upgrade.assetID ] = upgrade.selected;
-                }
+        for ( let upgrade of this.upgradesWithFilter ) {
+            if ( upgrade.asset.type !== upgrade.selected ) {
+                map [ upgrade.assetID ] = upgrade.selected;
             }
         }
         return map;
