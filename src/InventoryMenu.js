@@ -59,6 +59,7 @@ export const InventoryMenu = observer (( props ) => {
 
     const onClickUpgrades = () => {
 
+        upgradesFormController.validate () // make sure the selection gets picked up
         setTransactionController ( upgradesFormController );
     }
 
