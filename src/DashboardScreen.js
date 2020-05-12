@@ -46,7 +46,7 @@ export const NetworkList = observer (( props ) => {
         appState.deleteNetwork ( networkName );
     }
 
-    const makeItemMessageBody = ( networkName ) => {
+    const makeItemMessageBody = ( networkName, info ) => {
 
         const nodeURL = appState.networks [ networkName ].nodeURL;
 
@@ -58,7 +58,10 @@ export const NetworkList = observer (( props ) => {
                 >
                     { networkName }
                 </UI.Message.Header>
-                <a href = { nodeURL } target = '_blank'>{ nodeURL }</a>
+                <UI.Message.Content>
+                    <a href = { nodeURL } target = '_blank'>{ nodeURL }</a>
+                    <p style = {{ padding: 0, margin: 0 }}>{ info.build }</p>
+                </UI.Message.Content>
             </React.Fragment>
         );
     }
