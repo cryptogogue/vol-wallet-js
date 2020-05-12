@@ -8,7 +8,7 @@ import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 
-const ACCOUNT_NAME_REGEX = /^[^~]\S*$/;
+const ACCOUNT_NAME_REGEX = /^(?!\.)[0-9a-zA-Z$\-_.+!*()]*$/;
 
 //================================================================//
 // TransactionFormController_RenameAccount
@@ -71,8 +71,23 @@ export class TransactionFormController_RenameAccount extends TransactionFormCont
 
         const fieldErrors = this.fieldErrors;
 
-        if (( revealedName.length > 0 ) && !ACCOUNT_NAME_REGEX.test ( revealedName )) {
-            this.fields.revealedName.error = 'New name contains illegal characters.';
+        const checkName = ( name ) => {
+            if ( name.charAt ( 0 ) === '.' ) {
+                return 'New name cannot start with a dot.';
+            }
+            else if ( !ACCOUNT_NAME_REGEX.test ( name )) {
+                return 'New name contains illegal characters.';
+            }
+            return false;
+        }
+
+        if ( revealedName.length > 0 ){
+
+            const nameErr = checkName ( revealedName );
+            
+            if ( nameErr !== false ) {
+                this.fields.revealedName.error = nameErr;
+            }
         }
 
         if ( this.makerAccountName === revealedName ) {
@@ -80,7 +95,13 @@ export class TransactionFormController_RenameAccount extends TransactionFormCont
         }
 
         if ( secretName && ( secretName.length > 0 )) {
-            if ( this.makerAccountName === secretName ) {
+
+            const nameErr = checkName ( secretName );
+
+            if ( nameErr !== false ) {
+                this.fields.secretName.error = nameErr;
+            }
+            else if ( this.makerAccountName === secretName ) {
                 this.fields.secretName.error = 'Secret name should be different from current account name.';
             }
             else if ( secretName === revealedName ) {
