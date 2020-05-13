@@ -49,6 +49,8 @@ export const NetworkList = observer (( props ) => {
     const makeItemMessageBody = ( networkName, info ) => {
 
         const nodeURL = appState.networks [ networkName ].nodeURL;
+        const schema = info && info.schema;
+        const schemaString = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
 
         return (
             <React.Fragment>
@@ -60,7 +62,10 @@ export const NetworkList = observer (( props ) => {
                 </UI.Message.Header>
                 <UI.Message.Content>
                     <a href = { nodeURL } target = '_blank'>{ nodeURL }</a>
-                    <p style = {{ padding: 0, margin: 0 }}>{ info.build }</p>
+                    <If condition = { info }>
+                        <p style = {{ padding: 0, margin: 0 }}>{ info.build }</p>
+                        <p style = {{ padding: 0, margin: 0 }}>{ schemaString }</p>
+                    </If>
                 </UI.Message.Content>
             </React.Fragment>
         );
