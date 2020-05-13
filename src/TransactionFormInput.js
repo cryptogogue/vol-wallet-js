@@ -145,8 +145,28 @@ const SchemaFileInput = observer (( props ) => {
             try {
 
                 const current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
+                if ( !( current && current.schema )) throw 'Could not download current schema.'
+
                 const scanner = new SchemaScannerXLSX ( book );
-                if ( !( scanner && scanner.schema )) throw 'Could not download current schema.'
+
+                console.log ( 'CURRENT:', current );
+                console.log ( 'SCANNER:', current );
+
+                const version0 = current.schema.version;
+                const version1 = scanner.schema.version;
+
+                if ( !( version0.release || version1.release )) {
+                    errorMessages.push ({ header: 'Version Error', body: 'Missing version release name.' });
+                }
+
+                if ( !(
+                    ( !version0.release ) ||
+                    ( version0.major <= version1.major ) &&
+                    ( version0.minor <= version1.minor ) &&
+                    ( version0.revision < version1.revision )
+                )) {
+                    errorMessages.push ({ header: 'Version Error', body: 'New schema must increment version.' });
+                }
 
                 filterCollisions ( 'definitions', scanner, current.schema.definitions, scanner.schema.definitions );
                 filterCollisions ( 'fonts', scanner, current.schema.fonts, scanner.schema.fonts );

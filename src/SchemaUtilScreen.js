@@ -58,7 +58,10 @@ export const SchemaUtilScreen = observer (( props ) => {
                 <JSONTree hideRoot data = { schema } theme = 'bright'/>
             </If>
 
-            <ScannerReportModal scanner = { scanner }/>
+            <ScannerReportModal
+                scanner = { scanner }
+                setScanner = { setSchema }
+            />
 
         </SingleColumnContainerView>
     );
