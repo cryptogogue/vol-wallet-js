@@ -17,7 +17,8 @@ const SPECIAL_FIELDS = [
 //================================================================//
 export class TransactionFormController {
 
-    @observable     cost = 0;
+    @observable     cost    = 0;
+    @observable     weight  = 0;
 
     //----------------------------------------------------------------//
     @computed get
@@ -112,6 +113,7 @@ export class TransactionFormController {
 
         this.transaction    = this.makeTransaction ();
         this.cost           = this.transaction.getCost ();
+        this.weight         = this.transaction.getWeight ();
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();

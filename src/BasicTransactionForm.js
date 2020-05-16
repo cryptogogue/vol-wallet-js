@@ -19,12 +19,20 @@ export const TransactionBalanceHeader = observer (( props ) => {
     const textColor     = balance > 0 ? 'black' : 'red';
 
     return (
-        <UI.Header
-            as = 'h4'
-            style = {{ color: textColor }}
-        >
-            Balance: { balance }
-        </UI.Header>
+        <React.Fragment>
+            <UI.Header
+                as = 'h4'
+                style = {{ color: textColor, marginBottom: 0 }}
+            >
+                Balance: { balance }
+            </UI.Header>
+            <UI.Header
+                as = 'h4'
+                style = {{ marginTop: 0 }}
+            >
+                Weight: { controller.weight }
+            </UI.Header>
+        </React.Fragment>
     );
 });
 

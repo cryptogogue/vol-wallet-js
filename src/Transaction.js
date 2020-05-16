@@ -61,7 +61,13 @@ export class Transaction {
     //----------------------------------------------------------------//
     getCost () {
 
-        return this.body.maker.gratuity || 0;
+        return this.virtual_getCost ();
+    }
+
+    //----------------------------------------------------------------//
+    getWeight () {
+
+        return this.virtual_getWeight ();
     }
 
     //----------------------------------------------------------------//
@@ -90,9 +96,22 @@ export class Transaction {
 
         switch ( type ) {
             case TRANSACTION_TYPE.OPEN_ACCOUNT: return new Transaction_OpenAccount ( type, body );
+            case TRANSACTION_TYPE.RUN_SCRIPT:   return new Transaction_RunScript ( type, body );
             case TRANSACTION_TYPE.SEND_VOL:     return new Transaction_SendVOL ( type, body );
             default:                            return new Transaction ( type, body );
         }
+    }
+
+    //----------------------------------------------------------------//
+    virtual_getCost () {
+
+        return this.body.maker.gratuity || 0;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_getWeight () {
+
+        return 1;
     }
 };
 
@@ -102,9 +121,21 @@ export class Transaction {
 class Transaction_OpenAccount extends Transaction {
 
     //----------------------------------------------------------------//
-    getCost () {
+    virtual_getCost () {
 
         return super.getCost () + ( this.body.grant || 0 );
+    }
+};
+
+//================================================================//
+// Transaction_RunScript
+//================================================================//
+class Transaction_RunScript extends Transaction {
+
+    //----------------------------------------------------------------//
+    virtual_getWeight () {
+
+        return ( this.body.weight || 1 );
     }
 };
 
@@ -114,7 +145,7 @@ class Transaction_OpenAccount extends Transaction {
 class Transaction_SendVOL extends Transaction {
 
     //----------------------------------------------------------------//
-    getCost () {
+    virtual_getCost () {
 
         return super.getCost () + ( this.body.amount || 0 );
     }
