@@ -70,6 +70,7 @@ export class AccountInfoService {
             accountInfo.balance         = account.balance;
             accountInfo.nonce           = account.nonce;
             accountInfo.inventoryNonce  = account.inventoryNonce;
+            accountInfo.height          = account.height;
 
             if ( appState.inventoryNonce < accountInfo.inventoryNonce ) {
 

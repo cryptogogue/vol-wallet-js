@@ -170,7 +170,7 @@ export class AppStateService {
     canSubmitTransactions () {
 
         if ( !this.hasAccount ) return false;
-        if ( this.nextNonce < 0 ) return false;
+        if ( this.nonce < 0 ) return false;
 
         if ( this.stagedTransactions.length > 0 ) return true;
         if (( this.pendingTransactions.length > 0 ) && ( this.hasTransactionError )) return true;
@@ -532,18 +532,6 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @computed get
-    nextNonce () {
-
-        if ( this.nonce < 0 ) return -1;
-
-        const pendingTransactions = this.pendingTransactions;
-        const pendingTop = pendingTransactions.length;
-
-        return pendingTop > 0 ? pendingTransactions [ pendingTop - 1 ].nonce + 1 : this.nonce;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
     network () {
         return this.getNetwork ();
     }
@@ -672,6 +660,7 @@ export class AppStateService {
             this.accountInfo.nonce      = accountInfo.nonce;
             this.accountInfo.inventoryNonce = accountInfo.inventoryNonce;
             this.accountInfo.newAssets  = accountInfo.newAssets || {};
+            this.accountInfo.height     = accountInfo.height || 0;
         }
         else {
             this.accountInfo = false;
@@ -784,14 +773,26 @@ export class AppStateService {
 
         try {
 
-            while ( this.canSubmitTransactions ) {
+            const submitted = [];
+            const currentNonce = this.nonce;
 
-                let memo = _.cloneDeep ( stagedTransactions [ 0 ]);
-                let nonce = this.nextNonce;
+            for ( let i = 0; i < pendingTransactions.length; ++i ) {
+                submitted.push ( _.cloneDeep ( pendingTransactions [ i ]));
+            }
 
-                let body = memo.body;
-                body.note = randomBytes ( 12 ).toString ( 'hex' );
-                body.maker.nonce = nonce;
+            for ( let i = 0; i < stagedTransactions.length; ++i ) {
+                submitted.push ( _.cloneDeep ( stagedTransactions [ i ]));
+            }
+
+            for ( let i = 0; i < submitted.length; ++i ) {
+
+                let memo            = submitted [ i ];
+                let nonce           = currentNonce + i;
+
+                let body            = memo.body;
+                body.note           = randomBytes ( 12 ).toString ( 'hex' );
+                body.maxHeight      = this.accountInfo.height + 6;
+                body.maker.nonce    = nonce;
 
                 let envelope = {
                     body: JSON.stringify ( body ),
@@ -809,12 +810,12 @@ export class AppStateService {
 
                 memo.envelope   = envelope;
                 memo.nonce      = nonce;
-
-                runInAction (() => {
-                    stagedTransactions.shift ();
-                    pendingTransactions.push ( memo );
-                });
             }
+
+            runInAction (() => {
+                this.account.stagedTransactions = [];
+                this.account.pendingTransactions = submitted;
+            });
         }
         catch ( error ) {
              console.log ( 'AN ERROR!', error );
