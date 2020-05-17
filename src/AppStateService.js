@@ -784,6 +784,9 @@ export class AppStateService {
                 submitted.push ( _.cloneDeep ( stagedTransactions [ i ]));
             }
 
+            const recordBy = new Date ();
+            recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
+
             for ( let i = 0; i < submitted.length; ++i ) {
 
                 let memo            = submitted [ i ];
@@ -791,7 +794,8 @@ export class AppStateService {
 
                 let body            = memo.body;
                 body.note           = randomBytes ( 12 ).toString ( 'hex' );
-                body.maxHeight      = this.accountInfo.height + 6;
+                body.maxHeight      = 0; // don't use for now
+                body.recordBy       = recordBy.toISOString ();
                 body.maker.nonce    = nonce;
 
                 let envelope = {
