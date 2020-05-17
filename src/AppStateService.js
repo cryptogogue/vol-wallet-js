@@ -769,8 +769,6 @@ export class AppStateService {
         let stagedTransactions      = this.account.stagedTransactions;
         let pendingTransactions     = this.account.pendingTransactions;
 
-        this.account.transactionError = false;
-
         try {
 
             const submitted = [];
@@ -816,22 +814,19 @@ export class AppStateService {
                 memo.nonce      = nonce;
             }
 
+            // submit these *before* clearing any cached transaction errors!
+            for ( let memo of submitted ) {
+                await this.putTransactionAsync ( memo );
+            }
+
             runInAction (() => {
-                this.account.stagedTransactions = [];
-                this.account.pendingTransactions = submitted;
+                this.account.stagedTransactions     = [];
+                this.account.pendingTransactions    = submitted;
+                this.account.transactionError       = false; // OK to clear the transaction error no.
             });
         }
         catch ( error ) {
              console.log ( 'AN ERROR!', error );
-        }
-
-        try {
-            for ( let memo of pendingTransactions ) {
-                await this.putTransactionAsync ( memo );
-            }
-        }
-        catch ( error ) {
-            console.log ( 'AN ERROR!', error );
         }
     }
 

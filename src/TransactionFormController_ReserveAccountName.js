@@ -2,52 +2,44 @@
 
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
+import { checkName }                        from './TransactionFormController_RenameAccount';
 import { FIELD_CLASS }                      from './TransactionFormFieldControllers';
-import { assert, randomBytes, util }        from 'fgc';
+import { assert, crypto, util }             from 'fgc';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 
-const ACCOUNT_NAME_REGEX = /^(?!\.)[0-9a-zA-Z$\-_.+!*()]*$/;
-
-//----------------------------------------------------------------//
-export function checkName ( name ) {
-    if ( name.charAt ( 0 ) === '.' ) {
-        return 'New name cannot start with a dot.';
-    }
-    else if ( !ACCOUNT_NAME_REGEX.test ( name )) {
-        return 'New name contains illegal characters.';
-    }
-    return false;
-}
-
 //================================================================//
-// TransactionFormController_RenameAccount
+// TransactionFormController_ReserveAccountName
 //================================================================//
-export class TransactionFormController_RenameAccount extends TransactionFormController {
+export class TransactionFormController_ReserveAccountName extends TransactionFormController {
 
     //----------------------------------------------------------------//
     constructor ( appState ) {
         super ();
 
         const fieldsArray = [
-            new FIELD_CLASS.STRING      ( 'revealedName',   'New Name' ),
+            new FIELD_CLASS.STRING      ( 'secretName',     'Reserve Name' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.RENAME_ACCOUNT, fieldsArray );
+        this.initialize ( appState, TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME, fieldsArray );
     }
 
     //----------------------------------------------------------------//
     @computed get
-    revealedName () {
-
-        return this.fields.revealedName && this.fields.revealedName.value || '';
+    secretName () {
+        
+        return this.fields.secretName && this.fields.secretName.value || '';
     }
 
     //----------------------------------------------------------------//
     virtual_composeBody ( fieldValues ) {
 
+        const secretNameLower   = this.secretName.toLowerCase ();
+        const accountNameLower  = this.makerAccountName.toLowerCase ();
+
         return {
-            revealedName: this.revealedName,
+            nameHash:       crypto.sha256 ( secretNameLower ),
+            nameSecret:     crypto.sha256 ( `${ accountNameLower }:${ secretNameLower }` ),
         };
     }
 
@@ -55,21 +47,21 @@ export class TransactionFormController_RenameAccount extends TransactionFormCont
     @action
     virtual_validate () {
         
-        const revealedName = this.revealedName;
-        this.isComplete = Boolean ( revealedName );
+        const secretName = this.secretName;
+        this.isComplete = Boolean ( secretName );
 
         this.fieldErrors = {};
         const fieldErrors = this.fieldErrors;
 
-        if ( revealedName.length > 0 ){
-            const nameErr = checkName ( revealedName );
+        if ( secretName.length > 0 ){
+            const nameErr = checkName ( secretName );
             if ( nameErr !== false ) {
-                this.fields.revealedName.error = nameErr;
+                this.fields.secretName.error = nameErr;
             }
         }
 
-        if ( this.makerAccountName.toLowerCase () === revealedName.toLowerCase ()) {
-            this.fields.revealedName.error = 'New name should be different from current account name.';
+        if ( this.makerAccountName.toLowerCase () === secretName.toLowerCase ()) {
+            this.fields.secretName.error = 'New name should be different from current account name.';
         }
     }
 };
