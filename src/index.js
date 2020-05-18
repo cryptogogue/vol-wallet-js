@@ -63,6 +63,7 @@ const App = () => {
                 <Route exact path = "/debug/mobx"               component = { fgc.debug.MobXScreen }/>
                 <Route exact path = "/debug/print"              component = { fgc.debug.PrintScreen }/>
                 <Route exact path = "/debug/squap"              component = { cardmotron.debug.SquapScreen }/>
+                <Route exact path = "/debug/svgtopng"           component = { cardmotron.debug.SVGtoPNGScreen }/>
                 <Route exact path = "/debug/textfitter"         component = { fgc.debug.TextFitterScreen }/>
                 <Route exact path = "/debug/textstyle"          component = { fgc.debug.TextStyleScreen }/>
 
