@@ -93,6 +93,7 @@ export const InventoryScreen = observer (( props ) => {
                     <InventoryMenu
                         appState                = { appState }
                         controller              = { controller }
+                        printController         = { printController }
                         craftingFormController  = { craftingFormController }
                         upgradesFormController  = { upgradesFormController }
                         tags                    = { tags }

@@ -26,7 +26,7 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 export const InventoryMenu = observer (( props ) => {
 
-    const { appState, controller, craftingFormController, upgradesFormController, tags } = props;
+    const { appState, controller, printController, craftingFormController, upgradesFormController, tags } = props;
     const [ transactionController, setTransactionController ] = useState ( false );
     const binding = craftingFormController.binding;
 
@@ -122,7 +122,18 @@ export const InventoryMenu = observer (( props ) => {
                 
                 <Choose>
                     <When condition = { controller.isPrintLayout }>
-                        <Menu.Item name = 'Print' onClick = {() => { window.print ()}}>
+                        <Menu.Item
+                            name        = 'Download'
+                            onClick     = {() => { printController.saveAsZip ()}}
+                            disabled    = { !printController.hasPages }
+                        >
+                            <Icon name = 'download'/>
+                        </Menu.Item>
+                        <Menu.Item
+                            name        = 'Print'
+                            onClick     = {() => { window.print ()}}
+                            disabled    = { !printController.hasPages }
+                        >
                             <Icon name = 'print'/>
                         </Menu.Item>
                     </When>
