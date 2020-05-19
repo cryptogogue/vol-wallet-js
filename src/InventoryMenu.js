@@ -145,7 +145,7 @@ export const InventoryMenu = observer (( props ) => {
                         <inventoryMenuItems.ZoomOptionsDropdown controller = { controller }/>
                         <Menu.Item
                             name        = 'Download'
-                            onClick     = {() => { setDownloadAssets ( controller.sortedAssets )}}
+                            onClick     = {() => { setDownloadAssets ( controller.hasSelection ? Object.values ( controller.selection ) : controller.getSortedAssets ( false ))}}
                             disabled    = { controller.sortedAssets.length === 0 }
                         >
                             <Icon name = 'download'/>
