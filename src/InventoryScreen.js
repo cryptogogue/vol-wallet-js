@@ -15,7 +15,7 @@ import KeyboardEventHandler                                 from 'react-keyboard
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { UpgradesFormController }                           from './UpgradesFormController';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, hooks, ProgressController, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
@@ -29,8 +29,6 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 // InventoryScreenBody
 //================================================================//
 export const InventoryScreen = observer (( props ) => {
-
-    // const { appState }          = props;
 
     const [ batchSelect, setBatchSelect ]           = useState ( false );
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
@@ -46,6 +44,7 @@ export const InventoryScreen = observer (( props ) => {
     const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
     const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
+    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( controller ));
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
     const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, inventory ));
     const tags                      = hooks.useFinalizable (() => new InventoryTagsController ());
@@ -107,10 +106,8 @@ export const InventoryScreen = observer (( props ) => {
                     <Choose>
                         <When condition = { controller.isPrintLayout }>
                             <InventoryPrintView
-                                key             = { controller.sortMode }
-                                inventory       = { controller.inventory }
-                                assetArray      = { controller.sortedAssets }
-                                layoutName      = { controller.layoutName }
+                                key = { printController.pages.length }
+                                pages = { printController.pages }
                             />
                         </When>
                         <Otherwise>

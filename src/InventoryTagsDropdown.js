@@ -28,8 +28,6 @@ export const InventoryTagsDropdown = observer (( props ) => {
     const tagNames          = tags.tagNames;
     const selectionSize     = controller.selectionSize;
 
-    console.log ( 'TAG NAMES:', tagNames );
-
     let tagList = [];
     for ( let tagName of tagNames ) {
 
