@@ -11,7 +11,7 @@ import { InventoryTagsController }                          from './InventoryTag
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryDownloadModal, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
@@ -28,6 +28,7 @@ export const InventoryMenu = observer (( props ) => {
 
     const { appState, controller, printController, craftingFormController, upgradesFormController, tags } = props;
     const [ transactionController, setTransactionController ] = useState ( false );
+    const [ downloadAssets, setDownloadAssets ] = useState ( false );
     const binding = craftingFormController.binding;
 
     const onClickSendAssets = () => {
@@ -108,20 +109,22 @@ export const InventoryMenu = observer (( props ) => {
         }
     }
 
+    const isPrintLayout = controller.isPrintLayout;
+
     return (
         <React.Fragment>
 
             <Menu attached = 'top'>
                 <inventoryMenuItems.SortModeFragment controller = { controller }/>
                 <Menu.Item
-                    icon        = { controller.isPrintLayout ? 'circle outline' : ( controller.hideDuplicates ? 'plus square' : 'minus square' )}
-                    disabled    = { controller.isPrintLayout }
+                    icon        = { isPrintLayout ? 'circle outline' : ( controller.hideDuplicates ? 'plus square' : 'minus square' )}
+                    disabled    = { isPrintLayout }
                     onClick     = {() => { controller.setHideDuplicates ( !controller.hideDuplicates )}}
                 />
                 <inventoryMenuItems.LayoutOptionsDropdown controller = { controller }/>
                 
                 <Choose>
-                    <When condition = { controller.isPrintLayout }>
+                    <When condition = { isPrintLayout }>
                         <Menu.Item
                             name        = 'Download'
                             onClick     = {() => { printController.saveAsZip ()}}
@@ -140,6 +143,13 @@ export const InventoryMenu = observer (( props ) => {
 
                     <Otherwise>
                         <inventoryMenuItems.ZoomOptionsDropdown controller = { controller }/>
+                        <Menu.Item
+                            name        = 'Download'
+                            onClick     = {() => { setDownloadAssets ( controller.sortedAssets )}}
+                            disabled    = { controller.sortedAssets.length === 0 }
+                        >
+                            <Icon name = 'download'/>
+                        </Menu.Item>
                     </Otherwise>
                 </Choose>
             </Menu>
@@ -151,21 +161,31 @@ export const InventoryMenu = observer (( props ) => {
                 <Menu.Menu position = 'right'>
                     <Menu.Item
                         icon        = 'share'
-                        disabled    = { !controller.hasSelection }
+                        disabled    = { isPrintLayout || !controller.hasSelection }
                         onClick     = {() => { onClickSendAssets ()}}
                     />
                     <Menu.Item
                         icon        = 'gift'
-                        disabled    = { upgradesFormController.upgradesWithFilter.length === 0 }
+                        disabled    = { isPrintLayout || upgradesFormController.upgradesWithFilter.length === 0 }
                         onClick     = {() => { onClickUpgrades ()}}
                     />
-                    <Dropdown item icon = 'industry' disabled = { !hasValidMethods }>
+                    <Dropdown
+                        item
+                        icon        = 'industry'
+                        disabled    = { isPrintLayout || !hasValidMethods }
+                    >
                         <Dropdown.Menu>
                             { methodListItems }
                         </Dropdown.Menu>
                     </Dropdown>
                 </Menu.Menu>
             </Menu>
+
+            <InventoryDownloadModal
+                inventory   = { controller.inventory }
+                assets      = { downloadAssets }
+                setAssets   = { setDownloadAssets }
+            />
 
             <TransactionModal
                 appState    = { appState }
