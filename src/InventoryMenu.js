@@ -28,8 +28,28 @@ export const InventoryMenu = observer (( props ) => {
 
     const { appState, controller, printController, craftingFormController, upgradesFormController, tags } = props;
     const [ transactionController, setTransactionController ] = useState ( false );
-    const [ downloadAssets, setDownloadAssets ] = useState ( false );
+    const [ downloadOptions, setDownloadOptions ] = useState ( false );
     const binding = craftingFormController.binding;
+
+    const onClickDownloadAssets = () => {
+
+        const assets = controller.hasSelection ? Object.values ( controller.selection ) : controller.getSortedAssets ( false );
+        if ( assets && ( assets.length > 0 )) {
+            setDownloadOptions ({
+                assets:     assets,
+                inventory:  controller.inventory,
+            });
+        }
+    }
+
+    const onClickDownloadPages = () => {
+        
+        if ( printController.hasPages ) {
+            setDownloadOptions ({
+                pages:  printController.pages,
+            });
+        }
+    }
 
     const onClickSendAssets = () => {
         setTransactionController (
@@ -127,7 +147,7 @@ export const InventoryMenu = observer (( props ) => {
                     <When condition = { isPrintLayout }>
                         <Menu.Item
                             name        = 'Download'
-                            onClick     = {() => { printController.saveAsZip ()}}
+                            onClick     = { onClickDownloadPages }
                             disabled    = { !printController.hasPages }
                         >
                             <Icon name = 'download'/>
@@ -145,7 +165,7 @@ export const InventoryMenu = observer (( props ) => {
                         <inventoryMenuItems.ZoomOptionsDropdown controller = { controller }/>
                         <Menu.Item
                             name        = 'Download'
-                            onClick     = {() => { setDownloadAssets ( controller.hasSelection ? Object.values ( controller.selection ) : controller.getSortedAssets ( false ))}}
+                            onClick     = { onClickDownloadAssets }
                             disabled    = { controller.sortedAssets.length === 0 }
                         >
                             <Icon name = 'download'/>
@@ -182,9 +202,8 @@ export const InventoryMenu = observer (( props ) => {
             </Menu>
 
             <InventoryDownloadModal
-                inventory   = { controller.inventory }
-                assets      = { downloadAssets }
-                setAssets   = { setDownloadAssets }
+                options     = { downloadOptions }
+                setOptions  = { setDownloadOptions }
             />
 
             <TransactionModal
