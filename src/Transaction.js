@@ -125,7 +125,7 @@ class Transaction_OpenAccount extends Transaction {
     //----------------------------------------------------------------//
     virtual_getCost () {
 
-        return super.getCost () + ( this.body.grant || 0 );
+        return super.virtual_getCost () + ( this.body.grant || 0 );
     }
 };
 
@@ -149,6 +149,6 @@ class Transaction_SendVOL extends Transaction {
     //----------------------------------------------------------------//
     virtual_getCost () {
 
-        return super.getCost () + ( this.body.amount || 0 );
+        return super.virtual_getCost () + ( this.body.amount || 0 );
     }
 };
