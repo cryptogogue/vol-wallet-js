@@ -3,7 +3,7 @@
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { FIELD_CLASS }                      from './TransactionFormFieldControllers';
-import { Binding }                          from 'cardmotron';
+import { Binding, MethodBinding }           from 'cardmotron';
 import { assert, randomBytes, util }        from 'fgc';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
@@ -14,7 +14,7 @@ import { observer }                         from 'mobx-react';
 //================================================================//
 export class CraftingFormController extends TransactionFormController {
 
-    @observable binding             = false;
+    @observable binding             = new Binding ();
     @observable invocations         = [];
     @observable assetsUtilized      = {}; // reverse lookup into invocation and param
 
@@ -22,7 +22,13 @@ export class CraftingFormController extends TransactionFormController {
     @action
     addInvocation ( methodName ) {
 
-        const method = this.inventory.schema.methods [ methodName ];
+        const method = this.binding.methodsByName [ methodName ];
+        const methodBinding =  new MethodBinding ( this.inventory.schema, method );
+
+        methodBinding.rebuild (
+            this.inventory.assets,
+            ( assetID ) => { return this.filter ( assetID )}
+        );
 
         const assetParams = {};
         for ( let paramName in method.assetArgs ) {
@@ -30,30 +36,16 @@ export class CraftingFormController extends TransactionFormController {
         }
 
         const invocation = {
-            methodName:         methodName,
+            method:             method,
             assetParams:        assetParams,
             constParams:        {},
-            weight:             method.weight,
-            maturity:           method.maturity,
+            methodBinding:      methodBinding,
+            assetsUtilized:     {},
         };
 
         this.invocations.push ( invocation );
         this.validate ();
         return this.invocations [ this.invocations.length - 1 ]; // because mobX
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    affirmBinding () {
-        if ( !this.binding ) {
-            this.binding = new Binding (
-                this.inventory.schema,
-                this.inventory.assets,
-                ( assetID ) => { return !this.appState.assetsUtilized.includes ( assetID )},
-                ( assetID ) => { return ( this.assetsUtilized [ assetID ] !== true )}
-            );
-        }
-        return this.binding;
     }
 
     //----------------------------------------------------------------//
@@ -87,14 +79,19 @@ export class CraftingFormController extends TransactionFormController {
                 };
             },
             ( params ) => {
-                this.binding = new Binding (
-                    this.inventory.schema,
-                    params.assets,
-                    ( assetID ) => { return !this.appState.assetsUtilized.includes ( assetID )},
-                    ( assetID ) => { return ( params.assetsUtilized [ assetID ] !== true )}
-                );
+                this.refreshBinding ();
             }
         );
+    }
+
+    //----------------------------------------------------------------//
+    filter ( assetID, invocation ) {
+
+        if ( invocation && invocation.assetsUtilized [ assetID ]) return true;
+        if ( this.appState.assetsUtilized.includes ( assetID )) return false;
+        if ( this.assetsUtilized [ assetID ] === true ) return false;
+
+        return true;
     }
 
     //----------------------------------------------------------------//
@@ -118,8 +115,19 @@ export class CraftingFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     @action
     refreshBinding () {
-        this.binding = false;
-        return this.affirmBinding ();
+
+        this.binding.rebuild (
+            this.inventory.schema,
+            this.inventory.assets,
+            ( assetID ) => { return this.filter ( assetID )}
+        );
+
+        for ( let invocation of this.invocations ) {
+            invocation.methodBinding.rebuild ( 
+                this.inventory.assets,
+                ( assetID ) => { return this.filter ( assetID, invocation )}
+            );
+        }
     }
 
     //----------------------------------------------------------------//
@@ -149,14 +157,16 @@ export class CraftingFormController extends TransactionFormController {
         const prevValue = invocation.assetParams [ paramName ];
         if ( assetID === prevValue ) return;
 
-        if ( prevValue !== false ) {
+        if ( prevValue === true ) {
             delete this.assetsUtilized [ prevValue ];
+            delete invocation.assetsUtilized [ prevValue ];
         }
 
         invocation.assetParams [ paramName ] = assetID;
 
         if ( assetID !== false ) {
             this.assetsUtilized [ assetID ] = true;
+            invocation.assetsUtilized [ assetID ] = true;
         }
         this.validate ();
     }
@@ -174,14 +184,30 @@ export class CraftingFormController extends TransactionFormController {
         let maturity = 0; 
 
         for ( let invocation of this.invocations ) {
-            weight += invocation.weight;
-            maturity = maturity < invocation.maturity ? invocation.maturity : maturity;
+            const method = invocation.method;
+            weight += method.weight;
+            maturity = maturity < method.maturity ? method.maturity : maturity;
         }
 
         const body = this.formatBody ();
-        body.invocations = _.cloneDeep ( this.invocations );
-        body.weight = weight;
-        body.maturity = maturity;
+
+        const invocations = [];
+        for ( let invocation of this.invocations ) {
+
+            const method = invocation.method;
+
+            invocations.push ({
+                methodName:         method.name,
+                weight:             method.weight,
+                maturity:           method.maturity,
+                assetParams:        invocation.assetParams,
+                constParams:        invocation.constParams,
+            });
+        }
+
+        body.invocations    = invocations;
+        body.weight         = weight;
+        body.maturity       = maturity;
         return body;
     }
 

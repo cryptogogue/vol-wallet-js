@@ -21,38 +21,39 @@ const AssetSelectionModal = observer (( props ) => {
         return ( <React.Fragment/> );
     }
 
-    const { invocation, paramName, paramOptions } = paramModalState;
-    const { methodName } = invocation;
+    const { invocation, paramName } = paramModalState;
+    const allOptions        = invocation.methodBinding.getParamOptions ( paramName );
+    const availableOptions  = invocation.methodBinding.getParamOptions ( paramName, invocation.assetParams );
 
     const ingredients = [];
-    if ( paramOptions ) {
-        for ( let assetID of paramOptions ) {
+    for ( let assetID of allOptions ) {
 
-            const isSelected = controller.isSelected ( invocation, paramName, assetID );
-            const isUtilized = controller.isUtilized ( assetID );
+        const isSelected    = ( invocation.assetParams [ paramName ] === assetID );
+        const isAvailable   = availableOptions.includes ( assetID );
 
-            const onSelect = ( asset, selected ) => {
-                if ( !closeTimeout ) {
-                    controller.setAssetParam ( invocation, paramName, selected ? assetID : false );
+        const onSelect = ( asset, selected ) => {
+            if ( !closeTimeout ) {
+                controller.setAssetParam ( invocation, paramName, selected ? assetID : false );
+                if ( selected ) {
                     setCloseTimeout ( setTimeout(() => {
                         setCloseTimeout ( false );
                         setParamModalState ( false );
                     }, 350 ));
                 }
             }
-
-            ingredients.push (
-                <div style = {{ display: 'block' }} key = { assetID }>
-                    <AssetCardView
-                        assetID     = { assetID }
-                        inventory   = { controller.inventory }
-                        isSelected  = { isSelected }
-                        disabled    = { isUtilized && !isSelected }
-                        onSelect    = { onSelect }
-                    />
-                </div>
-            );
         }
+
+        ingredients.push (
+            <div style = {{ display: 'block' }} key = { assetID }>
+                <AssetCardView
+                    assetID     = { assetID }
+                    inventory   = { controller.inventory }
+                    isSelected  = { isSelected }
+                    disabled    = { !( isSelected || isAvailable )}
+                    onSelect    = { onSelect }
+                />
+            </div>
+        );
     }
 
     return (
@@ -84,11 +85,8 @@ const InvocationField = observer (( props ) => {
     const { controller, invocation, index } = props;
     const [ paramModalState, setParamModalState ] = useState ( false );
 
-    const binding = controller.affirmBinding ();
-    const paramBindings = binding.getMethodParamBindings ( invocation.methodName );
-
     const paramList = [];
-    for ( let paramName in paramBindings ) {
+    for ( let paramName in invocation.assetParams ) {
 
         const paramValue = invocation.assetParams [ paramName ];
 
@@ -103,7 +101,6 @@ const InvocationField = observer (( props ) => {
                         setParamModalState ({
                             invocation:     invocation,
                             paramName:      paramName,
-                            paramOptions:   paramBindings [ paramName ],
                         });
                     }}
                 >
@@ -124,7 +121,7 @@ const InvocationField = observer (( props ) => {
 
             <UI.Menu attached = 'top' color = 'teal' borderless inverted compact>
                 <UI.Menu.Item header>
-                    { invocation.methodName }
+                    { invocation.method.friendlyName }
                 </UI.Menu.Item>
                 <If condition = { controller.singleInvocation !== true }>
                     <UI.Menu.Menu position = 'right'>
@@ -156,13 +153,16 @@ const MethodDropdown = observer (( props ) => {
     let dropdownOptions = [];
     let hasValidMethod = false;
 
-    const binding = controller.affirmBinding ();
-    for ( let methodName in binding.methodBindingsByName ) {
+    const binding = controller.binding;
+    for ( let methodName in binding.methodsByName ) {
+
+        const method = binding.methodsByName [ methodName ];
         const isValid = binding.methodIsValid ( methodName );
+        
         dropdownOptions.push (
             <UI.Dropdown.Item
                 key         = { methodName }
-                text        = { methodName }
+                text        = { method.friendlyName }
                 disabled    = { !isValid }
                 onClick     = {( event, data ) => { addInvocation ( methodName )}}
             />

@@ -92,44 +92,43 @@ export const InventoryMenu = observer (( props ) => {
 
     let hasValidMethods = false;
     let methodListItems = [];
-    if ( craftingFormController.binding ) {
         
-        const methodBindings = binding.getCraftingMethodBindings ();
-        for ( let methodName in methodBindings ) {
-            
-            let disabled = !binding.methodIsValid ( methodName );
-            
-            if ( controller.hasSelection && !disabled ) {
+    for ( let methodName in binding.methodsByName ) {
+        
+        const method = binding.methodsByName [ methodName ];
+        let disabled = !binding.methodIsValid ( methodName );
+        
+        if ( controller.hasSelection && !disabled ) {
 
-                const method = binding.methodsByName [ methodName ];
+            const method = binding.methodsByName [ methodName ];
 
-                if ( method.totalAssetsArgs === 1 ) {
-                    disabled = false;
+            if ( method.totalAssetsArgs === 1 ) {
+                disabled = false;
 
-                    for ( let assetID in controller.selection ) {
-                        if ( !binding.methodIsValid ( methodName, assetID )) {
-                            disabled = true;
-                            break;
-                        }
+                for ( let assetID in controller.selection ) {
+                    if ( !binding.methodIsValid ( methodName, assetID )) {
+                        disabled = true;
+                        break;
                     }
                 }
-                else {
-                    disabled = true;
-                }
             }
-
-            methodListItems.push (<Dropdown.Item
-                key         = { methodName }
-                text        = { methodName }
-                disabled    = { disabled }
-                onClick     = {() => { onClickCraftingMethod ( methodName )}}
-            />);
-
-            hasValidMethods = hasValidMethods || !disabled;
+            else {
+                disabled = true;
+            }
         }
+
+        methodListItems.push (<Dropdown.Item
+            key         = { methodName }
+            text        = { method.friendlyName }
+            disabled    = { disabled }
+            onClick     = {() => { onClickCraftingMethod ( methodName )}}
+        />);
+
+        hasValidMethods = hasValidMethods || !disabled;
     }
 
     const isPrintLayout = controller.isPrintLayout;
+    const hideCollapse = isPrintLayout || !controller.hasDuplicates;
 
     return (
         <React.Fragment>
@@ -137,8 +136,8 @@ export const InventoryMenu = observer (( props ) => {
             <Menu attached = 'top'>
                 <inventoryMenuItems.SortModeFragment controller = { controller }/>
                 <Menu.Item
-                    icon        = { isPrintLayout ? 'circle outline' : ( controller.hideDuplicates ? 'plus square' : 'minus square' )}
-                    disabled    = { isPrintLayout }
+                    icon        = { hideCollapse ? 'circle outline' : ( controller.hideDuplicates ? 'plus square' : 'minus square' )}
+                    disabled    = { hideCollapse }
                     onClick     = {() => { controller.setHideDuplicates ( !controller.hideDuplicates )}}
                 />
                 <inventoryMenuItems.LayoutOptionsDropdown controller = { controller }/>

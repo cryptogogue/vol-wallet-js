@@ -2,6 +2,7 @@
 
 import { assert, ProgressController, RevocableContext, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
+import Dexie                        from 'dexie';
 import _                            from 'lodash';
 
 //================================================================//
@@ -17,7 +18,7 @@ export class InventoryService {
         this.progress = progressController || new ProgressController ();
         this.inventory = inventoryController;
 
-        this.cancelAppStateReaction = reaction (
+        this.cancelAccountInfoReaction = reaction (
             () => {
                 return {
                     hasAccountInfo:     appState.hasAccountInfo,
@@ -42,7 +43,7 @@ export class InventoryService {
     finalize () {
 
         this.revocable.finalize ();
-        this.cancelAppStateReaction ();
+        this.cancelAccountInfoReaction ();
     }
 
     //----------------------------------------------------------------//
