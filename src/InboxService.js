@@ -17,7 +17,9 @@ export class InboxService {
         this.progress   = progressController || new ProgressController ();
         this.inventory  = inventoryController;
 
-        this.fetchSchema ( appState.network.nodeURL, appState.accountID, appState.accountInfo.newAssets );
+        this.revocable.timeout (() => {
+            this.fetchSchema ( appState.network.nodeURL, appState.accountID, appState.accountInfo.newAssets );
+        }, 1 );
     }
 
     //----------------------------------------------------------------//
@@ -32,9 +34,8 @@ export class InboxService {
         try {
             this.progress.setLoading ( true );
 
-            this.progress.onProgress ( 'Fetching Schema' );
+            this.progress.onProgress ( 'Fetching New Assets' );
             const schemaJSON = await this.revocable.fetchJSON ( nodeURL + '/schema' );
-            console.log ( schemaJSON );
 
             const assets = {};
             for ( let asset of newAssetList ) {

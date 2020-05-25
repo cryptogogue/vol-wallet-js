@@ -119,7 +119,13 @@ const InvocationField = observer (( props ) => {
                 setParamModalState  = { setParamModalState }
             />
 
-            <UI.Menu attached = 'top' color = 'teal' borderless inverted compact>
+            <UI.Menu
+                attached = 'top'
+                color = { invocation.hasErrors ? 'red' : 'teal' }
+                borderless
+                inverted
+                compact
+            >
                 <UI.Menu.Item header>
                     { invocation.method.friendlyName }
                 </UI.Menu.Item>
@@ -211,6 +217,17 @@ export const CraftingForm = observer (( props ) => {
             <TransactionBalanceHeader controller = { controller }/>
             <UI.Form>
                 { invocationFields }
+
+                <If condition = { controller.hasErrors }>
+                    <UI.Message icon negative>
+                        <UI.Icon name = 'warning circle'/>
+                        <UI.Message.Content>
+                            <UI.Message.Header>Error</UI.Message.Header>
+                            <p>One or more multi-parameter constraints have not been satisfied.</p>
+                        </UI.Message.Content>
+                    </UI.Message>
+                </If>
+
                 <If condition = { showDropdown }>
                     <MethodDropdown
                         key             = { controller.invocations.length }

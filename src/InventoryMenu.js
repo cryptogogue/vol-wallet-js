@@ -63,14 +63,7 @@ export const InventoryMenu = observer (( props ) => {
     const onClickCraftingMethod = ( methodName ) => {
 
         if ( controller.hasSelection ) {
-
-            const method = binding.methodsByName [ methodName ];
-            const paramName = Object.keys ( method.assetArgs )[ 0 ];
-
-            for ( let assetID in controller.selection ) {
-                const invocation = craftingFormController.addInvocation ( methodName );
-                craftingFormController.setAssetParam ( invocation, paramName, assetID );
-            }
+            craftingFormController.addBatchInvocation ( methodName, controller.selection );
         }
         else {
             craftingFormController.addInvocation ( methodName );
@@ -102,7 +95,7 @@ export const InventoryMenu = observer (( props ) => {
 
             const method = binding.methodsByName [ methodName ];
 
-            if ( method.totalAssetsArgs === 1 ) {
+            if (( method.totalAssetsArgs === 1 ) && ( method.constraints.length === 0 )) {
                 disabled = false;
 
                 for ( let assetID in controller.selection ) {

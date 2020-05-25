@@ -1,13 +1,13 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { InboxService }             from './InboxService';
-import { InventoryTagsController }  from './InventoryTagsController';
+import { InboxService }                 from './InboxService';
+import { InventoryTagsController }      from './InventoryTagsController';
 import { AssetCardView, InventoryController } from 'cardmotron';
 import { hooks, ProgressController, ProgressSpinner } from 'fgc';
-import React, { useState }          from 'react';
+import React, { useEffect, useState }   from 'react';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
-import { observer }                 from 'mobx-react';
-import * as UI                      from 'semantic-ui-react';
+import { observer }                     from 'mobx-react';
+import * as UI                          from 'semantic-ui-react';
 
 function getShortDateString () {
     const date = new Date ();
@@ -15,19 +15,13 @@ function getShortDateString () {
 }
 
 //================================================================//
-// InboxModal
+// InboxModalCardList
 //================================================================//
-export const InboxModal = observer (( props ) => {
+export const InboxModalCardList = observer (( props ) => {
 
-    const { appState, open, onClose } = props;
+    const { appState, inventory, progress } = props;
 
-    const progress          = hooks.useFinalizable (() => new ProgressController ());
-    const inventory         = hooks.useFinalizable (() => new InventoryController ( progress ));
-    const inboxService      = hooks.useFinalizable (() => new InboxService ( appState, inventory, progress ));
-    const tags              = props.tags ? props.tags : hooks.useFinalizable (() => new InventoryTagsController ( progress ));
-
-    const [ dateTag ]       = useState ( `New Assets - ${ getShortDateString ()}` );
-    const [ tag, setTag ]   = useState ( dateTag );
+    const inboxService = hooks.useFinalizable (() => new InboxService ( appState, inventory, progress ));
 
     const assetCards = [];
     for ( let assetID in inventory.assets ) {
@@ -38,6 +32,56 @@ export const InboxModal = observer (( props ) => {
                 inventory   = { inventory }
             />
         );
+    }
+
+    return (
+        <Choose>
+            <When condition = { progress.loading}>
+                <UI.Message icon>
+                    <UI.Icon name = 'circle notched' loading/>
+                    <UI.Message.Content>
+                        { progress.message }
+                    </UI.Message.Content>
+                </UI.Message>
+            </When>
+
+            <Otherwise>
+                <UI.Grid columns = { 1 }>
+                    <UI.Grid.Column>
+                        { assetCards }
+                    </UI.Grid.Column>
+                </UI.Grid>
+            </Otherwise>
+        </Choose>
+    );
+});
+
+//================================================================//
+// InboxModal
+//================================================================//
+export const InboxModal = observer (( props ) => {
+
+    const { appState, open, onClose } = props;
+
+    const progress          = hooks.useFinalizable (() => new ProgressController ());
+    const inventory         = hooks.useFinalizable (() => new InventoryController ( progress ));
+    const tags              = props.tags ? props.tags : hooks.useFinalizable (() => new InventoryTagsController ( progress ));
+
+    const [ dateTag ]       = useState ( `New Assets - ${ getShortDateString ()}` );
+    const [ tag, setTag ]   = useState ( dateTag );
+
+    const assetCards = [];
+    if ( !progress.loading ) {
+
+        for ( let assetID in inventory.assets ) {
+            assetCards.push (
+                <AssetCardView
+                    key         = { assetID }
+                    assetID     = { assetID }
+                    inventory   = { inventory }
+                />
+            );
+        }
     }
 
     const tagNames = tags.tagNames.slice ( 0 );
@@ -69,11 +113,11 @@ export const InboxModal = observer (( props ) => {
             <UI.Modal.Header>New Assets</UI.Modal.Header>
 
             <UI.Modal.Content>
-                <UI.Grid columns = { 1 }>
-                    <UI.Grid.Column>
-                        { assetCards }
-                    </UI.Grid.Column>
-                </UI.Grid>
+                <InboxModalCardList
+                    appState    = { appState }
+                    inventory   = { inventory }
+                    progress    = { progress }
+                />
 
                 <UI.Form>
                     <UI.Form.Field>
@@ -83,13 +127,14 @@ export const InboxModal = observer (( props ) => {
                             value = { tag }
                             onChange = {( event ) => { setTag ( event.target.value )}}
                             label = {
-                                <UI.Dropdown item icon = 'tags' disabled = { false }>
+                                <UI.Dropdown item icon = 'tags' disabled = { progress.loading }>
                                     <UI.Dropdown.Menu>
                                         { tagOptions }
                                     </UI.Dropdown.Menu>
                                 </UI.Dropdown>
                             }
                             labelPosition = 'left'
+                            disabled = { progress.loading }
                         />
                     </UI.Form.Field>
                 </UI.Form>

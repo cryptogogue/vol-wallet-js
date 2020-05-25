@@ -150,20 +150,3 @@ export const InventoryScreen = observer (( props ) => {
         </div>
     );
 });
-
-// //================================================================//
-// // InventoryScreen
-// //================================================================//
-// export const InventoryScreen = observer (( props ) => {
-
-//     const networkIDFromEndpoint = util.getMatch ( props, 'networkID' );
-//     const accountIDFromEndpoint = util.getMatch ( props, 'accountID' );
-
-//     const appState              = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
-//     const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
-
-//     // TODO: this is a nasty hack to force a reload when the nonce changes. do this right instead.
-//     return (
-//         <InventoryScreenBody key = { appState.nonce } appState = { appState }/>
-//     );
-// });

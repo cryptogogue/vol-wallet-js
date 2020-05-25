@@ -14,6 +14,7 @@ configure ({
 });
 
 import { AccountScreen }                from './AccountScreen';
+import { AccountDebugScreen }           from './AccountDebugScreen';
 import { CraftingScreen }               from './CraftingScreen';
 import { DashboardScreen }              from './DashboardScreen';
 import { InventoryScreen }              from './InventoryScreen';
@@ -44,6 +45,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID"                component = { AccountScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/crafting"       component = { CraftingScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/crafting"       component = { CraftingScreen }/>
+                <Route exact path = "/net/:networkID/account/:accountID/debug"          component = { AccountDebugScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/upgrades"       component = { UpgradesScreen }/>

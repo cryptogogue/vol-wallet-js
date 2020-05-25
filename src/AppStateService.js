@@ -655,12 +655,19 @@ export class AppStateService {
     setAccountInfo ( accountInfo ) {
 
         if ( accountInfo ) {
-            this.accountInfo            = this.accountInfo || {};
-            this.accountInfo.balance    = accountInfo.balance;
-            this.accountInfo.nonce      = accountInfo.nonce;
-            this.accountInfo.inventoryNonce = accountInfo.inventoryNonce;
-            this.accountInfo.newAssets  = accountInfo.newAssets || {};
-            this.accountInfo.height     = accountInfo.height || 0;
+
+            if ( !this.accountInfo ) {
+                this.accountInfo = {};
+            }
+
+            // if ( !_.isEqual ( this.accountInfo, accountInfo )) {
+
+                this.accountInfo.balance            = accountInfo.balance;
+                this.accountInfo.nonce              = accountInfo.nonce;
+                this.accountInfo.inventoryNonce     = accountInfo.inventoryNonce;
+                this.accountInfo.newAssets          = accountInfo.newAssets || {};
+                this.accountInfo.height             = accountInfo.height || 0;
+            // }
         }
         else {
             this.accountInfo = false;

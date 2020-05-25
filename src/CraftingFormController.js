@@ -20,30 +20,37 @@ export class CraftingFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
     @action
-    addInvocation ( methodName ) {
+    addBatchInvocation ( methodName, selection ) {
 
+        const invocation = this.makeInvocation ( methodName );
         const method = this.binding.methodsByName [ methodName ];
-        const methodBinding =  new MethodBinding ( this.inventory.schema, method );
+        const paramName = Object.keys ( method.assetArgs )[ 0 ];
 
-        methodBinding.rebuild (
-            this.inventory.assets,
-            ( assetID ) => { return this.filter ( assetID )}
-        );
+        const invocations = this.invocations.slice ( 0 );
+        const assetsUtilized = _.cloneDeep ( this.assetsUtilized );
 
-        const assetParams = {};
-        for ( let paramName in method.assetArgs ) {
-            assetParams [ paramName ] = false;
+        for ( let assetID in selection ) {
+
+            if ( assetsUtilized [ assetID ]) continue;
+
+            const invocation = this.makeInvocation ( methodName );
+            invocation.assetParams [ paramName ] = assetID;
+            invocation.assetsUtilized [ assetID ] = true;
+            invocations.push ( invocation );
+            
+            assetsUtilized [ assetID ] = true;
         }
 
-        const invocation = {
-            method:             method,
-            assetParams:        assetParams,
-            constParams:        {},
-            methodBinding:      methodBinding,
-            assetsUtilized:     {},
-        };
+        this.invocations = invocations;
+        this.assetsUtilized = assetsUtilized;
+        this.validate ();
+    }
 
-        this.invocations.push ( invocation );
+    //----------------------------------------------------------------//
+    @action
+    addInvocation ( methodName ) {
+
+        this.invocations.push ( this.makeInvocation ( methodName ));
         this.validate ();
         return this.invocations [ this.invocations.length - 1 ]; // because mobX
     }
@@ -52,10 +59,8 @@ export class CraftingFormController extends TransactionFormController {
     @computed get
     canAddInvocation () {
 
-        for ( let invocation of this.invocations ) {            
-            for ( let paramName in invocation.assetParams ) {
-                if ( invocation.assetParams [ paramName ] === false ) return false;
-            }
+        for ( let invocation of this.invocations ) {
+            if (( invocation.hasErrors ) || ( invocation.hasParams === false )) return false;
         }
         return true;
     }
@@ -75,7 +80,7 @@ export class CraftingFormController extends TransactionFormController {
             () => {
                 return {
                     assets: this.inventory.assets,
-                    assetsUtilized: _.cloneDeep ( this.assetsUtilized ), // necessary because of use in callback
+                    assetsUtilized: _.cloneDeep ( this.assetsUtilized ), // _cloneDeep necessary because of use in callback
                 };
             },
             ( params ) => {
@@ -101,6 +106,16 @@ export class CraftingFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
+    @computed get
+    hasErrors () {
+
+        for ( let invocation of this.invocations ) {
+            if ( invocation.hasErrors ) return true;
+        }
+        return false;
+    }
+
+    //----------------------------------------------------------------//
     isSelected ( invocation, paramName, assetID ) {
 
         return ( invocation.assetParams [ paramName ] === assetID );
@@ -110,6 +125,36 @@ export class CraftingFormController extends TransactionFormController {
     isUtilized ( assetID ) {
 
         return ( this.assetsUtilized [ assetID ] === true );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    makeInvocation ( methodName ) {
+
+        const method = this.binding.methodsByName [ methodName ];
+        const methodBinding =  new MethodBinding ( this.inventory.schema, method );
+
+        methodBinding.rebuild (
+            this.inventory.assets,
+            ( assetID ) => { return this.filter ( assetID )}
+        );
+
+        const assetParams = {};
+        for ( let paramName in method.assetArgs ) {
+            assetParams [ paramName ] = false;
+        }
+
+        const invocation = {
+            method:             method,
+            assetParams:        assetParams,
+            constParams:        {},
+            methodBinding:      methodBinding,
+            assetsUtilized:     {},
+            hasParams:          false,
+            hasErrors:          false,
+        };
+
+        return invocation;
     }
 
     //----------------------------------------------------------------//
@@ -174,6 +219,19 @@ export class CraftingFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     virtual_checkComplete () {
 
+        for ( let invocation of this.invocations ) {
+
+            let hasParams = true;
+
+            for ( let paramName in invocation.assetParams ) {
+                if ( invocation.assetParams [ paramName ] === false ) {
+                    hasParams = false;
+                    break;
+                }
+            }
+            invocation.hasParams = hasParams;
+            invocation.hasErrors = hasParams ? !invocation.methodBinding.checkParams ( invocation.assetParams ) : false;
+        }
         return (( this.invocations.length > 0 ) && ( this.canAddInvocation ));
     }
 
