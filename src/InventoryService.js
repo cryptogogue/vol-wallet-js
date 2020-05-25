@@ -61,6 +61,21 @@ export class InventoryService {
             let assets = {};
             for ( let asset of inventoryJSON.inventory ) {
                 if ( asset.inventoryNonce < inventoryNonce ) {
+
+                    const definition = schemaJSON.schema.definitions [ asset.type ];
+                    if ( !definition ) continue;
+
+                    for ( let fieldName in definition.fields ) {
+
+                        if ( !asset.fields [ fieldName ]) {
+
+                            const field = definition.fields [ fieldName ];
+                            asset.fields [ fieldName ] = {
+                                type:   field.type,
+                                value:  field.value,
+                            };
+                        }
+                    }
                     assets [ asset.assetID ] = asset;
                 }
             }
