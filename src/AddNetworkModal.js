@@ -4,7 +4,8 @@ import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util
 import React, { useState }          from 'react';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                 from 'mobx-react';
-import { Button, Divider, Form, Header, Icon, Input, Label, Message, Modal, Popup, Segment } from 'semantic-ui-react';
+import * as UI                      from 'semantic-ui-react';
+import validator                    from 'validator';
 
 const NETWORK_NAME_REGEX     = /^[a-z0-9]+[a-z0-9-]*$/;
 
@@ -44,7 +45,6 @@ export class NodeInfoService {
                 runInAction (() => {
                     this.info = info;
                     this.state = NODE_INFO_STATE.DONE;
-                    console.log ( 'GOT INFO:', info );
                 });
             }
             catch ( error ) {
@@ -100,32 +100,30 @@ export const AddNetworkModalBody = observer (( props ) => {
             err = `Network named ${ value } already exists.`
         }
         setNameError ( err );
-    };
+    }
 
     let onChangeNodeURL = ( url ) => {
 
         controller.reset ();
-        setNodeURL ( url );
+        setNodeURL ( url.toLowerCase ());
 
-        if ( url ) {
-            url = url.toLowerCase ();
-            if ( url.startsWith ( 'http://' ) || url.startsWith ( 'https://' )) {
-                setTestURL ( url.replace ( /\/+$/, '' ));
-            }
+        if ( validator.isURL ( url, { protocols: [ 'http', 'https' ], require_protocol: true, require_tld: false })) {
+            url = url.toLowerCase ().replace ( /\/+$/, '' );
+            setTestURL ( url );
         }
-    };
+    }
 
     let onCheckNodeURL = () => {
         controller.fetchNodeInfo ( testURL );
         if ( !name ) {
             setSuggestName ( true );
         }
-    };
+    }
 
     let onSubmit = () => {
         appState.affirmNetwork ( name, controller.info.identity, testURL )
         onClose ();
-    };
+    }
 
     const isBusy = controller.state === NODE_INFO_STATE.BUSY;
     const nodeURLError = controller.state === NODE_INFO_STATE.ERROR && 'Error fetching node info.';
@@ -137,67 +135,73 @@ export const AddNetworkModalBody = observer (( props ) => {
     }
 
     const submitEnabled = name && !nameError && ( nodeType === 'VOL_MINING_NODE' );
+    const testEnabled = Boolean ( testURL );
 
     return (
-        <Modal
+        <UI.Modal
             size = 'small'
             closeIcon
             onClose = {() => { onClose ()}}
             open = { open }
         >
-            <Modal.Header>Add Network</Modal.Header>
+            <UI.Modal.Header>Add Network</UI.Modal.Header>
 
-            <Modal.Content>
-                <Form>
-
-                    <Form.Field>
-                        <Input
-                            fluid
-                            placeholder = "Network Name"
-                            disabled = { isBusy }
-                            type = "text"
-                            value = { name }
-                            onChange = {( event ) => { onChangeName ( event.target.value )}}
-                        />
-                        { nameError && <Label pointing prompt>{ nameError }</Label> }
-                    </Form.Field>
-
-                    <Form.Field>
-                        <Input
+            <UI.Modal.Content>
+                <UI.Form>
+                    <p><span>Enter the URL of a Volition mining node then press </span><UI.Icon name = 'sync alternate'/><span>to sync:</span></p>
+                    <UI.Form.Field>
+                        <UI.Input
                             fluid
                             loading = { isBusy }
                             action = {
                                 <If condition = { !isBusy }>
-                                    <Button
+                                    <UI.Button
                                         icon = 'sync alternate'
-                                        disabled = { !Boolean ( testURL )}
+                                        color = { testEnabled ? 'green' : 'grey' }
+                                        disabled = { !testEnabled }
                                         onClick = { onCheckNodeURL }
                                     />
                                 </If>
-                            } 
-                            placeholder = "Node URL"
-                            name = "nodeURL"
-                            type = "url"
-                            value = { nodeURL }
-                            onChange = {( event ) => { onChangeNodeURL ( event.target.value )}}
+                            }
+                            placeholder     = "Node URL"
+                            name            = "nodeURL"
+                            type            = "url"
+                            value           = { nodeURL }
+                            onChange        = {( event ) => { onChangeNodeURL ( event.target.value )}}
                         />
-                        { nodeURLError && <Label pointing prompt>{ nodeURLError }</Label> }
-                    </Form.Field>
-                </Form>
+                        { nodeURLError && <UI.Label pointing prompt>{ nodeURLError }</UI.Label> }
+                    </UI.Form.Field>
+                </UI.Form>
 
                 <Choose>
                     <When condition = { nodeType === 'VOL_MINING_NODE' }>
-                        <Message
+                        <UI.Message
                             positive
                             icon = 'sitemap'
                             header = { controller.info.identity }
                             content = 'Mining network is online.'
                         />
+
+                        <UI.Form>
+                            <p>Enter a local nickname for this mining network:</p>
+                            <UI.Form.Field>
+                                <UI.Input
+                                    fluid
+                                    placeholder = "Network Name"
+                                    disabled = { isBusy }
+                                    type = "text"
+                                    value = { name }
+                                    onChange = {( event ) => { onChangeName ( event.target.value )}}
+                                />
+                                { nameError && <UI.Label pointing prompt>{ nameError }</UI.Label> }
+                            </UI.Form.Field>
+
+                        </UI.Form>
                     </When>
 
                     <When condition = { controller.state === NODE_INFO_STATE.DONE }>
-                        <Message
-                            negatove
+                        <UI.Message
+                            negative
                             icon = 'question circle'
                             header = { UNKNOWN }
                             content = 'Not a mining node.'
@@ -205,17 +209,17 @@ export const AddNetworkModalBody = observer (( props ) => {
                     </When>
                 </Choose>
 
-            </Modal.Content>
+            </UI.Modal.Content>
 
-            <Modal.Actions>
-                <Button
+            <UI.Modal.Actions>
+                <UI.Button
                     positive
                     disabled = { !submitEnabled }
                     onClick = { onSubmit }>
                     Save
-                </Button>
-            </Modal.Actions>
-        </Modal>
+                </UI.Button>
+            </UI.Modal.Actions>
+        </UI.Modal>
     );
 });
 
