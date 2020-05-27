@@ -144,40 +144,40 @@ const SchemaFileInput = observer (( props ) => {
 
             try {
 
-                const current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
-                if ( !( current && current.schema )) throw 'Could not download current schema.'
-
                 const scanner = new SchemaScannerXLSX ( book );
 
-                console.log ( 'CURRENT:', current );
-                console.log ( 'SCANNER:', current );
+                if ( controller.checkSchema ) {
 
-                const version0 = current.schema.version;
-                const version1 = scanner.schema.version;
+                    const current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
+                    if ( !( current && current.schema )) throw 'Could not download current schema.'
 
-                if ( !( version0.release || version1.release )) {
-                    errorMessages.push ({ header: 'Version Error', body: 'Missing version release name.' });
-                }
+                    const version0 = current.schema.version;
+                    const version1 = scanner.schema.version;
 
-                if ( !(
-                    ( !version0.release ) ||
-                    ( version0.major <= version1.major ) &&
-                    ( version0.minor <= version1.minor ) &&
-                    ( version0.revision < version1.revision )
-                )) {
-                    errorMessages.push ({ header: 'Version Error', body: 'New schema must increment version.' });
-                }
+                    if ( !( version0.release || version1.release )) {
+                        errorMessages.push ({ header: 'Version Error', body: 'Missing version release name.' });
+                    }
 
-                filterCollisions ( 'definitions', scanner, current.schema.definitions, scanner.schema.definitions );
-                filterCollisions ( 'fonts', scanner, current.schema.fonts, scanner.schema.fonts );
-                filterCollisions ( 'icons', scanner, current.schema.icons, scanner.schema.icons );
-                filterCollisions ( 'layouts', scanner, current.schema.layouts, scanner.schema.layouts );
-                filterCollisions ( 'upgrades', scanner, current.schema.upgrades, scanner.schema.upgrades );
-                filterCollisions ( 'methods', scanner, current.schema.methods, scanner.schema.methods );
-                filterCollisions ( 'sets', scanner, current.schema.sets, scanner.schema.sets );
+                    if ( !(
+                        ( !version0.release ) ||
+                        ( version0.major <= version1.major ) &&
+                        ( version0.minor <= version1.minor ) &&
+                        ( version0.revision < version1.revision )
+                    )) {
+                        errorMessages.push ({ header: 'Version Error', body: 'New schema must increment version.' });
+                    }
 
-                if ( _.isEqual ( current.schema.decks, scanner.schema.decks )) {
-                    scanner.schema.decks = {};
+                    filterCollisions ( 'definitions', scanner, current.schema.definitions, scanner.schema.definitions );
+                    filterCollisions ( 'fonts', scanner, current.schema.fonts, scanner.schema.fonts );
+                    filterCollisions ( 'icons', scanner, current.schema.icons, scanner.schema.icons );
+                    filterCollisions ( 'layouts', scanner, current.schema.layouts, scanner.schema.layouts );
+                    filterCollisions ( 'upgrades', scanner, current.schema.upgrades, scanner.schema.upgrades );
+                    filterCollisions ( 'methods', scanner, current.schema.methods, scanner.schema.methods );
+                    filterCollisions ( 'sets', scanner, current.schema.sets, scanner.schema.sets );
+
+                    if ( _.isEqual ( current.schema.decks, scanner.schema.decks )) {
+                        scanner.schema.decks = {};
+                    }
                 }
 
                 if ( scanner.hasErrors ()) {
@@ -196,6 +196,33 @@ const SchemaFileInput = observer (( props ) => {
         }
         setIsLoading ( false );
         setErrors ( errorMessages );
+    }
+
+    let deckOptions = [];
+    if ( schema && controller.isPublishAndReset ) {
+
+        const sortedDecksAndSets = [];
+
+        for ( let deckName in schema.decks ) {
+            sortedDecksAndSets.push ( deckName );
+        }
+
+        for ( let setName in schema.sets ) {
+            sortedDecksAndSets.push ( setName );
+        }
+
+        sortedDecksAndSets.sort (( a, b ) => a.localeCompare ( b ));
+
+        for ( let name of sortedDecksAndSets ) {
+
+            deckOptions.push (
+                <UI.Dropdown.Item
+                    key         = { name }
+                    text        = { name }
+                    onClick     = {() => { controller.setDeckName ( name )}}
+                />
+            );
+        }
     }
 
     const errorMessages = []
@@ -232,6 +259,23 @@ const SchemaFileInput = observer (( props ) => {
                     <If condition = { schema }>
                         <JSONTree hideRoot data = { schema } theme = 'bright'/>
                     </If>
+
+                    <If condition = { deckOptions.length > 0 }>
+                        <UI.Menu>
+                            <UI.Dropdown
+                                fluid
+                                item
+                                closeOnBlur
+                                placeholder     = 'Get Deck'
+                                text            = { controller.deckName }
+                            >
+                                <UI.Dropdown.Menu>
+                                    { deckOptions }
+                                </UI.Dropdown.Menu>
+                            </UI.Dropdown>
+                        </UI.Menu>
+                    </If>
+
                 </Otherwise>
             </Choose>
 

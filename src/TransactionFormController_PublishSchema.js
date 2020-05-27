@@ -13,20 +13,39 @@ import { observer }                         from 'mobx-react';
 //================================================================//
 export class TransactionFormController_PublishSchema extends TransactionFormController {
 
+    @observable deckName = '';
+
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( appState, andReset ) {
         super ();
 
+        this.isPublishAndReset = Boolean ( andReset );
+        this.checkSchema = !this.isPublishAndReset;
+
+        // TODO: using a field for this is just silly; refactor into its own view (like the crafting form.)
         const fieldsArray = [
             new FIELD_CLASS.SCHEMA  ( 'schema',     'Schema' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.PUBLISH_SCHEMA, fieldsArray );
+
+        const transactionType = andReset ? TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET : TRANSACTION_TYPE.PUBLISH_SCHEMA;
+        this.initialize ( appState, transactionType, fieldsArray );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setDeckName ( deckName ) {
+        this.deckName = deckName;
     }
 
     //----------------------------------------------------------------//
     virtual_composeBody ( fieldValues ) {
 
         const body = {};
+        
+        if ( this.isPublishAndReset ) {
+            body.deckName = this.deckName;
+        }
+
         if ( this.fields.schema.value ) {
             try {
                 body.schema = JSON.parse ( this.fields.schema.value );

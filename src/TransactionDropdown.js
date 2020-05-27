@@ -28,6 +28,7 @@ export const gTransactionTypes = [
     // TRANSACTION_TYPE.KEY_POLICY,
     
     TRANSACTION_TYPE.PUBLISH_SCHEMA,
+    TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET,
     // TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,
     TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME,
@@ -37,17 +38,18 @@ export const gTransactionTypes = [
 function makeControllerForTransactionType ( appState, transactionType ) {
 
     switch ( transactionType ) {
-        case TRANSACTION_TYPE.ACCOUNT_POLICY:           return new TransactionFormController_AccountPolicy ( appState );
-        case TRANSACTION_TYPE.AFFIRM_KEY:               return new TransactionFormController_AffirmKey ( appState );
-        case TRANSACTION_TYPE.BETA_GET_ASSETS:          return new TransactionFormController_BetaGetAssets ( appState );
-        case TRANSACTION_TYPE.BETA_GET_DECK:            return new TransactionFormController_BetaGetDeck ( appState );
-        case TRANSACTION_TYPE.KEY_POLICY:               return new TransactionFormController_KeyPolicy ( appState );
-        case TRANSACTION_TYPE.OPEN_ACCOUNT:             return new TransactionFormController_OpenAccount ( appState );
-        case TRANSACTION_TYPE.PUBLISH_SCHEMA:           return new TransactionFormController_PublishSchema ( appState );
-        case TRANSACTION_TYPE.REGISTER_MINER:           return new TransactionFormController_RegisterMiner ( appState );
-        case TRANSACTION_TYPE.RENAME_ACCOUNT:           return new TransactionFormController_RenameAccount ( appState );
-        case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:     return new TransactionFormController_ReserveAccountName ( appState );
-        case TRANSACTION_TYPE.SEND_VOL:                 return new TransactionFormController_SendVOL ( appState );
+        case TRANSACTION_TYPE.ACCOUNT_POLICY:               return new TransactionFormController_AccountPolicy ( appState );
+        case TRANSACTION_TYPE.AFFIRM_KEY:                   return new TransactionFormController_AffirmKey ( appState );
+        case TRANSACTION_TYPE.BETA_GET_ASSETS:              return new TransactionFormController_BetaGetAssets ( appState );
+        case TRANSACTION_TYPE.BETA_GET_DECK:                return new TransactionFormController_BetaGetDeck ( appState );
+        case TRANSACTION_TYPE.KEY_POLICY:                   return new TransactionFormController_KeyPolicy ( appState );
+        case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return new TransactionFormController_OpenAccount ( appState );
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return new TransactionFormController_PublishSchema ( appState );
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return new TransactionFormController_PublishSchema ( appState, true );
+        case TRANSACTION_TYPE.REGISTER_MINER:               return new TransactionFormController_RegisterMiner ( appState );
+        case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new TransactionFormController_RenameAccount ( appState );
+        case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new TransactionFormController_ReserveAccountName ( appState );
+        case TRANSACTION_TYPE.SEND_VOL:                     return new TransactionFormController_SendVOL ( appState );
     }
     return new TransactionFormController ( appState );
 }
