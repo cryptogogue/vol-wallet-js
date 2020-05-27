@@ -49,7 +49,7 @@ export const NetworkList = observer (( props ) => {
     const makeItemMessageBody = ( networkName, info ) => {
 
         const nodeURL = appState.networks [ networkName ].nodeURL;
-        const schema = info && info.schema;
+        const schema = info && info.schemaVersion;
         const schemaString = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
 
         return (

@@ -15,7 +15,7 @@ export class InventoryService {
 
         this.db = new Dexie ( 'volwal' ); 
         this.db.version ( 1 ).stores ({
-            schemas: '&networkID, &version',
+            schemas: '[networkID+key], networkID',
         });
         this.db.open ();
 
@@ -56,8 +56,8 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
-    formatSchemaVersion ( version ) {
-        return `${ version.release } - ${ version.major }.${ version.minor }.${ version.revision }`;
+    formatSchemaKey ( schemaHash, version ) {
+        return `${ version.release } - ${ version.major }.${ version.minor }.${ version.revision } (${ schemaHash })`;
     }
 
     //----------------------------------------------------------------//
@@ -72,23 +72,25 @@ export class InventoryService {
 
             await this.progress.onProgress ( 'Fetching Schema' );
 
-            let schemaJSON = false;
-            if ( inventoryJSON.version ) {
+            let schema = false;
+            if ( inventoryJSON.schemaHash && inventoryJSON.schemaVersion ) {
 
-                const schemaVersion = this.formatSchemaVersion ( inventoryJSON.version );
-                const schemaRecord = await this.db.schemas.get ({ networkID: networkID, version: schemaVersion });
+                const schemaKey = this.formatSchemaKey ( inventoryJSON.schemaHash, inventoryJSON.schemaVersion );
+                const schemaRecord = await this.db.schemas.get ({ networkID: networkID, key: schemaKey });
                 if ( schemaRecord ) {
-                    schemaJSON = JSON.parse ( schemaRecord.json );
+                    schema = JSON.parse ( schemaRecord.json );
                 }
             }
 
-            if ( !schemaJSON ) {
+            if ( !schema ) {
 
                 await this.db.schemas.where ({ networkID: networkID }).delete (); // clear out all the old schemas (TODO: limit this to the current
 
-                schemaJSON = ( await this.revocable.fetchJSON ( nodeURL + '/schema' )).schema;
-                const schemaVersion = this.formatSchemaVersion ( schemaJSON.version );
-                await this.db.schemas.put ({ networkID: networkID, version: schemaVersion, json: JSON.stringify ( schemaJSON )});
+                const schemaJSON = ( await this.revocable.fetchJSON ( nodeURL + '/schema' ));
+                schema = schemaJSON.schema;
+
+                const schemaKey = this.formatSchemaKey ( schemaJSON.schemaHash, schema.version );
+                await this.db.schemas.put ({ networkID: networkID, key: schemaKey, json: JSON.stringify ( schema )});
             }
 
             let assets = {};
@@ -97,7 +99,7 @@ export class InventoryService {
                     assets [ asset.assetID ] = asset;
                 }
             }
-            await this.inventory.update ( schemaJSON, assets );
+            await this.inventory.update ( schema, assets );
         }
         catch ( error ) {
             console.log ( error );
