@@ -35,6 +35,7 @@ export class TransactionFormController_PublishSchema extends TransactionFormCont
     @action
     setDeckName ( deckName ) {
         this.deckName = deckName;
+        this.validate ();
     }
 
     //----------------------------------------------------------------//
@@ -42,8 +43,11 @@ export class TransactionFormController_PublishSchema extends TransactionFormCont
 
         const body = {};
         
+        console.log ( 'COMPOSE BODY' );
+
         if ( this.isPublishAndReset ) {
             body.deckName = this.deckName;
+            console.log ( 'DECK NAME:', body.deckName );
         }
 
         if ( this.fields.schema.value ) {

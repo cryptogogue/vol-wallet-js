@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { CraftingAssetSelectionModal }      from './CraftingAssetSelectionModal';
 import { TransactionBalanceHeader, TransactionFormFields } from './BasicTransactionForm';
 import { TransactionFormInput }             from './TransactionFormInput';
 import { AssetCardView }                    from 'cardmotron';
@@ -8,74 +9,6 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
-
-//================================================================//
-// AssetSelectionModal
-//================================================================//
-const AssetSelectionModal = observer (( props ) => {
-
-    const { controller, paramModalState, setParamModalState } = props;
-    const [ closeTimeout, setCloseTimeout ] = useState ( false );
-
-    if ( paramModalState === false ) {
-        return ( <React.Fragment/> );
-    }
-
-    const { invocation, paramName } = paramModalState;
-    const allOptions        = invocation.methodBinding.getParamOptions ( paramName );
-    const availableOptions  = invocation.methodBinding.getParamOptions ( paramName, invocation.assetParams );
-
-    const ingredients = [];
-    for ( let assetID of allOptions ) {
-
-        const isSelected    = ( invocation.assetParams [ paramName ] === assetID );
-        const isAvailable   = availableOptions.includes ( assetID );
-
-        const onSelect = ( asset, selected ) => {
-            if ( !closeTimeout ) {
-                controller.setAssetParam ( invocation, paramName, selected ? assetID : false );
-                if ( selected ) {
-                    setCloseTimeout ( setTimeout(() => {
-                        setCloseTimeout ( false );
-                        setParamModalState ( false );
-                    }, 350 ));
-                }
-            }
-        }
-
-        ingredients.push (
-            <div style = {{ display: 'block' }} key = { assetID }>
-                <AssetCardView
-                    assetID     = { assetID }
-                    inventory   = { controller.inventory }
-                    isSelected  = { isSelected }
-                    disabled    = { !( isSelected || isAvailable )}
-                    onSelect    = { onSelect }
-                />
-            </div>
-        );
-    }
-
-    return (
-        <UI.Modal
-            closeIcon
-            onClose = {() => {
-                if ( closeTimeout ) {
-                    clearTimeout ( closeTimeout );
-                    setCloseTimeout ( false );
-                }
-                setParamModalState ( false )
-            }}
-            open = { paramModalState !== false }
-        >
-            <UI.Modal.Header>{ `Select Asset for '${ paramName }'` }</UI.Modal.Header>
-            
-            <UI.Modal.Content>
-                { ingredients }
-            </UI.Modal.Content>
-        </UI.Modal>
-    );
-});
 
 //================================================================//
 // InvocationField
@@ -88,24 +21,37 @@ const InvocationField = observer (( props ) => {
     const paramList = [];
     for ( let paramName in invocation.assetParams ) {
 
-        const paramValue = invocation.assetParams [ paramName ];
+        let name = '';
+        const assetID = invocation.assetParams [ paramName ] || '';
+
+        if ( assetID ) {
+            const asset = controller.inventory.assets [ assetID ];
+            name = controller.inventory.schema.getFriendlyNameForAsset ( asset );
+        }
 
         paramList.push (
-            <UI.Table.Row key = { paramName }>
+            <UI.Table.Row
+                key = { paramName }
+                onClick = {() => {
+                    setParamModalState ({
+                        invocation:     invocation,
+                        paramName:      paramName,
+                    });
+                }}
+            >
                 <UI.Table.Cell collapsing>
                     { paramName }
                 </UI.Table.Cell>
 
-                <UI.Table.Cell
-                    onClick = {() => {
-                        setParamModalState ({
-                            invocation:     invocation,
-                            paramName:      paramName,
-                        });
-                    }}
-                >
-                    {( paramValue === false ) ? '' : paramValue }
+                <UI.Table.Cell>
+                    { name }
                 </UI.Table.Cell>
+
+                <If condition = { name !== assetID }>
+                    <UI.Table.Cell collapsing>
+                        { assetID }
+                    </UI.Table.Cell>
+                </If>
             </UI.Table.Row>
         );
     }
@@ -113,7 +59,7 @@ const InvocationField = observer (( props ) => {
     return (
         <React.Fragment>
 
-            <AssetSelectionModal
+            <CraftingAssetSelectionModal
                 controller          = { controller }
                 paramModalState     = { paramModalState }
                 setParamModalState  = { setParamModalState }
