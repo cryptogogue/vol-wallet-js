@@ -547,8 +547,6 @@ export class AppStateService {
 
         if ( !this.hasAccount ) return;
 
-        console.log ( 'PROCESS TRANSACTION QUEUE' );
-
         if ( !this.hasTransactionError ) {
 
             let pendingTransactions = this.pendingTransactions;
