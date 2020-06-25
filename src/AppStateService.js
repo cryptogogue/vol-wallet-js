@@ -250,19 +250,6 @@ export class AppStateService {
     }
 
     //----------------------------------------------------------------//
-    @action
-    confirmTransactions ( nonce ) {
-
-        if ( this.hasAccount ) {
-            let pendingTransactions = this.account.pendingTransactions;
-            while (( pendingTransactions.length > 0 ) && ( pendingTransactions [ 0 ].nonce < nonce )) {
-                pendingTransactions.shift ();
-                this.account.transactionError = false;
-            }
-        }
-    }
-
-    //----------------------------------------------------------------//
     constructor ( networkID, accountID ) {
 
         this.revocable      = new RevocableContext ();
@@ -560,33 +547,51 @@ export class AppStateService {
 
         if ( !this.hasAccount ) return;
 
+        console.log ( 'PROCESS TRANSACTION QUEUE' );
+
         if ( !this.hasTransactionError ) {
 
-            let pendingTransactions = this.account.pendingTransactions;
-            for ( let memo of this.pendingTransactions ) {
+            let pendingTransactions = this.pendingTransactions;
+            let more = pendingTransactions.length > 0;
+            
+            while ( more && ( pendingTransactions.length > 0 )) {
 
+                more = false;
+
+                const memo          = pendingTransactions [ 0 ];
                 const accountName   = memo.body.maker.accountName;
-                const nonce         = memo.nonce; 
                 
+                console.log ( memo.uuid );
+
                 try {
 
-                    const url = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ nonce }`;
+                    const url = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
                     const checkResult = await this.revocable.fetchJSON ( url );
 
                     switch ( checkResult.status ) {
 
+                        case 'ACCEPTED':
+                            console.log ( 'ACCEPTED' );
+                            runInAction (() => {
+                                pendingTransactions.shift ();
+                            });
+                            more = true;
+                            break;
+
                         case 'REJECTED':
+                            console.log ( 'REJECTED' );
                             runInAction (() => {
                                 this.account.transactionError = {
                                     message:    checkResult.message,
-                                    note:       checkResult.note,
+                                    uuid:       checkResult.uuid,
                                 }
                             });
-                        break;
+                            break;
 
                         case 'UNKNOWN':
+                            console.log ( 'UNKNOWN' );
                             await this.putTransactionAsync ( memo );
-                            break;
+                            return;
 
                         default:
                             break;
@@ -597,7 +602,7 @@ export class AppStateService {
                 }
             }
         }
-        
+
         this.revocable.timeout (() => { this.processTransactionsAsync ()}, 5000 );
     }
 
@@ -613,6 +618,7 @@ export class AppStateService {
             cost:               transaction.getCost (),
             body:               transaction.body,
             assets:             transaction.assetsUtilized,
+            uuid:               util.generateUUIDV4 (),
         }
 
         this.account.stagedTransactions.push ( memo );
@@ -624,8 +630,7 @@ export class AppStateService {
     async putTransactionAsync ( memo ) {
 
         const accountName   = memo.body.maker.accountName;
-        const nonce         = memo.nonce; 
-        const url           = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ nonce }`;
+        const url           = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
 
         await this.revocable.fetchJSON ( url, {
             method :    'PUT',
@@ -798,7 +803,7 @@ export class AppStateService {
                 let nonce           = currentNonce + i;
 
                 let body            = memo.body;
-                body.note           = randomBytes ( 12 ).toString ( 'hex' );
+                body.uuid           = memo.uuid;
                 body.maxHeight      = 0; // don't use for now
                 body.recordBy       = recordBy.toISOString ();
                 body.maker.nonce    = nonce;

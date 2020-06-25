@@ -88,7 +88,6 @@ export class AccountInfoService {
 
             appState.setAccountInfo ( accountInfo );
             appState.updateAccount ( account, entitlements );
-            appState.confirmTransactions ( account.nonce );
 
             if ( account.name !== accountID ) {
                 appState.renameAccount ( accountID, account.name );

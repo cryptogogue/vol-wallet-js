@@ -32,7 +32,6 @@ const TransactionModalBody = observer (( props ) => {
     const submit = () => {
         appState.pushTransaction ( controller.transaction );
         if ( submitEnabled ) {
-            console.log ( 'DID SUBMIT!' );
             appState.submitTransactions ( password );
         }
         onClose ();

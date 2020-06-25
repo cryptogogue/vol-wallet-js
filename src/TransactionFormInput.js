@@ -2,7 +2,7 @@
 
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { FIELD_CLASS }                      from './TransactionFormFieldControllers';
-import { ScannerReportModal, SchemaScannerXLSX } from 'cardmotron';
+import { ScannerReportMessages, SchemaScannerXLSX } from 'cardmotron';
 import { assert, excel, hooks, FilePickerMenuItem, util } from 'fgc';
 import JSONTree                             from 'react-json-tree';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
@@ -111,6 +111,7 @@ const SchemaFileInput = observer (( props ) => {
 
     const { field, controller }         = props;
     const [ errors, setErrors ]         = useState ([]);
+    const [ warnings, setWarnings ]     = useState ([]);
     const [ schema, setSchema ]         = useState ( false );
     const [ isLoading, setIsLoading ]   = useState ( false );
 
@@ -135,6 +136,7 @@ const SchemaFileInput = observer (( props ) => {
         setIsLoading ( true );
         field.setInputString ( '' );
         let errorMessages = [];
+        let warningMessages = [];
 
         const book = new excel.Workbook ( binary, { type: 'binary' });
         if ( book ) {
@@ -180,9 +182,9 @@ const SchemaFileInput = observer (( props ) => {
                     }
                 }
 
-                if ( scanner.hasErrors ()) {
-                    errorMessages = errorMessages.concat ( scanner.errors );
-                }
+                errorMessages       = errorMessages.concat ( scanner.errors );
+                warningMessages     = warningMessages.concat ( scanner.warnings );
+
                 setSchema ( scanner.schema );
                 field.setInputString ( JSON.stringify ( scanner.schema ));
             }
@@ -194,8 +196,10 @@ const SchemaFileInput = observer (( props ) => {
         if ( field.error ) {
             errorMessages.push ({ header: 'Field Error', body: field.error });
         }
+
         setIsLoading ( false );
         setErrors ( errorMessages );
+        setWarnings ( warningMessages );
     }
 
     let deckOptions = [];
@@ -225,14 +229,16 @@ const SchemaFileInput = observer (( props ) => {
         }
     }
 
-    const errorMessages = []
-    for ( let error of errors ) {
-        errorMessages.push (
-            <UI.Message icon negative key = { errorMessages.length }>
+    const messages = [];
+    let count = 0;
+
+    for ( let message of errors ) {
+        messages.push (
+            <UI.Message visible icon negative key = { count++ }>
                 <UI.Icon name = 'bug' />
                 <UI.Message.Content>
-                    <UI.Message.Header>{ error.header }</UI.Message.Header>
-                    { error.body }
+                    <UI.Message.Header>{ message.header }</UI.Message.Header>
+                    { message.body }
                 </UI.Message.Content>
             </UI.Message>
         );
@@ -250,34 +256,33 @@ const SchemaFileInput = observer (( props ) => {
                 />
             </UI.Menu>
 
-            <Choose>
-                <When condition = { errorMessages.length > 0 }>
-                    { errorMessages }
-                </When>
+            <ScannerReportMessages
+                errors      = { errors }
+                warnings    = { warnings }
+            />
 
-                <Otherwise>
-                    <If condition = { schema }>
-                        <JSONTree hideRoot data = { schema } theme = 'bright'/>
-                    </If>
+            <If condition = {( errors.length === 0 )}>
 
-                    <If condition = { deckOptions.length > 0 }>
-                        <UI.Menu>
-                            <UI.Dropdown
-                                fluid
-                                item
-                                closeOnBlur
-                                placeholder     = 'Get Deck'
-                                text            = { controller.deckName }
-                            >
-                                <UI.Dropdown.Menu>
-                                    { deckOptions }
-                                </UI.Dropdown.Menu>
-                            </UI.Dropdown>
-                        </UI.Menu>
-                    </If>
+                <If condition = { schema }>
+                    <JSONTree hideRoot data = { schema } theme = 'bright'/>
+                </If>
 
-                </Otherwise>
-            </Choose>
+                <If condition = { deckOptions.length > 0 }>
+                    <UI.Menu>
+                        <UI.Dropdown
+                            fluid
+                            item
+                            closeOnBlur
+                            placeholder     = 'Get Deck'
+                            text            = { controller.deckName }
+                        >
+                            <UI.Dropdown.Menu>
+                                { deckOptions }
+                            </UI.Dropdown.Menu>
+                        </UI.Dropdown>
+                    </UI.Menu>
+                </If>
+            </If>
 
         </React.Fragment>
     );
