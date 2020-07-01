@@ -559,8 +559,6 @@ export class AppStateService {
                 const memo          = pendingTransactions [ 0 ];
                 const accountName   = memo.body.maker.accountName;
                 
-                console.log ( memo.uuid );
-
                 try {
 
                     const url = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
