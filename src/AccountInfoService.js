@@ -69,7 +69,7 @@ export class AccountInfoService {
             appState.updateAccount ( accountInfo, entitlements );
 
             if ( accountInfo.name !== accountID ) {
-                appState.renameAccount ( accountID, account.name );
+                appState.renameAccount ( accountID, accountInfo.name );
             }
         }
     }

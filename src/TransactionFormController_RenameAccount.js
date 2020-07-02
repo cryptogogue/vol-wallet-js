@@ -8,7 +8,7 @@ import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 
-const ACCOUNT_NAME_REGEX = /^(?!\.)[0-9a-zA-Z$\-_.+!*()]*$/;
+const ACCOUNT_NAME_REGEX = /^(?!\.)[0-9a-zA-Z\-.]*$/;
 
 //----------------------------------------------------------------//
 export function checkName ( name ) {
