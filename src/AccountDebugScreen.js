@@ -21,8 +21,9 @@ export const AccountDebugScreen = observer (( props ) => {
     const networkID = util.getMatch ( props, 'networkID' );
     const accountID = util.getMatch ( props, 'accountID' );
 
-    const appState              = hooks.useFinalizable (() => new AppStateService ( networkID, accountID ));
-    const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
+    const appState      = hooks.useFinalizable (() => new AppStateService ( networkID, accountID ));
+    const accountURL    = `${ appState.network.nodeURL }/accounts/${ appState.accountID }`;
+    const hasInfo       = appState.hasAccountInfo;
 
     return (
         <SingleColumnContainerView>
@@ -33,6 +34,41 @@ export const AccountDebugScreen = observer (( props ) => {
             />
 
             <If condition = { appState.hasAccount }>
+
+                <UI.Segment>
+                    <div style = {{ textAlign: 'center' }}>
+                        <UI.Header as = "h2" icon>
+                            <Choose>
+                                <When condition = { hasInfo }>
+                                    <UI.Icon name = 'trophy' circular />
+                                </When>
+                                <Otherwise>
+                                    <UI.Icon name = 'circle notched' loading circular/>
+                                </Otherwise>
+                            </Choose>
+                            <a href = { accountURL } target = '_blank'>{ appState.accountID }</a>
+                        </UI.Header>
+
+                        <div style = {{ visibility: hasInfo ? 'visible' : 'hidden' }}>
+                            <UI.Header as = 'h3'>
+                                { `Balance: ${ appState.balance }` }
+                            </UI.Header>
+
+                            <UI.Header.Subheader>
+                                { `Transaction Nonce: ${ appState.nonce }` }
+                            </UI.Header.Subheader>
+
+                            <UI.Header.Subheader>
+                                { `Inventory Nonce: ${ appState.inventoryNonce }` }
+                            </UI.Header.Subheader>
+
+                            <UI.Header.Subheader>
+                                { `Inventory Nonce (Node): ${ hasInfo ? appState.accountInfo.inventoryNonce : appState.inventoryNonce }` }
+                            </UI.Header.Subheader>
+                        </div>
+                    </div>
+                </UI.Segment>
+
                 <UI.Button
                     fluid
                     color       = 'teal'

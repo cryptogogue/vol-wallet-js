@@ -19,10 +19,10 @@ export const InboxLabel = observer (( props ) => {
         setCount ( count + 1 )
     }
 
-    const accountInventoryNonce = appState.account.inventoryNonce || 0;
-    const accountInfoInventoryNonce = appState.accountInfo.inventoryNonce || 0;
-    const newAssets = appState.accountInfo && appState.accountInfo.newAssets || [];
-    const showLabel = (( accountInventoryNonce < accountInfoInventoryNonce ) && ( newAssets.length > 0 ));
+    const inboxSize                     = appState.inventoryService.inboxSize;
+    const accountInventoryNonce         = appState.account.inventoryNonce || 0;
+    const accountInfoInventoryNonce     = appState.accountInfo.inventoryNonce || 0;
+    const showLabel                     = (( accountInventoryNonce < accountInfoInventoryNonce ) && ( inboxSize > 0 ));
 
     return (
         <React.Fragment>
@@ -34,7 +34,6 @@ export const InboxLabel = observer (( props ) => {
                     appState    = { appState }
                     open        = { open }
                     onClose     = { onClose }
-                    tags        = { props.tags }
                 />
 
                 <UI.Label
@@ -42,7 +41,7 @@ export const InboxLabel = observer (( props ) => {
                     onClick     = {() => { setOpen ( true )}}
                 >
                     <UI.Icon name = 'mail'/>
-                    { `${ newAssets.length }` }
+                    { `${ inboxSize }` }
                 </UI.Label>
 
             </If>

@@ -70,10 +70,14 @@ export class InventoryTagsController {
     
         delete this.tags [ tag ];
 
-        for ( let assetID in this.assetTags ) {
-            const tagsForAsset = this.assetTags [ assetID ];
+        const assetTags = _.cloneDeep ( this.assetTags );
+
+        for ( let assetID in assetTags ) {
+            const tagsForAsset = assetTags [ assetID ];
             delete tagsForAsset [ tag ];
         }
+
+        this.assetTags = assetTags;
 
         if ( this.filter === tag ) {
             this.filter = '';
@@ -131,14 +135,15 @@ export class InventoryTagsController {
         this.affirmTag ( tagName );
         value = value || false;
 
-        for ( let assetID in selection ) {
+        const assetTags = _.cloneDeep ( this.assetTags );
 
-            // do this here to work around mobx
-            if ( !_.has ( this.assetTags, assetID )) {
-                this.assetTags [ assetID ] = {};
+        for ( let assetID in selection ) {
+            if ( !_.has ( assetTags, assetID )) {
+                assetTags [ assetID ] = {};
             }
-            this.assetTags [ assetID ][ tagName ] = value;
+            assetTags [ assetID ][ tagName ] = value;
         }
+        this.assetTags = assetTags;
     }
 
     //----------------------------------------------------------------//

@@ -49,7 +49,7 @@ const AccountDetailsView = observer (( props ) => {
                 <UI.Header.Subheader>
                     { `Nonce: ${ appState.nonce }` }
                 </UI.Header.Subheader>
-                </div>
+            </div>
         </div>
     );
 });
@@ -104,7 +104,6 @@ export const AccountScreen = observer (( props ) => {
     const accountID = util.getMatch ( props, 'accountID' );
 
     const appState              = hooks.useFinalizable (() => new AppStateService ( networkID, accountID ));
-    const accountInfoService    = hooks.useFinalizable (() => new AccountInfoService ( appState ));
 
     return (
         <SingleColumnContainerView>

@@ -11,10 +11,13 @@ import _                            from 'lodash';
 //================================================================//
 export class InventoryService {
 
-    @observable assets = {};
+    @observable assets          = {};
+    @observable isLoaded        = false;
 
     //----------------------------------------------------------------//
     constructor ( appState, inventoryController, progressController ) {
+
+        console.log ( 'INVENTORY SERVICE CONSTRUCTOR' );
 
         this.db = new Dexie ( 'volwal' ); 
         this.db.version ( 1 ).stores ({
@@ -31,51 +34,62 @@ export class InventoryService {
         this.appState   = appState;
         this.inventory  = inventoryController;
 
-        this.cancelAccountInfoReaction = reaction (
-            () => {
-                return {
-                    networkID:          appState.networkID,
-                    hasAccountInfo:     appState.hasAccountInfo,
-                    inventoryNonce:     appState.inventoryNonce,
-                };
-            },
-            ({ networkID, hasAccountInfo, inventoryNonce }) => {
-
-                if ( appState.hasAccountInfo ) {
-                    try {
-                        this.update ();
-                    }
-                    catch ( error ) {
-                        console.log ( error );
-                    }
-                }
-            }
-        );
+        this.serviceLoop ();
     }
 
     //----------------------------------------------------------------//
     finalize () {
 
         this.revocable.finalize ();
-        this.cancelAccountInfoReaction ();
     }
 
     //----------------------------------------------------------------//
     formatSchemaKey ( schemaHash, version ) {
+
         return `${ version.release } - ${ version.major }.${ version.minor }.${ version.revision } (${ schemaHash })`;
+    }
+
+    //----------------------------------------------------------------//
+    @computed
+    get inboxSize () {
+
+        let count = 0;
+        for ( let assetID in this.assets ) {
+            if ( this.isNew ( assetID )) {
+                count++;
+            }
+        }
+        return count;
+    }
+
+    //----------------------------------------------------------------//
+    isNew ( assetID ) {
+
+        const asset = this.assets [ assetID ];
+        return asset ? ( this.appState.inventoryNonce <= asset.inventoryNonce ) : false;
     }
 
     //----------------------------------------------------------------//
     async loadAssets () {
 
-        if ( this.assets ) return;
+        if ( this.isLoaded ) return;
 
+        console.log ( 'INVENTORY: LOADING ASSETS' );
+
+        let assets = {};
+        
         const record = await this.db.assets.get ( this.appState.accountID );
+        
         if ( record ) {
-            runInAction (() => {
-                this.assets = JSON.parse ( record.assets );
-            });
+            console.log ( 'INVENTORY: HAS CACHED ASSETS' );
+            assets = JSON.parse ( record.assets );
         }
+
+        runInAction (() => {
+            this.assets = assets;
+        });
+
+        this.inventory.setAssets ( assets );
     }
 
     //----------------------------------------------------------------//
@@ -86,10 +100,68 @@ export class InventoryService {
         runInAction (() => {
             this.schema = schema;
         });
+        this.inventory.setSchema ( schema );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async reset () {
+
+        console.log ( 'INVENTORY: RESET' );
+
+        if ( Object.keys ( this.assets ).length > 0 ) {
+            this.assets = {};
+            this.inventory.setAssets ({});
+            await this.db.assets.where ({ accountID: this.appState.accountID }).delete ();
+        }
+        this.appState.setAccountInventoryNonce ( 0 );
+    }
+
+    //----------------------------------------------------------------//
+    async serviceLoop () {
+
+        this.progress.setLoading ( true );
+
+        const schemaRecord = await this.db.schemas.get ({ networkID: this.appState.networkID });
+        if ( schemaRecord ) {
+
+            console.log ( 'INVENTORY: HAS SCHEMA RECORD' );
+
+            await this.makeSchema ( JSON.parse ( schemaRecord.json ));
+            if ( this.schema ) {
+
+                console.log ( 'INVENTORY: HAS CACHED SCHEMA' );
+
+                await this.loadAssets ();
+                if ( Object.keys ( this.assets ).length > 0 ) {
+
+                    console.log ( 'INVENTORY: LOADED CACHED ASSETS' );
+
+                    runInAction (() => {
+                        this.isLoaded = true;
+                    });
+                }
+            }
+        }
+
+        this.progress.setLoading ( false );
+
+        const update = async () => {
+            try {
+                await this.update ();
+            }
+            catch ( error ) {
+                console.log ( error );
+                throw error;
+            }
+        }
+        this.revocable.promiseWithBackoff ( async () => await update (), 5000, true );
     }
 
     //----------------------------------------------------------------//
     async update () {
+
+        console.log ( 'INVENTORY: UPDATE' );
 
         this.progress.setLoading ( true );
 
@@ -108,31 +180,42 @@ export class InventoryService {
             await this.updateSchema ( data.schemaHash, data.schemaVersion );
             if ( !this.schema ) return;
 
-            await this.progress.onProgress ( 'Loading Assets' );
-            await this.loadAssets ();
             await this.progress.onProgress ( 'Updating Inventory' );
-
+            
             const record = await this.db.accounts.get ( accountID );
 
-            if ( record && ( timestamp === record.timestamp ) && ( record.nonce < nonce )) {
-                await this.updateDelta ( record.nonce );
+            if ( record && ( timestamp === record.timestamp )) {
+                if ( record.nonce < nonce ) {
+                    await this.updateDelta ( record.nonce, nonce );
+                }
+                else if ( nonce < record.nonce ) {
+                    await this.reset ();
+                }
             }
             else {
                 this.updateAll ();
+                this.appState.setAccountInventoryNonce ( nonce );
             }
-
             await this.db.accounts.put ({ accountID: accountID, nonce: nonce, timestamp: timestamp });
         }
+        else {
+            await this.reset ();
+        }
+
         this.progress.setLoading ( false );
     }
 
     //----------------------------------------------------------------//
     async updateAll () {
 
-        await this.progress.onProgress ( 'Fetching Inventory' );
+        await this.reset ();
 
         const accountID = this.appState.accountID;
         const nodeURL = this.appState.network.nodeURL;
+
+        console.log ( 'INVENTORY: UPDATE ALL' );
+
+        await this.progress.onProgress ( 'Fetching Inventory' );
 
         const inventoryJSON = await this.revocable.fetchJSON ( nodeURL + '/accounts/' + accountID + '/inventory/assets' );
 
@@ -147,14 +230,41 @@ export class InventoryService {
             this.assets = assets;
         });
 
-        this.inventory.setSchema ( this.schema );
         this.inventory.setAssets ( this.assets );
     }
 
     //----------------------------------------------------------------//
-    async updateDelta ( nonce ) {
+    async updateDelta ( currentNonce, nextNonce ) {
 
-        await this.updateAll ();
+        console.log ( 'INVENTORY: UPDATE DELTA' );
+
+        await this.progress.onProgress ( 'Fetching Inventory' );
+
+        const accountID = this.appState.accountID;
+        const nodeURL = this.appState.network.nodeURL;
+
+        const count = nextNonce - currentNonce;
+        const url = `${ nodeURL }/accounts/${ accountID }/inventory/log/${ currentNonce }?count=${ count }`;
+        const data = await this.revocable.fetchJSON ( url );
+
+        runInAction (() => {
+
+            for ( let asset of data.assets ) {
+                console.log ( 'INVENTORY: ADDING ASSET', asset.assetID );
+                this.assets [ asset.assetID ] = asset;
+                this.inventory.setAsset ( asset );
+            }
+
+            for ( let assetID of data.deletions ) {
+                console.log ( 'INVENTORY: DELETING ASSET', assetID );
+                delete this.assets [ assetID ];
+                this.inventory.deleteAsset ( assetID );
+            }
+        });
+
+        await this.db.assets.put ({ accountID: accountID, assets: JSON.stringify ( this.assets )});
+        
+        this.inventory.setAssets ( this.assets );
     }
 
     //----------------------------------------------------------------//
@@ -169,17 +279,9 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Fetching Schema' );
 
-        const networkRecord = await this.db.networks.get ( networkID );
-
-        if ( networkRecord && ( networkRecord.schemaKey === schemaKey )) {
-
-            if ( !this.schema ) {
-                const schemaRecord = await this.db.schemas.get ({ networkID: networkID, key: schemaKey });
-                if ( schemaRecord ) {
-                    await this.makeSchema ( JSON.parse ( schemaRecord.json ));
-                }
-            }
-            if ( this.schema ) return;
+        if ( this.schema ) {
+            const networkRecord = await this.db.networks.get ( networkID );
+            if ( networkRecord && ( networkRecord.schemaKey === schemaKey )) return;
         }
 
         await this.db.schemas.where ({ networkID: networkID }).delete ();

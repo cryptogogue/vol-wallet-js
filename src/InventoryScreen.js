@@ -2,21 +2,18 @@
 
 import './InventoryScreen.css';
 
-import { AccountInfoService }                               from './AccountInfoService';
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { AppStateService }                                  from './AppStateService';
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
-import { InventoryService }                                 from './InventoryService';
-import { InventoryTagsController }                          from './InventoryTagsController';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { UpgradesFormController }                           from './UpgradesFormController';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
-import { assert, hooks, ProgressController, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
+import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { assert, hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
@@ -38,19 +35,19 @@ export const InventoryScreen = observer (( props ) => {
     const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
 
     const appState                  = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
-    const accountInfoService        = hooks.useFinalizable (() => new AccountInfoService ( appState ));
 
-    const progress                  = hooks.useFinalizable (() => new ProgressController ());
-    const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
-    const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
+    const progress                  = appState.inventoryProgress;
+    const inventory                 = appState.inventory;
+    const inventoryService          = appState.inventoryService;
+    const tags                      = appState.inventoryTags;
+
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
     const printController           = hooks.useFinalizable (() => new InventoryPrintController ( controller ));
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
     const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, inventory ));
-    const tags                      = hooks.useFinalizable (() => new InventoryTagsController ());
 
     controller.setFilterFunc (( assetID ) => {
-        return tags.isAssetVisible ( assetID ) && !appState.assetsUtilized.includes ( assetID );
+        return tags.isAssetVisible ( assetID ) && !( appState.assetsUtilized.includes ( assetID ) || inventoryService.isNew ( assetID ));
     });
 
     upgradesFormController.setFilterFunc (( assetID ) => {
@@ -75,7 +72,7 @@ export const InventoryScreen = observer (( props ) => {
         }
     }
 
-    const hasAssets = (( progress.loading === false ) && ( inventory.availableAssetsArray.length > 0 ));
+    const hasAssets = ( inventoryService.isLoaded && ( inventory.availableAssetsArray.length > 0 ));
 
     return (
         <div style = {{
@@ -83,12 +80,11 @@ export const InventoryScreen = observer (( props ) => {
             flexFlow: 'column',
             height: '100vh',
         }}>
-            <div className = "no-print">
+            <div className = 'no-print'>
                 <SingleColumnContainerView>
                     <AccountNavigationBar
                         appState    = { appState }
                         tab         = { ACCOUNT_TABS.INVENTORY }
-                        tags        = { tags }
                     />
                     <InventoryMenu
                         appState                = { appState }
@@ -101,7 +97,7 @@ export const InventoryScreen = observer (( props ) => {
                 </SingleColumnContainerView>
             </div>
 
-            <ProgressSpinner loading = { progress.loading } message = { progress.message }>
+            <ProgressSpinner loading = {( inventoryService.isLoaded === false ) && progress.loading } message = { progress.message }>
 
                 <If condition = { hasAssets }>
                     <Choose>

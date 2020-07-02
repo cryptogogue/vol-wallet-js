@@ -26,10 +26,11 @@ const InventoryTransactionScreenBody = observer (( props ) => {
     const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
 
     const appState                  = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
-    const accountInfoService        = hooks.useFinalizable (() => new AccountInfoService ( appState ));
-    const progress                  = hooks.useFinalizable (() => new ProgressController ());
-    const inventory                 = hooks.useFinalizable (() => new InventoryController ( progress ));
-    const inventoryService          = hooks.useFinalizable (() => new InventoryService ( appState, inventory, progress ));
+
+    const progress                  = appState.inventoryProgress;
+    const inventory                 = appState.inventory;
+    const inventoryService          = appState.inventoryService;
+
     const transactionController     = hooks.useFinalizable (() => controllerFactory ( appState, inventory ));
 
     const [ password, setPassword ] = useState ( '' );

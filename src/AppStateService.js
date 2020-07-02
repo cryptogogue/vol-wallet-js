@@ -1,11 +1,15 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as entitlements        from './util/entitlements';
-import { assert, crypto, excel, hooks, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
-import * as bcrypt              from 'bcryptjs';
-import _                        from 'lodash';
+import { AccountInfoService }           from './AccountInfoService';
+import { InventoryService }             from './InventoryService';
+import { InventoryTagsController }      from './InventoryTagsController';
+import * as entitlements                from './util/entitlements';
+import { InventoryController }          from 'cardmotron';
+import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
+import * as bcrypt                      from 'bcryptjs';
+import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
-import React                    from 'react';
+import React                            from 'react';
 
 const STORE_FLAGS               = '.vol_flags';
 const STORE_NETWORKS            = '.vol_networks';
@@ -294,6 +298,12 @@ export class AppStateService {
 
         this.setAccountInfo ();
         this.processTransactionsAsync ();
+
+        this.accountInfoService     = new AccountInfoService ( this );
+        this.inventoryProgress      = new ProgressController ();
+        this.inventory              = new InventoryController ( this.inventoryProgress );
+        this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
+        this.inventoryTags          = new InventoryTagsController ();
     }
 
     //----------------------------------------------------------------//
@@ -354,6 +364,12 @@ export class AppStateService {
 
         this.storage.finalize ();
         this.revocable.finalize ();
+
+        this.accountInfoService.finalize ();
+        this.inventoryProgress.finalize ();
+        this.inventory.finalize ();
+        this.inventoryService.finalize ();
+        this.inventoryTags.finalize ();
     }
 
     //----------------------------------------------------------------//
@@ -661,14 +677,10 @@ export class AppStateService {
                 this.accountInfo = {};
             }
 
-            // if ( !_.isEqual ( this.accountInfo, accountInfo )) {
-
-                this.accountInfo.balance            = accountInfo.balance;
-                this.accountInfo.nonce              = accountInfo.nonce;
-                this.accountInfo.inventoryNonce     = accountInfo.inventoryNonce;
-                this.accountInfo.newAssets          = accountInfo.newAssets || {};
-                this.accountInfo.height             = accountInfo.height || 0;
-            // }
+            this.accountInfo.balance            = accountInfo.balance;
+            this.accountInfo.nonce              = accountInfo.nonce;
+            this.accountInfo.inventoryNonce     = accountInfo.inventoryNonce;
+            this.accountInfo.height             = accountInfo.height || 0;
         }
         else {
             this.accountInfo = false;

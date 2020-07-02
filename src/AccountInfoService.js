@@ -60,36 +60,15 @@ export class AccountInfoService {
             data = await service.revocable.fetchJSON ( `${ appState.network.nodeURL }/keys/${ keyID }/account` );
         }
 
-        const account = data.account;
+        const accountInfo = data.account;
         const entitlements = data.entitlements;
 
-        if ( account ) {
-
-            const accountInfo = _.cloneDeep ( appState.accountInfo || {});
-
-            accountInfo.balance         = account.balance;
-            accountInfo.nonce           = account.nonce;
-            accountInfo.inventoryNonce  = account.inventoryNonce;
-            accountInfo.height          = account.height;
-
-            if ( appState.inventoryNonce < accountInfo.inventoryNonce ) {
-
-                const count = accountInfo.inventoryNonce - appState.inventoryNonce;
-                const url = `${ appState.network.nodeURL }/accounts/${ accountID }/inventory/log/${ appState.inventoryNonce }?count=${ count }`;
-                data = await service.revocable.fetchJSON ( url );
-
-                if ( data.additions && ( data.additions.length > 0 )) {
-                    accountInfo.newAssets = data.assets;
-                }
-                else {
-                    appState.setAccountInventoryNonce ( accountInfo.inventoryNonce );
-                }
-            }
+        if ( accountInfo ) {
 
             appState.setAccountInfo ( accountInfo );
-            appState.updateAccount ( account, entitlements );
+            appState.updateAccount ( accountInfo, entitlements );
 
-            if ( account.name !== accountID ) {
+            if ( accountInfo.name !== accountID ) {
                 appState.renameAccount ( accountID, account.name );
             }
         }
