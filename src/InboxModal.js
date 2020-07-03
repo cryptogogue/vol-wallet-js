@@ -48,7 +48,7 @@ export const InboxModal = observer (( props ) => {
     }
 
     const onClickSubmit = () => {
-        tags.tagSelection ( inventory.assets, tag, true );
+        tags.tagSelection ( inventoryService.newAssets, tag, true );
         appState.setAccountInventoryNonce ( appState.accountInfo.inventoryNonce );
         onClose ();
     };

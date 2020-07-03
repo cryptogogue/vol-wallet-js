@@ -104,6 +104,19 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
+    @computed
+    get newAssets () {
+
+        const newAssets = {};
+        for ( let assetID in this.assets ) {
+            if ( this.isNew ( assetID )) {
+                newAssets [ assetID ] = this.assets [ assetID ];
+            }
+        }
+        return newAssets;
+    }
+
+    //----------------------------------------------------------------//
     @action
     async reset () {
 
@@ -194,7 +207,6 @@ export class InventoryService {
             }
             else {
                 this.updateAll ();
-                this.appState.setAccountInventoryNonce ( nonce );
             }
             await this.db.accounts.put ({ accountID: accountID, nonce: nonce, timestamp: timestamp });
         }

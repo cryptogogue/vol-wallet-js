@@ -97,7 +97,7 @@ export const InventoryScreen = observer (( props ) => {
                 </SingleColumnContainerView>
             </div>
 
-            <ProgressSpinner loading = {( inventoryService.isLoaded === false ) && progress.loading } message = { progress.message }>
+            <ProgressSpinner loading = {( inventoryService.isLoaded === false ) && progress.loading } message = { inventoryService.isLoaded ? '' : progress.message }>
 
                 <If condition = { hasAssets }>
                     <Choose>
