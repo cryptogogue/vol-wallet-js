@@ -353,11 +353,12 @@ export class AccountStateService extends NetworkStateService {
         const accountName   = memo.body.maker.accountName;
         const url           = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
 
-        await this.revocable.fetchJSON ( url, {
+        const result = await this.revocable.fetchJSON ( url, {
             method :    'PUT',
             headers :   { 'content-type': 'application/json' },
             body :      JSON.stringify ( memo.envelope, null, 4 ),
         });
+        return ( result.status === 'RETRY' );
     }
 
     //----------------------------------------------------------------//
@@ -429,23 +430,23 @@ export class AccountStateService extends NetworkStateService {
 
         try {
 
-            const submitted = [];
+            const queue = [];
             const currentNonce = this.nonce;
 
             for ( let i = 0; i < pendingTransactions.length; ++i ) {
-                submitted.push ( _.cloneDeep ( pendingTransactions [ i ]));
+                queue.push ( _.cloneDeep ( pendingTransactions [ i ]));
             }
 
             for ( let i = 0; i < stagedTransactions.length; ++i ) {
-                submitted.push ( _.cloneDeep ( stagedTransactions [ i ]));
+                queue.push ( _.cloneDeep ( stagedTransactions [ i ]));
             }
 
             const recordBy = new Date ();
             recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
 
-            for ( let i = 0; i < submitted.length; ++i ) {
+            for ( let i = 0; i < queue.length; ++i ) {
 
-                let memo            = submitted [ i ];
+                let memo            = queue [ i ];
                 let nonce           = currentNonce + i;
 
                 let body            = memo.body;
@@ -473,12 +474,19 @@ export class AccountStateService extends NetworkStateService {
             }
 
             // submit these *before* clearing any cached transaction errors!
-            for ( let memo of submitted ) {
-                await this.putTransactionAsync ( memo );
+            const submitted = [];
+            while ( queue.length ) {
+                const memo = queue.shift ();
+                if ( await this.putTransactionAsync ( memo )) {
+                    submitted.push ( memo );
+                }
+                else {
+                    break;
+                }
             }
 
             runInAction (() => {
-                this.account.stagedTransactions     = [];
+                this.account.stagedTransactions     = queue;
                 this.account.pendingTransactions    = submitted;
                 this.account.transactionError       = false; // OK to clear the transaction error no.
             });

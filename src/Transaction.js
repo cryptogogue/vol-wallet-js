@@ -8,6 +8,7 @@ export const TRANSACTION_TYPE = {
     AFFIRM_KEY:                 'AFFIRM_KEY',
     BETA_GET_ASSETS:            'BETA_GET_ASSETS',
     BETA_GET_DECK:              'BETA_GET_DECK',
+    HARD_RESET:                 'HARD_RESET',
     KEY_POLICY:                 'KEY_POLICY',
     OPEN_ACCOUNT:               'OPEN_ACCOUNT',
     PUBLISH_SCHEMA:             'PUBLISH_SCHEMA',
@@ -47,6 +48,7 @@ export class Transaction {
             case TRANSACTION_TYPE.AFFIRM_KEY:                   return 'Affirm Key';
             case TRANSACTION_TYPE.BETA_GET_DECK:                return 'BETA Get Deck';
             case TRANSACTION_TYPE.BETA_GET_ASSETS:              return 'BETA Get Assets';
+            case TRANSACTION_TYPE.HARD_RESET:                   return 'Hard Reset';
             case TRANSACTION_TYPE.KEY_POLICY:                   return 'Key Policy';
             case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return 'Sponsor Account';
             case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return 'Publish Schema';

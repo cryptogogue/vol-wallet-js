@@ -5,6 +5,7 @@ import { TransactionFormController_AccountPolicy }          from './TransactionF
 import { TransactionFormController_AffirmKey }              from './TransactionFormController_AffirmKey';
 import { TransactionFormController_BetaGetAssets }          from './TransactionFormController_BetaGetAssets';
 import { TransactionFormController_BetaGetDeck }            from './TransactionFormController_BetaGetDeck';
+import { TransactionFormController_HardReset }              from './TransactionFormController_HardReset';
 import { TransactionFormController_KeyPolicy }              from './TransactionFormController_KeyPolicy';
 import { TransactionFormController_OpenAccount }            from './TransactionFormController_OpenAccount';
 import { TransactionFormController_PublishSchema }          from './TransactionFormController_PublishSchema';
@@ -29,6 +30,7 @@ export const gTransactionTypes = [
     
     TRANSACTION_TYPE.PUBLISH_SCHEMA,
     TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET,
+    TRANSACTION_TYPE.HARD_RESET,
     // TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,
     TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME,
@@ -42,6 +44,7 @@ function makeControllerForTransactionType ( appState, transactionType ) {
         case TRANSACTION_TYPE.AFFIRM_KEY:                   return new TransactionFormController_AffirmKey ( appState );
         case TRANSACTION_TYPE.BETA_GET_ASSETS:              return new TransactionFormController_BetaGetAssets ( appState );
         case TRANSACTION_TYPE.BETA_GET_DECK:                return new TransactionFormController_BetaGetDeck ( appState );
+        case TRANSACTION_TYPE.HARD_RESET:                   return new TransactionFormController_HardReset ( appState );
         case TRANSACTION_TYPE.KEY_POLICY:                   return new TransactionFormController_KeyPolicy ( appState );
         case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return new TransactionFormController_OpenAccount ( appState );
         case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return new TransactionFormController_PublishSchema ( appState );
