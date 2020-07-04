@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppStateService }                  from './AppStateService';
+import { AccountStateService }              from './AccountStateService';
 import { TransactionModal }                 from './TransactionModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
@@ -103,7 +103,7 @@ export const AccountScreen = observer (( props ) => {
     const networkID = util.getMatch ( props, 'networkID' );
     const accountID = util.getMatch ( props, 'accountID' );
 
-    const appState              = hooks.useFinalizable (() => new AppStateService ( networkID, accountID ));
+    const appState              = hooks.useFinalizable (() => new AccountStateService ( networkID, accountID ));
 
     return (
         <SingleColumnContainerView>

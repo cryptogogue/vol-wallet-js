@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { AppStateService }                                  from './AppStateService';
-import { KeyInfoMessage }                                    from './KeyInfoMessage';
+import { AccountStateService }                              from './AccountStateService';
+import { KeyInfoMessage }                                   from './KeyInfoMessage';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
@@ -19,7 +19,7 @@ export const KeysScreen = observer (( props ) => {
     const networkIDFromEndpoint = util.getMatch ( props, 'networkID' );
     const accountIDFromEndpoint = util.getMatch ( props, 'accountID' );
 
-    const appState      = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+    const appState      = hooks.useFinalizable (() => new AccountStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
 
     const keys = [];
     for ( let keyName in appState.account.keys ) {

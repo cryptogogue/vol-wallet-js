@@ -2,7 +2,7 @@
 
 
 import { AccountInfoService }                           from './AccountInfoService';
-import { AppStateService }                              from './AppStateService';
+import { AccountStateService }                          from './AccountStateService';
 import { PasswordInputField }                           from './PasswordInputField';
 import { InventoryService }                             from './InventoryService';
 import { TransactionForm }                              from './TransactionForm';
@@ -25,7 +25,7 @@ const InventoryTransactionScreenBody = observer (( props ) => {
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
 
-    const appState                  = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+    const appState                  = hooks.useFinalizable (() => new AccountStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
 
     const progress                  = appState.inventoryProgress;
     const inventory                 = appState.inventory;

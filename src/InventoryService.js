@@ -6,6 +6,8 @@ import { action, computed, extendObservable, observable, observe, reaction, runI
 import Dexie                        from 'dexie';
 import _                            from 'lodash';
 
+const debugLog = function () {}
+
 //================================================================//
 // InventoryService
 //================================================================//
@@ -16,8 +18,6 @@ export class InventoryService {
 
     //----------------------------------------------------------------//
     constructor ( appState, inventoryController, progressController ) {
-
-        console.log ( 'INVENTORY SERVICE CONSTRUCTOR' );
 
         this.db = new Dexie ( 'volwal' ); 
         this.db.version ( 1 ).stores ({
@@ -74,14 +74,14 @@ export class InventoryService {
 
         if ( this.isLoaded ) return;
 
-        console.log ( 'INVENTORY: LOADING ASSETS' );
+        debugLog ( 'INVENTORY: LOADING ASSETS' );
 
         let assets = {};
         
         const record = await this.db.assets.get ( this.appState.accountID );
         
         if ( record ) {
-            console.log ( 'INVENTORY: HAS CACHED ASSETS' );
+            debugLog ( 'INVENTORY: HAS CACHED ASSETS' );
             assets = JSON.parse ( record.assets );
         }
 
@@ -120,14 +120,13 @@ export class InventoryService {
     @action
     async reset () {
 
-        console.log ( 'INVENTORY: RESET' );
+        debugLog ( 'INVENTORY: RESET' );
 
         if ( Object.keys ( this.assets ).length > 0 ) {
             this.assets = {};
             this.inventory.setAssets ({});
             await this.db.assets.where ({ accountID: this.appState.accountID }).delete ();
         }
-        this.appState.setAccountInventoryNonce ( 0 );
     }
 
     //----------------------------------------------------------------//
@@ -138,17 +137,17 @@ export class InventoryService {
         const schemaRecord = await this.db.schemas.get ({ networkID: this.appState.networkID });
         if ( schemaRecord ) {
 
-            console.log ( 'INVENTORY: HAS SCHEMA RECORD' );
+            debugLog ( 'INVENTORY: HAS SCHEMA RECORD' );
 
             await this.makeSchema ( JSON.parse ( schemaRecord.json ));
             if ( this.schema ) {
 
-                console.log ( 'INVENTORY: HAS CACHED SCHEMA' );
+                debugLog ( 'INVENTORY: HAS CACHED SCHEMA' );
 
                 await this.loadAssets ();
                 if ( Object.keys ( this.assets ).length > 0 ) {
 
-                    console.log ( 'INVENTORY: LOADED CACHED ASSETS' );
+                    debugLog ( 'INVENTORY: LOADED CACHED ASSETS' );
 
                     runInAction (() => {
                         this.isLoaded = true;
@@ -174,7 +173,7 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async update () {
 
-        console.log ( 'INVENTORY: UPDATE' );
+        debugLog ( 'INVENTORY: UPDATE' );
 
         this.progress.setLoading ( true );
 
@@ -206,6 +205,7 @@ export class InventoryService {
                 }
             }
             else {
+                this.appState.setAccountInventoryNonce ( 0 );
                 this.updateAll ();
             }
             await this.db.accounts.put ({ accountID: accountID, nonce: nonce, timestamp: timestamp });
@@ -225,7 +225,7 @@ export class InventoryService {
         const accountID = this.appState.accountID;
         const nodeURL = this.appState.network.nodeURL;
 
-        console.log ( 'INVENTORY: UPDATE ALL' );
+        debugLog ( 'INVENTORY: UPDATE ALL' );
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 
@@ -248,7 +248,7 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async updateDelta ( currentNonce, nextNonce ) {
 
-        console.log ( 'INVENTORY: UPDATE DELTA' );
+        debugLog ( 'INVENTORY: UPDATE DELTA' );
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 

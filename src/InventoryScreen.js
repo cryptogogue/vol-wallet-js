@@ -3,7 +3,7 @@
 import './InventoryScreen.css';
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { AppStateService }                                  from './AppStateService';
+import { AccountStateService }                              from './AccountStateService';
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
@@ -34,7 +34,7 @@ export const InventoryScreen = observer (( props ) => {
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
 
-    const appState                  = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+    const appState                  = hooks.useFinalizable (() => new AccountStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
 
     const progress                  = appState.inventoryProgress;
     const inventory                 = appState.inventory;

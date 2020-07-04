@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountList }                      from './AccountList';
-import { AppStateService }                  from './AppStateService';
+import { NetworkStateService }              from './NetworkStateService';
 import { ImportAccountModal }               from './ImportAccountModal';
 import { NetworkNavigationBar, NETWORK_TABS } from './NetworkNavigationBar';
 import { PendingAccountList }               from './PendingAccountList';
@@ -79,7 +79,7 @@ export const NetworkActionsSegment = observer (( props ) => {
 export const NetworkScreen = observer (( props ) => {
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
-    const appState                  = hooks.useFinalizable (() => new AppStateService ( networkIDFromEndpoint ));
+    const appState                  = hooks.useFinalizable (() => new NetworkStateService ( networkIDFromEndpoint ));
 
     return (
         <SingleColumnContainerView>
