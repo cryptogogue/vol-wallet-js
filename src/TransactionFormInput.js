@@ -144,14 +144,28 @@ const SchemaFileInput = observer (( props ) => {
             const appState      = controller.appState;
             const nodeURL       = appState.network.nodeURL;
 
+            let scanner = false;
             try {
+                scanner = new SchemaScannerXLSX ( book );
+            }
+            catch ( error ) {
+                console.log ( error );
+                errorMessages.push ({ header: 'Scanner Error', body: error });
+            }
+            
+            if ( scanner && controller.checkSchema ) {
 
-                const scanner = new SchemaScannerXLSX ( book );
+                let current = false;
 
-                if ( controller.checkSchema ) {
-
-                    const current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
+                try {
+                    current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
                     if ( !( current && current.schema )) throw 'Could not download current schema.'
+                }
+                catch ( error ) {
+                    errorMessages.push ({ header: 'Network Error', body: 'Could not fetch current schema. Node may be offline.' });
+                }
+
+                if ( scanner && current ) {
 
                     const version0 = current.schema.version;
                     const version1 = scanner.schema.version;
@@ -188,11 +202,10 @@ const SchemaFileInput = observer (( props ) => {
                 setSchema ( scanner.schema );
                 field.setInputString ( JSON.stringify ( scanner.schema ));
             }
-            catch ( error ) {
-                errorMessages.push ({ header: 'Network Error', body: 'Could not fetch current schema. Node may be offline.' });
-            }
         }
+
         controller.validate ();
+
         if ( field.error ) {
             errorMessages.push ({ header: 'Field Error', body: field.error });
         }

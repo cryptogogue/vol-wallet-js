@@ -292,7 +292,6 @@ export class AccountStateService extends NetworkStateService {
                     switch ( checkResult.status ) {
 
                         case 'ACCEPTED':
-                            console.log ( 'ACCEPTED' );
                             runInAction (() => {
                                 pendingTransactions.shift ();
                             });
@@ -300,7 +299,6 @@ export class AccountStateService extends NetworkStateService {
                             break;
 
                         case 'REJECTED':
-                            console.log ( 'REJECTED' );
                             runInAction (() => {
                                 this.account.transactionError = {
                                     message:    checkResult.message,
@@ -310,9 +308,8 @@ export class AccountStateService extends NetworkStateService {
                             break;
 
                         case 'UNKNOWN':
-                            console.log ( 'UNKNOWN' );
                             await this.putTransactionAsync ( memo );
-                            return;
+                            break;
 
                         default:
                             break;
