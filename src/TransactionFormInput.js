@@ -198,7 +198,9 @@ const SchemaFileInput = observer (( props ) => {
 
                 errorMessages       = errorMessages.concat ( scanner.errors );
                 warningMessages     = warningMessages.concat ( scanner.warnings );
+            }
 
+            if ( scanner ) {
                 setSchema ( scanner.schema );
                 field.setInputString ( JSON.stringify ( scanner.schema ));
             }

@@ -240,6 +240,7 @@ export class InventoryService {
 
         runInAction (() => {
             this.assets = assets;
+            this.appState.account.assetsSent = {};
         });
 
         this.inventory.setAssets ( this.assets );
@@ -259,19 +260,26 @@ export class InventoryService {
         const url = `${ nodeURL }/accounts/${ accountID }/inventory/log/${ currentNonce }?count=${ count }`;
         const data = await this.revocable.fetchJSON ( url );
 
+        const assetsSent = _.clone ( this.appState.account.assetsSent || {});
+
         runInAction (() => {
 
             for ( let asset of data.assets ) {
+                delete assetsSent [ asset.assetID ];
                 console.log ( 'INVENTORY: ADDING ASSET', asset.assetID );
                 this.assets [ asset.assetID ] = asset;
                 this.inventory.setAsset ( asset );
             }
 
             for ( let assetID of data.deletions ) {
+                delete assetsSent [ assetID ];
+                if ( data.additions.includes ( assetID )) continue;
                 console.log ( 'INVENTORY: DELETING ASSET', assetID );
                 delete this.assets [ assetID ];
                 this.inventory.deleteAsset ( assetID );
             }
+
+            this.appState.account.assetsSent = assetsSent;
         });
 
         await this.db.assets.put ({ accountID: accountID, assets: JSON.stringify ( this.assets )});

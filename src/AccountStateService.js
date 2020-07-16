@@ -40,7 +40,7 @@ export class AccountStateService extends NetworkStateService {
     @computed get
     assetsUtilized () {
 
-        let assetsUtilized = [];
+        let assetsUtilized = this.account.assetsSent ? Object.keys ( this.account.assetsSent ) : [];
 
         // touch .length to force update if change (mobx)
         const pendingTransactions = this.pendingTransactions;
@@ -293,7 +293,12 @@ export class AccountStateService extends NetworkStateService {
 
                         case 'ACCEPTED':
                             runInAction (() => {
+                                const assetsSent = _.clone ( this.account.assetsSent || {});
+                                for ( let assetID of memo.assets ) {
+                                    assetsSent [ assetID ] = assetID;
+                                }
                                 pendingTransactions.shift ();
+                                this.account.assetsSent = assetsSent;
                             });
                             more = true;
                             break;
