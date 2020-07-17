@@ -130,6 +130,39 @@ const SchemaFileInput = observer (( props ) => {
         }
     }
 
+    const filterDefinitionCollisions = ( tableName, scanner, current, update ) => {
+
+        for ( let key in current ) {
+            if ( _.has ( update, key )) {
+
+                const fields0 = current [ key ].fields;
+                const fields1 = update [ key ].fields;
+
+                if ( !_.isEqual ( fields0, fields1 )) {
+
+                    for ( let fieldname in fields0 ) {
+                        if ( !_.has ( fields1, fieldname )) {
+                            scanner.reportError ( `Collision in definition '${ key }': Attemped redefinition removing field named '${ fieldname }'.` );
+                        }
+                    }
+
+                    for ( let fieldname in fields1 ) {
+                        if ( !_.has ( fields0, fieldname )) {
+                            scanner.reportError ( `Collision in definition '${ key }': Attemped redefinition adding field named '${ fieldname }'.` );
+                        }
+                    }
+
+                    for ( let fieldname in fields0 ) {
+                        if ( _.has ( fields1, fieldname ) && !_.isEqual ( fields0 [ fieldname ], fields1 [ fieldname ])) {
+                            scanner.reportError ( `Collision in definition '${ key }': Mismatch on field '${ fieldname }'.` );
+                        }
+                    }
+                }
+                delete update [ key ];
+            }
+        }
+    }
+
     const loadFile = async ( binary ) => {
 
         setSchema ( false );
@@ -183,7 +216,8 @@ const SchemaFileInput = observer (( props ) => {
                         errorMessages.push ({ header: 'Version Error', body: 'New schema must increment version.' });
                     }
 
-                    filterCollisions ( 'definitions', scanner, current.schema.definitions, scanner.schema.definitions );
+                    filterDefinitionCollisions ( 'definitions', scanner, current.schema.definitions, scanner.schema.definitions );
+
                     filterCollisions ( 'fonts', scanner, current.schema.fonts, scanner.schema.fonts );
                     filterCollisions ( 'icons', scanner, current.schema.icons, scanner.schema.icons );
                     filterCollisions ( 'layouts', scanner, current.schema.layouts, scanner.schema.layouts );
