@@ -2,7 +2,7 @@
 
 import { TransactionBalanceHeader, TransactionFormFields } from './BasicTransactionForm';
 import { TransactionFormInput }             from './TransactionFormInput';
-import { AssetCardView, inventoryMenuItems, InventoryViewController, InventoryView } from 'cardmotron';
+import { AssetCardView, InventoryFilter, inventoryMenuItems, InventoryViewController, InventoryView } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
@@ -18,7 +18,7 @@ export const CraftingAssetSelectionModal = observer (( props ) => {
     const { paramModalState, setParamModalState } = props;
     const [ closeTimeout, setCloseTimeout ] = useState ( false );
 
-    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( craftingFormController.inventory, false ));
+    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( craftingFormController.inventory ));
 
     if ( paramModalState === false ) {
         return ( <React.Fragment/> );
@@ -26,11 +26,11 @@ export const CraftingAssetSelectionModal = observer (( props ) => {
 
     const { invocation, paramName } = paramModalState;
     const allOptions        = invocation.methodBinding.getParamOptions ( paramName );
-    const availableOptions  = invocation.methodBinding.getParamOptions ( paramName, invocation.assetParams );
+    const availableOptions  = invocation.methodBinding.getParamOptions ( paramName, invocation.assetParams );    
 
-    inventoryViewController.setFilterFunc (( assetID ) => {
+    inventoryViewController.setInventory ( new InventoryFilter ( craftingFormController.inventory, ( assetID ) => {
         return allOptions.includes ( assetID );
-    });
+    }));
 
     const isSelected = ( assetID ) => {
         return ( invocation.assetParams [ paramName ] === assetID );

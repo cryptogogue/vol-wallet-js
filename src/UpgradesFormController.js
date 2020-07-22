@@ -13,22 +13,23 @@ import { observer }                         from 'mobx-react';
 //================================================================//
 export class UpgradesFormController extends TransactionFormController {
 
-    @observable upgrades = [];
-    @observable assetsWithUpgrades = [];
+    @observable inventory               = false;
+    @observable upgrades                = [];
+    @observable assetsWithUpgrades      = [];
 
     //----------------------------------------------------------------//
     constructor ( appState, inventory ) {
         super ();
 
-        this.inventory = inventory;
+        runInAction (() => {
+            this.inventory = inventory; // needed by UpgradesForm
+        });
+
         this.initialize ( appState, TRANSACTION_TYPE.UPGRADE_ASSETS );
 
         this.cancelRebuildReaction = reaction (
             () => {
-                return {
-                    assets: inventory.availableAssetsArray,
-                    assetsUtilized: appState.assetsUtilized,
-                };
+                return inventory.assets;
             },
             ( params ) => {
                 this.rebuild ( appState, inventory );
@@ -70,19 +71,13 @@ export class UpgradesFormController extends TransactionFormController {
     @action
     rebuild ( appState, inventory ) {
 
-        const assetsUtilized = appState ? appState.assetsUtilized : [];
-
-        this.inventory = inventory;
-
-        const assets = inventory.availableAssetsArray;
+        const assets = inventory.assetsArray;
         if ( !assets.length ) return;
 
         const upgrades = [];
         const assetsWithUpgrades = [];
 
         for ( let asset of assets ) {
-
-            if ( assetsUtilized.includes ( asset.assetID )) continue;
 
             const forAsset = inventory.schema.getUpgradesForAsset ( asset );
             if ( forAsset ) {
@@ -117,12 +112,6 @@ export class UpgradesFormController extends TransactionFormController {
 
         this.upgrades [ upgradeID ].selected = option;
         this.validate ();
-    }
-
-    //----------------------------------------------------------------//
-    setFilterFunc ( filter ) {
-
-        this.filter = typeof ( filter ) === 'function' ? filter : false;
     }
 
     //----------------------------------------------------------------//

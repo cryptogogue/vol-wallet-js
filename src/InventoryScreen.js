@@ -12,7 +12,7 @@ import KeyboardEventHandler                                 from 'react-keyboard
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { UpgradesFormController }                           from './UpgradesFormController';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { AssetModal, AssetTagsModal, InventoryFilter, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
@@ -41,18 +41,19 @@ export const InventoryScreen = observer (( props ) => {
     const inventoryService          = appState.inventoryService;
     const tags                      = appState.inventoryTags;
 
-    const controller                = hooks.useFinalizable (() => new InventoryViewController ( inventory ));
-    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( controller ));
-    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, inventory ));
-    const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, inventory ));
-
-    controller.setFilterFunc (( assetID ) => {
+    const viewFilter = new InventoryFilter ( inventory, ( assetID ) => {
         return tags.isAssetVisible ( assetID ) && !( appState.assetsUtilized.includes ( assetID ) || inventoryService.isNew ( assetID ));
     });
 
-    upgradesFormController.setFilterFunc (( assetID ) => {
-        return controller.filterFunc ( assetID ) && ( controller.hasSelection ? controller.isSelected ( assetID ) : true );
+    const controller                = hooks.useFinalizable (() => new InventoryViewController ( viewFilter ));
+    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( controller ));
+
+    const upgradesFilter = new InventoryFilter ( inventory, ( assetID ) => {
+        return viewFilter.filterFunc ( assetID ) && ( controller.hasSelection ? controller.isSelected ( assetID ) : true );
     });
+
+    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, viewFilter ));
+    const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, upgradesFilter ));
 
     const onAssetSelect = ( asset, toggle ) => {
         controller.toggleAssetSelection ( asset );
@@ -72,7 +73,7 @@ export const InventoryScreen = observer (( props ) => {
         }
     }
 
-    const hasAssets = ( inventoryService.isLoaded && ( inventory.availableAssetsArray.length > 0 ));
+    const hasAssets = ( inventoryService.isLoaded && ( inventory.assetsArray.length > 0 ));
 
     return (
         <div style = {{

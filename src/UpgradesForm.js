@@ -120,6 +120,7 @@ const UpgradeModal = observer (( props ) => {
 
         assetViews [ option ] = (
             <AssetView
+                key = { type }
                 assetID = { type }
                 inventory = { inventory }
             />
@@ -128,6 +129,8 @@ const UpgradeModal = observer (( props ) => {
 
     const fromName = schema.getFriendlyNameForAsset ( upgrade.asset );
     const toName = schema.getFriendlyNameForType ( upgrade.selected );
+
+    console.log ( 'SELECTION CHANGED:', upgrade.selected );
 
     return (
         <UI.Modal

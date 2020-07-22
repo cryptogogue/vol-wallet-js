@@ -93,7 +93,6 @@ export class CraftingFormController extends TransactionFormController {
     filter ( assetID, invocation ) {
 
         if ( invocation && invocation.assetsUtilized [ assetID ]) return true;
-        if ( this.appState.assetsUtilized.includes ( assetID )) return false;
         if ( this.assetsUtilized [ assetID ] === true ) return false;
 
         return true;

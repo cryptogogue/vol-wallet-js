@@ -27,11 +27,11 @@ export const InboxModal = observer (( props ) => {
     const [ dateTag ]       = useState ( `New Assets - ${ getShortDateString ()}` );
     const [ tag, setTag ]   = useState ( dateTag );
 
-    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( inventory, false ));
-
-    inventoryViewController.setFilterFunc (( assetID ) => {
+    const viewFilter = new InventoryFilter ( inventory, ( assetID ) => {
         return inventoryService.isNew ( assetID );
     });
+
+    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( viewFilter, false ));
 
     const tagNames = tags.tagNames.slice ( 0 );
     tagNames.push ( dateTag );

@@ -21,7 +21,6 @@ import { InventoryScreen }              from './InventoryScreen';
 import { KeysScreen }                   from './KeysScreen';
 import { NetworkScreen }                from './NetworkScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
-import { UpgradesScreen }               from './UpgradesScreen';
 import registerServiceWorker            from './util/registerServiceWorker';
 import React                            from 'react';
 import { useClearCache }                from "react-clear-cache";
@@ -48,7 +47,6 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/debug"          component = { AccountDebugScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
-                <Route exact path = "/net/:networkID/account/:accountID/upgrades"       component = { UpgradesScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
                 
                 <Route exact path = "/util/schema"              component = { SchemaUtilScreen }/>
