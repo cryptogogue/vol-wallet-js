@@ -21,7 +21,7 @@ const TransactionModalBody = observer (( props ) => {
     const [ password, setPassword ]                                 = useState ( '' );
     const [ controllerFromDropdown, setControllerFromDropdown ]     = useState ( false );
 
-    const controller = props.controller || controllerFromDropdown;
+    const controller        = props.controller || controllerFromDropdown;
 
     const showDropdown      = !props.controller;
     const title             = controller ? controller.friendlyName : 'New Transaction';

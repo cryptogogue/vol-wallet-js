@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AssetCardView, InventoryView, InventoryViewController } from 'cardmotron';
+import { AssetCardView, InventoryFilter, InventoryView, InventoryViewController } from 'cardmotron';
 import { hooks, ProgressSpinner }           from 'fgc';
 import React, { useEffect, useState }       from 'react';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
