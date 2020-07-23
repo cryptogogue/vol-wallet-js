@@ -143,10 +143,18 @@ export class CraftingFormController extends TransactionFormController {
             assetParams [ paramName ] = false;
         }
 
+        const constParams = {};
+        for ( let paramName in method.constArgs ) {
+            constParams [ paramName ] = {
+                type:       'STRING',
+                value:      '',
+            };
+        }
+
         const invocation = {
             method:             method,
             assetParams:        assetParams,
-            constParams:        {},
+            constParams:        constParams,
             methodBinding:      methodBinding,
             assetsUtilized:     {},
             hasParams:          false,
@@ -212,6 +220,14 @@ export class CraftingFormController extends TransactionFormController {
             this.assetsUtilized [ assetID ] = true;
             invocation.assetsUtilized [ assetID ] = true;
         }
+        this.validate ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setConstParam ( invocation, paramName, value ) {
+
+        invocation.constParams [ paramName ].value = value;
         this.validate ();
     }
 
