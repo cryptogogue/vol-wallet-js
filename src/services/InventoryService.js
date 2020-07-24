@@ -7,6 +7,7 @@ import Dexie                        from 'dexie';
 import _                            from 'lodash';
 
 const debugLog = function () {}
+// const debugLog = console.log;
 
 //================================================================//
 // InventoryService
@@ -14,7 +15,14 @@ const debugLog = function () {}
 export class InventoryService {
 
     @observable assets          = {};
-    @observable isLoaded        = false;
+    @observable version         = false;
+
+    //----------------------------------------------------------------//
+    @computed
+    get accountID () {
+
+        return this.appState.accountID;
+    }
 
     //----------------------------------------------------------------//
     constructor ( appState, inventoryController, progressController ) {
@@ -23,8 +31,8 @@ export class InventoryService {
         this.db.version ( 1 ).stores ({
             networks:   'networkID',
             schemas:    '[networkID+key], networkID',
-            accounts:   'accountID',
-            assets:     'accountID',
+            accounts:   '[networkID+accountID]',
+            assets:     '[networkID+accountID]',
         });
         this.db.open ();
 
@@ -72,13 +80,11 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async loadAssets () {
 
-        if ( this.isLoaded ) return;
-
         debugLog ( 'INVENTORY: LOADING ASSETS' );
 
         let assets = {};
         
-        const record = await this.db.assets.get ( this.appState.accountID );
+        const record = await this.db.assets.get ({ networkID: this.networkID, accountID: this.accountID });
         
         if ( record ) {
             debugLog ( 'INVENTORY: HAS CACHED ASSETS' );
@@ -93,13 +99,18 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
-    async loadSchema () {
+    async loadOrReload () {
 
-        if ( this.schema ) return;
+        const version = await this.db.accounts.get ({ networkID: this.networkID, accountID: this.accountID });
+        if ( !version ) return;
+
+        if (( this.version.timestamp === version.timestamp ) && ( this.version.nonce === version.nonce )) return;
+
+        debugLog ( 'LOADING SCHEMA AND INVENTORY FROM DB' );
 
         this.progress.setLoading ( true );
 
-        const schemaRecord = await this.db.schemas.get ({ networkID: this.appState.networkID });
+        const schemaRecord = await this.db.schemas.get ({ networkID: this.networkID });
         if ( schemaRecord ) {
 
             debugLog ( 'INVENTORY: HAS SCHEMA RECORD' );
@@ -122,6 +133,10 @@ export class InventoryService {
         }
 
         this.progress.setLoading ( false );
+
+        runInAction (() => {
+            this.version = version; // don't reload until next version
+        });
     }
 
     //----------------------------------------------------------------//
@@ -133,6 +148,13 @@ export class InventoryService {
             this.schema = schema;
         });
         this.inventory.setSchema ( schema );
+    }
+
+    //----------------------------------------------------------------//
+    @computed
+    get networkID () {
+
+        return this.appState.networkID;
     }
 
     //----------------------------------------------------------------//
@@ -149,6 +171,13 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
+    @computed
+    get nodeURL () {
+
+        return this.appState.network.nodeURL;
+    }
+
+    //----------------------------------------------------------------//
     @action
     async reset () {
 
@@ -157,7 +186,7 @@ export class InventoryService {
         if ( Object.keys ( this.assets ).length > 0 ) {
             this.assets = {};
             this.inventory.setAssets ({});
-            await this.db.assets.where ({ accountID: this.appState.accountID }).delete ();
+            await this.db.assets.where ({ networkID: this.networkID, accountID: this.accountID }).delete ();
         }
     }
 
@@ -165,12 +194,11 @@ export class InventoryService {
     async serviceStep () {
 
         try {
-            await this.loadSchema ();
+            await this.loadOrReload ();
             await this.update ();
         }
         catch ( error ) {
             console.log ( error );
-            throw error;
         }
     }
 
@@ -183,10 +211,7 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Updating Inventory' );
 
-        const accountID     = this.appState.accountID;
-        const nodeURL       = this.appState.network.nodeURL;
-
-        const data          = await this.revocable.fetchJSON ( `${ nodeURL }/accounts/${ accountID }/inventory` );
+        const data          = await this.revocable.fetchJSON ( `${ this.nodeURL }/accounts/${ this.accountID }/inventory` );
 
         const nonce         = data.inventoryNonce;
         const timestamp     = data.inventoryTimestamp;
@@ -198,13 +223,13 @@ export class InventoryService {
 
             await this.progress.onProgress ( 'Updating Inventory' );
             
-            const record = await this.db.accounts.get ( accountID );
+            const version = this.version;
 
-            if ( record && ( timestamp === record.timestamp )) {
-                if ( record.nonce < nonce ) {
-                    await this.updateDelta ( record.nonce, nonce );
+            if ( version && ( timestamp === version.timestamp )) {
+                if ( version.nonce < nonce ) {
+                    await this.updateDelta ( version.nonce, nonce );
                 }
-                else if ( nonce < record.nonce ) {
+                else if ( nonce < version.nonce ) {
                     await this.reset ();
                 }
             }
@@ -212,7 +237,10 @@ export class InventoryService {
                 this.appState.setAccountInventoryNonce ( 0 );
                 this.updateAll ();
             }
-            await this.db.accounts.put ({ accountID: accountID, nonce: nonce, timestamp: timestamp });
+
+            const nextVersion = { networkID: this.networkID, accountID: this.accountID, nonce: nonce, timestamp: timestamp };
+            runInAction (() => { this.version = nextVersion; });
+            await this.db.accounts.put ( nextVersion );
         }
         else {
             await this.reset ();
@@ -226,21 +254,18 @@ export class InventoryService {
 
         await this.reset ();
 
-        const accountID = this.appState.accountID;
-        const nodeURL = this.appState.network.nodeURL;
-
         debugLog ( 'INVENTORY: UPDATE ALL' );
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 
-        const inventoryJSON = await this.revocable.fetchJSON ( nodeURL + '/accounts/' + accountID + '/inventory/assets' );
+        const inventoryJSON = await this.revocable.fetchJSON ( this.nodeURL + '/accounts/' + this.accountID + '/inventory/assets' );
 
         const assets = {};
         for ( let asset of inventoryJSON.inventory ) {
             assets [ asset.assetID ] = asset;
         }
 
-        await this.db.assets.put ({ accountID: accountID, assets: JSON.stringify ( assets )});
+        await this.db.assets.put ({ networkID: this.networkID, accountID: this.accountID, assets: JSON.stringify ( assets )});
 
         runInAction (() => {
             this.assets = assets;
@@ -257,11 +282,8 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 
-        const accountID = this.appState.accountID;
-        const nodeURL = this.appState.network.nodeURL;
-
         const count = nextNonce - currentNonce;
-        const url = `${ nodeURL }/accounts/${ accountID }/inventory/log/${ currentNonce }?count=${ count }`;
+        const url = `${ this.nodeURL }/accounts/${ this.accountID }/inventory/log/${ currentNonce }?count=${ count }`;
         const data = await this.revocable.fetchJSON ( url );
 
         const assetsSent = _.clone ( this.appState.account.assetsSent || {});
@@ -270,7 +292,7 @@ export class InventoryService {
 
             for ( let asset of data.assets ) {
                 delete assetsSent [ asset.assetID ];
-                console.log ( 'INVENTORY: ADDING ASSET', asset.assetID );
+                debugLog ( 'INVENTORY: ADDING ASSET', asset.assetID );
                 this.assets [ asset.assetID ] = asset;
                 this.inventory.setAsset ( asset );
             }
@@ -278,7 +300,7 @@ export class InventoryService {
             for ( let assetID of data.deletions ) {
                 delete assetsSent [ assetID ];
                 if ( data.additions.includes ( assetID )) continue;
-                console.log ( 'INVENTORY: DELETING ASSET', assetID );
+                debugLog ( 'INVENTORY: DELETING ASSET', assetID );
                 delete this.assets [ assetID ];
                 this.inventory.deleteAsset ( assetID );
             }
@@ -286,16 +308,14 @@ export class InventoryService {
             this.appState.account.assetsSent = assetsSent;
         });
 
-        await this.db.assets.put ({ accountID: accountID, assets: JSON.stringify ( this.assets )});
-        
+        await this.db.assets.put ({ networkID: this.networkID, accountID: this.accountID, assets: JSON.stringify ( this.assets )});
+
         this.inventory.setAssets ( this.assets );
     }
 
     //----------------------------------------------------------------//
     async updateSchema ( schemaHash, schemaVersion ) {
 
-        const networkID     = this.appState.networkID;
-        const nodeURL       = this.appState.network.nodeURL;
         const schema        = false;
 
         if ( !( schemaHash && schemaVersion )) return;
@@ -304,17 +324,17 @@ export class InventoryService {
         await this.progress.onProgress ( 'Fetching Schema' );
 
         if ( this.schema ) {
-            const networkRecord = await this.db.networks.get ( networkID );
+            const networkRecord = await this.db.networks.get ( this.networkID );
             if ( networkRecord && ( networkRecord.schemaKey === schemaKey )) return;
         }
 
-        await this.db.schemas.where ({ networkID: networkID }).delete ();
+        await this.db.schemas.where ({ networkID: this.networkID }).delete ();
 
-        const schemaInfo = ( await this.revocable.fetchJSON ( nodeURL + '/schema' ));
+        const schemaInfo = ( await this.revocable.fetchJSON ( this.nodeURL + '/schema' ));
 
         schemaKey = this.formatSchemaKey ( schemaInfo.schemaHash, schemaInfo.schema.version );
-        await this.db.schemas.put ({ networkID: networkID, key: schemaKey, json: JSON.stringify ( schemaInfo.schema )});
-        await this.db.networks.put ({ networkID: networkID, schemaKey: schemaKey });
+        await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, json: JSON.stringify ( schemaInfo.schema )});
+        await this.db.networks.put ({ networkID: this.networkID, schemaKey: schemaKey });
 
         await this.makeSchema ( schemaInfo.schema );
     }

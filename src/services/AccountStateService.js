@@ -209,12 +209,12 @@ export class AccountStateService extends NetworkStateService {
 
         let timeout = 5000;
 
+        await this.accountInfoService.syncAccountInfo ();
+
         if ( this.transactionQueue.pendingTransactions.length > 0 ) {
             await this.transactionQueue.processTransactionsAsync ();
         }
         else {
-            console.log ( 'SYNC ACCOUNT INFO' );
-            await this.accountInfoService.syncAccountInfo ();
             await this.inventoryService.serviceStep ();
         }
         this.revocable.timeout (() => { this.serviceLoop ()}, timeout );

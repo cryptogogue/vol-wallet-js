@@ -28,8 +28,8 @@ export const TransactionQueueModal = observer (( props ) => {
     };
     
     let onClickClear = () => {
-        appState.clearPendingTransactions ();
-        appState.clearStagedTransactions ();
+        appState.transactionQueue.clearPendingTransactions ();
+        appState.transactionQueue.clearStagedTransactions ();
         clearPassword ();
     };
 
