@@ -13,6 +13,8 @@ export const TransactionQueueModal = observer (( props ) => {
 
     const { appState, open, onClose } = props;
 
+    const queue = appState.transactionQueue;
+
     const [ count, setCount ] = useState ( 0 );
     const [ password, setPassword ] = useState ( '' );
 
@@ -31,11 +33,11 @@ export const TransactionQueueModal = observer (( props ) => {
         clearPassword ();
     };
 
-    const allTransactions = appState.pendingTransactions.concat ( appState.stagedTransactions );
+    const allTransactions = queue.pendingTransactions.concat ( queue.stagedTransactions );
 
     const passwordIsValid = appState.checkPassword ( password );
-    const clearEnabled = ( passwordIsValid && appState.canClearTransactions );
-    const submitEnabled = ( passwordIsValid && appState.canSubmitTransactions );
+    const clearEnabled = ( passwordIsValid && queue.canClearTransactions );
+    const submitEnabled = ( passwordIsValid && queue.canSubmitTransactions );
 
     return (
         <UI.Modal
@@ -48,16 +50,16 @@ export const TransactionQueueModal = observer (( props ) => {
 
             <UI.Modal.Content>
                 
-                <If condition = { appState.hasTransactionError }>
+                <If condition = { queue.hasTransactionError }>
                     <UI.Message
                         error
                         icon = 'exclamation triangle'
-                        header = 'Transactions Error Occured'
-                        content = { appState.transactionError.message }
+                        header = 'Transaction Error Occured'
+                        content = { queue.transactionError.message }
                     />
                 </If>
 
-                <TransactionQueueView transactions = { allTransactions } error = { appState.transactionError }/>
+                <TransactionQueueView transactions = { allTransactions } error = { queue.transactionError }/>
 
                 <UI.Form>
                     <PasswordInputField

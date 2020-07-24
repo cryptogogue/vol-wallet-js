@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AccountStateService }              from './AccountStateService';
+import { AccountInfoService }               from './services/AccountInfoService';
+import { AccountStateService }              from './services/AccountStateService';
 import { TransactionModal }                 from './TransactionModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
@@ -11,7 +12,6 @@ import { useParams }                        from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
 import { AccountNavigationBar, ACCOUNT_TABS } from './AccountNavigationBar';
-import { AccountInfoService }               from './AccountInfoService';
 
 //================================================================//
 // AccountDetailsView

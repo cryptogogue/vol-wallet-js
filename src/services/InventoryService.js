@@ -34,7 +34,7 @@ export class InventoryService {
         this.appState   = appState;
         this.inventory  = inventoryController;
 
-        this.serviceLoop ();
+        // this.serviceLoop ();
     }
 
     //----------------------------------------------------------------//
@@ -93,6 +93,38 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
+    async loadSchema () {
+
+        if ( this.schema ) return;
+
+        this.progress.setLoading ( true );
+
+        const schemaRecord = await this.db.schemas.get ({ networkID: this.appState.networkID });
+        if ( schemaRecord ) {
+
+            debugLog ( 'INVENTORY: HAS SCHEMA RECORD' );
+
+            await this.makeSchema ( JSON.parse ( schemaRecord.json ));
+            if ( this.schema ) {
+
+                debugLog ( 'INVENTORY: HAS CACHED SCHEMA' );
+
+                await this.loadAssets ();
+                if ( Object.keys ( this.assets ).length > 0 ) {
+
+                    debugLog ( 'INVENTORY: LOADED CACHED ASSETS' );
+
+                    runInAction (() => {
+                        this.isLoaded = true;
+                    });
+                }
+            }
+        }
+
+        this.progress.setLoading ( false );
+    }
+
+    //----------------------------------------------------------------//
     async makeSchema ( json ) {
 
         const schema = new Schema ( json );
@@ -130,44 +162,16 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
-    async serviceLoop () {
+    async serviceStep () {
 
-        this.progress.setLoading ( true );
-
-        const schemaRecord = await this.db.schemas.get ({ networkID: this.appState.networkID });
-        if ( schemaRecord ) {
-
-            debugLog ( 'INVENTORY: HAS SCHEMA RECORD' );
-
-            await this.makeSchema ( JSON.parse ( schemaRecord.json ));
-            if ( this.schema ) {
-
-                debugLog ( 'INVENTORY: HAS CACHED SCHEMA' );
-
-                await this.loadAssets ();
-                if ( Object.keys ( this.assets ).length > 0 ) {
-
-                    debugLog ( 'INVENTORY: LOADED CACHED ASSETS' );
-
-                    runInAction (() => {
-                        this.isLoaded = true;
-                    });
-                }
-            }
+        try {
+            await this.loadSchema ();
+            await this.update ();
         }
-
-        this.progress.setLoading ( false );
-
-        const update = async () => {
-            try {
-                await this.update ();
-            }
-            catch ( error ) {
-                console.log ( error );
-                throw error;
-            }
+        catch ( error ) {
+            console.log ( error );
+            throw error;
         }
-        this.revocable.promiseWithBackoff ( async () => await update (), 5000, true );
     }
 
     //----------------------------------------------------------------//

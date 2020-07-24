@@ -2,13 +2,12 @@
 
 import './InventoryScreen.css';
 
-import { AccountInfoService }                               from './AccountInfoService';
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { AppStateService }                                  from './AppStateService';
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
-import { InventoryTagsController }                          from './InventoryTagsController';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
+import { AccountInfoService }                               from './services/AccountInfoService';
+import { AppStateService }                                  from './services/AppStateService';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryDownloadModal, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';

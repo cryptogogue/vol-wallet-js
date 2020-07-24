@@ -1,11 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountList }                      from './AccountList';
-import { NetworkStateService }              from './NetworkStateService';
 import { ImportAccountModal }               from './ImportAccountModal';
 import { NetworkNavigationBar, NETWORK_TABS } from './NetworkNavigationBar';
 import { PendingAccountList }               from './PendingAccountList';
 import { RequestAccountModal }              from './RequestAccountModal';
+import { NetworkStateService }              from './services/NetworkStateService';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';

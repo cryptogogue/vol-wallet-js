@@ -1,10 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AccountInfoService }           from './AccountInfoService';
 import { AppStateService }              from './AppStateService';
-import { InventoryService }             from './InventoryService';
-import { InventoryTagsController }      from './InventoryTagsController';
-import * as entitlements                from './util/entitlements';
 import { InventoryController }          from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';

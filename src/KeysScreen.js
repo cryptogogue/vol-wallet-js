@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { AccountStateService }                              from './AccountStateService';
 import { KeyInfoMessage }                                   from './KeyInfoMessage';
+import { AccountStateService }                              from './services/AccountStateService';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";

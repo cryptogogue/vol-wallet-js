@@ -3,12 +3,11 @@
 import './InventoryScreen.css';
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { AccountStateService }                              from './AccountStateService';
 import { CraftingFormController }                           from './CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
-import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
+import { AccountStateService }                              from './services/AccountStateService';
 import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
 import { TransactionModal }                                 from './TransactionModal';
 import { UpgradesFormController }                           from './UpgradesFormController';
@@ -18,6 +17,7 @@ import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
+import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { Redirect }                                         from 'react-router';
 import { Link }                                             from 'react-router-dom';
 import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-react';
@@ -71,6 +71,11 @@ export const InventoryScreen = observer (( props ) => {
         if ( !batchSelect ) {
             controller.clearSelection ();
         }
+    }
+
+    const assetIDtoAnchor = ( assetID ) => {
+        const assetURL = `${ appState.network.nodeURL }/assets/${ assetID }`;
+        return <a href = { assetURL } target = '_blank'>{ assetID }</a>
     }
 
     const hasAssets = ( inventoryService.isLoaded && ( inventory.assetsArray.length > 0 ));
@@ -137,6 +142,7 @@ export const InventoryScreen = observer (( props ) => {
                             <AssetModal
                                 controller      = { controller }
                                 assetID         = { zoomedAssetID }
+                                formatAssetID   = { assetIDtoAnchor }
                                 onClose         = {() => { setZoomedAssetID ( false )}}
                             />
                         </Otherwise>

@@ -105,10 +105,10 @@ export const AddNetworkModalBody = observer (( props ) => {
     let onChangeNodeURL = ( url ) => {
 
         controller.reset ();
-        setNodeURL ( url.toLowerCase ());
+        setNodeURL ( url );
 
         if ( validator.isURL ( url, { protocols: [ 'http', 'https' ], require_protocol: true, require_tld: false })) {
-            url = url.toLowerCase ().replace ( /\/+$/, '' );
+            url = url.replace ( /\/+$/, '' );
             setTestURL ( url );
         }
     }

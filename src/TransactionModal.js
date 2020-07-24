@@ -20,19 +20,20 @@ const TransactionModalBody = observer (( props ) => {
     const { appState, open, onClose }                               = props;
     const [ password, setPassword ]                                 = useState ( '' );
     const [ controllerFromDropdown, setControllerFromDropdown ]     = useState ( false );
-
+    
     const controller        = props.controller || controllerFromDropdown;
+    const queue             = appState.transactionQueue;
 
     const showDropdown      = !props.controller;
     const title             = controller ? controller.friendlyName : 'New Transaction';
     const stageEnabled      = appState.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
-    const submitLabel       = appState.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
+    const submitLabel       = queue.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
 
     const submit = () => {
-        appState.pushTransaction ( controller.transaction );
+        queue.pushTransaction ( controller.transaction );
         if ( submitEnabled ) {
-            appState.submitTransactions ( password );
+            queue.submitTransactions ( password );
         }
         onClose ();
     }

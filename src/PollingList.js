@@ -2,8 +2,8 @@
 
 import './PollingList.css';
 
-import { AppStateService }                  from './AppStateService';
 import { PollingService, POLLING_STATUS }   from './PollingService';
+import { AppStateService }                  from './services/AppStateService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';

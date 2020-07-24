@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppStateService }                  from './AppStateService';
 import { PasswordInputField }               from './PasswordInputField';
+import { AppStateService }                  from './services/AppStateService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { assert, hooks }                    from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';

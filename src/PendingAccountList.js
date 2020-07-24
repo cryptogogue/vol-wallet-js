@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppStateService }                  from './AppStateService';
+import { AppStateService }                  from './services/AppStateService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { assert, crypto, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';

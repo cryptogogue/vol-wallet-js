@@ -1,11 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AddNetworkModal }                  from './AddNetworkModal';
-import { AppStateService }                  from './AppStateService';
 import { DashboardNavigationBar }           from './DashboardNavigationBar';
 import { LoginForm }                        from './LoginForm';
 import { PollingList }                      from './PollingList';
 import { RegisterForm }                     from './RegisterForm';
+import { AppStateService }                  from './services/AppStateService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';

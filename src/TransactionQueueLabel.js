@@ -14,13 +14,17 @@ export const TransactionQueueLabel = observer (( props ) => {
     const { appState } = props;
     const [ open, setOpen ] = useState ( false );
 
+    const queue = appState.transactionQueue;
+
     const onClose = () => {
         setOpen ( false );
     }
 
-    const error             = appState.hasTransactionError;
-    const stagedCount       = appState.stagedTransactions.length;
-    const pendingCount      = appState.pendingTransactions.length;
+    const error             = queue.hasTransactionError;
+    const stagedCount       = queue.stagedTransactions.length;
+    const pendingCount      = queue.pendingTransactions.length;
+
+    console.log ( 'QUEUE', queue, queue.appState, queue.hasTransactionError );
 
     return (
         <React.Fragment>

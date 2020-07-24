@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppStateService }                                  from './AppStateService';
 import { NavigationBar }                                    from './NavigationBar';
+import { AppStateService }                                  from './services/AppStateService';
 import { ScannerReportModal, SchemaScannerXLSX }            from 'cardmotron';
 import _                                                    from 'lodash';
 import { assert, ClipboardMenuItem, excel, FilePickerMenuItem, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';

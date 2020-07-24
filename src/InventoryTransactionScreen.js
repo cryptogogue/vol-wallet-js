@@ -1,16 +1,13 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-
-import { AccountInfoService }                           from './AccountInfoService';
-import { AccountStateService }                          from './AccountStateService';
+import { AccountNavigationBar }                         from './AccountNavigationBar';
 import { PasswordInputField }                           from './PasswordInputField';
-import { InventoryService }                             from './InventoryService';
+import { AccountStateService }                          from './services/AccountStateService';
 import { TransactionForm }                              from './TransactionForm';
 import { InventoryController }                          from 'cardmotron';
 import { assert, hooks, ProgressController, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable } from 'mobx';
 import { observer }                                     from 'mobx-react';
-import { AccountNavigationBar }                         from './AccountNavigationBar';
 import React, { useState }                              from 'react';
 import { Redirect }                                     from 'react-router';
 import * as UI                                          from 'semantic-ui-react';

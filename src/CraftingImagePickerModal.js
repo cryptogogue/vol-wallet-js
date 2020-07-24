@@ -24,10 +24,10 @@ const CraftingImagePickerModalBody = observer (( props ) => {
 
     let onChangeImageURL = ( url ) => {
 
-        setInput ( url.toLowerCase ());
+        setInput ( url );
 
         if ( validator.isURL ( url, { protocols: [ 'http', 'https' ], require_protocol: true, require_tld: false })) {
-            url = url.toLowerCase ().replace ( /\/+$/, '' );
+            url = url.replace ( /\/+$/, '' );
             if ( url !== imageURL ) {
                 setURLError ( false );
                 setHasImage ( false );

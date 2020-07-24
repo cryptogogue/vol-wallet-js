@@ -18,7 +18,7 @@ export const CraftingAssetSelectionModal = observer (( props ) => {
     const { paramModalState, setParamModalState } = props;
     const [ closeTimeout, setCloseTimeout ] = useState ( false );
 
-    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( craftingFormController.inventory ));
+    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( craftingFormController.inventory, false ));
 
     if ( paramModalState === false ) {
         return ( <React.Fragment/> );

@@ -1,10 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import * as entitlements                from '../util/entitlements';
 import { AccountInfoService }           from './AccountInfoService';
 import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
-import * as entitlements                from './util/entitlements';
 import { InventoryController }          from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
@@ -13,34 +13,21 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import React                            from 'react';
 
 //================================================================//
-// AccountStateService
+// TransactionQueueService
 //================================================================//
-export class AccountStateService extends NetworkStateService {
+export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @computed get
     account () {
-        return this.getAccount ();
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    accountKeyNames () {
-        const account = this.account;
-        return ( account && Object.keys ( account.keys )) || [];
-    }
-
-    //----------------------------------------------------------------//
-    assertHasAccount () {
-        this.assertHasNetwork ();
-        if ( !this.hasAccount ) throw new Error ( 'No account selected.' );
+        return this.appState.account;
     }
 
     //----------------------------------------------------------------//
     @computed get
     assetsUtilized () {
 
-        let assetsUtilized = this.account.assetsSent ? Object.keys ( this.account.assetsSent ) : [];
+        let assetsUtilized = [];
 
         // touch .length to force update if change (mobx)
         const pendingTransactions = this.pendingTransactions;
@@ -62,37 +49,16 @@ export class AccountStateService extends NetworkStateService {
 
     //----------------------------------------------------------------//
     @computed get
-    balance () {
-
-        let cost = 0;
-
-        const pendingTransactions = this.pendingTransactions;
-        for ( let i in pendingTransactions ) {
-            cost += pendingTransactions [ i ].cost;
-        }
-
-        const stagedTransactions = this.stagedTransactions;
-        for ( let i in stagedTransactions ) {
-            cost += stagedTransactions [ i ].cost;
-        }
-
-        return this.accountInfo.balance - cost - this.nextTransactionCost;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
     canClearTransactions () {
 
-        if ( !this.hasAccount ) return false;
-        return (( this.account.stagedTransactions.length > 0 ) || ( this.account.pendingTransactions.length > 0 ));
+        return (( this.stagedTransactions.length > 0 ) || ( this.pendingTransactions.length > 0 ));
     }
 
     //----------------------------------------------------------------//
     @computed get
     canSubmitTransactions () {
 
-        if ( !this.hasAccount ) return false;
-        if ( this.nonce < 0 ) return false;
+        if ( this.appState.nonce < 0 ) return false;
 
         if ( this.stagedTransactions.length > 0 ) return true;
         if (( this.pendingTransactions.length > 0 ) && ( this.hasTransactionError )) return true;
@@ -100,177 +66,75 @@ export class AccountStateService extends NetworkStateService {
         return false;
     }
 
-    //----------------------------------------------------------------//
-    checkTransactionEntitlements ( transactionType ) {
+    // //----------------------------------------------------------------//
+    // checkTransactionEntitlements ( transactionType ) {
 
-        const account = this.account;
-        if ( account ) {
-            for ( let keyName in account.keys ) {
-                const key = account.keys [ keyName ];
-                if ( key.entitlements && entitlements.check ( key.entitlements.policy, transactionType )) return true;
-            }
-        }
-        return false;
-    }
+    //     const account = this.appState.account;
+    //     if ( account ) {
+    //         for ( let keyName in account.keys ) {
+    //             const key = account.keys [ keyName ];
+    //             if ( key.entitlements && entitlements.check ( key.entitlements.policy, transactionType )) return true;
+    //         }
+    //     }
+    //     return false;
+    // }
 
     //----------------------------------------------------------------//
     @action
     clearPendingTransactions () {
 
-        if ( this.hasAccount ) {
-            this.account.pendingTransactions = [];
-            this.account.transactionError = false;
-        }
+        this.account.pendingTransactions = [];
+        this.account.transactionError = false;
     }
 
     //----------------------------------------------------------------//
     @action
     clearStagedTransactions () {
 
-        if ( this.hasAccount ) {
-            this.account.stagedTransactions = [];
-        }
+        this.account.stagedTransactions = [];
     }
 
     //----------------------------------------------------------------//
-    constructor ( networkID, accountID ) {
-        super ( networkID );
+    constructor ( appState ) {
+        
+        this.revocable = new RevocableContext ();
+        this.appState = appState;
 
-        runInAction (() => {
-
-            if ( _.has ( this.network.accounts, accountID )) {
-                this.accountID = accountID;
-            }
-            else {
-                throw new Error ( 'Account not found.' );
-            }
-        });
-
-        this.setAccountInfo ();
         this.processTransactionsAsync ();
-
-        this.accountInfoService     = new AccountInfoService ( this );
-        this.inventoryProgress      = new ProgressController ();
-        this.inventory              = new InventoryController ( this.inventoryProgress );
-        this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
-        this.inventoryTags          = new InventoryTagsController ();
     }
 
     //----------------------------------------------------------------//
     @action
     deleteTransactions () {
 
-        if ( this.hasAccount ) {
-            this.account.pendingTransactions = [];
-            this.account.stagedTransactions = [];
-        }
+        this.account.pendingTransactions = [];
+        this.account.stagedTransactions = [];
     }
 
     //----------------------------------------------------------------//
     finalize () {
 
-        this.accountInfoService.finalize ();
-        this.inventoryProgress.finalize ();
-        this.inventory.finalize ();
-        this.inventoryService.finalize ();
-        this.inventoryTags.finalize ();
-
-        super.finalize ();
-    }
-
-    //----------------------------------------------------------------//
-    getDefaultAccountKeyName () {
-
-        const defaultKeyName = 'master';
-        const accountKeyNames = this.accountKeyNames;
-        if ( accountKeyNames.includes ( defaultKeyName )) return defaultKeyName;
-        return (( accountKeyNames.length > 0 ) && accountKeyNames [ 0 ]) || '';
-    }
-
-    //----------------------------------------------------------------//
-    getKey ( keyName ) {
-        const account = this.getAccount ();
-        return account ? account.keys [ keyName || this.getDefaultAccountKeyName ()] : null;
-    }
-
-    //----------------------------------------------------------------//
-    getKeyNamesForTransaction ( transactionType ) {
-
-        const keyNames = [];
-
-        const account = this.account;
-        if ( account ) {
-            for ( let keyName in account.keys ) {
-                const key = account.keys [ keyName ];
-                if ( entitlements.check ( key.entitlements.policy, transactionType )) {
-                    keyNames.push ( keyName );
-                }
-            }
-        }
-        return keyNames;
-    }
-
-    //----------------------------------------------------------------//
-    getPrivateKeyInfo ( keyName, password ) {
-
-        if ( this.checkPassword ( password )) {
-
-            try {
-                const key = this.account.keys [ keyName ];
-
-                return {
-                    phraseOrKey:    crypto.aesCipherToPlain ( key.phraseOrKeyAES, password ),
-                    privateKeyHex:  crypto.aesCipherToPlain ( key.privateKeyHexAES, password ),
-                }
-            }
-            catch ( error ) {
-                console.log ( error );
-            }
-        }
-        return false;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    hasAccount () {
-        return ( this.accountID && this.account );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    hasAccountInfo () {
-        return ( this.accountInfo !== false );
+        this.revocable.finalize ();
     }
 
     //----------------------------------------------------------------//
     @computed get
     hasTransactionError () {
-        return this.transactionError !== false;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    inventoryNonce () {
-        return this.account.inventoryNonce || 0;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    nonce () {
-        return this.accountInfo.nonce;
+        return this.account.transactionError !== false;
     }
 
     //----------------------------------------------------------------//
     @computed get
     pendingTransactions () {
-        return this.account.pendingTransactions;
+        return this.appState.account.pendingTransactions;
     }
 
     //----------------------------------------------------------------//
     @action
     async processTransactionsAsync () {
 
-        if ( !this.hasAccount ) return;
+        const appState = this.appState;
+        const account = this.account;
 
         if ( !this.hasTransactionError ) {
 
@@ -286,26 +150,26 @@ export class AccountStateService extends NetworkStateService {
                 
                 try {
 
-                    const url = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
+                    const url = `${ appState.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
                     const checkResult = await this.revocable.fetchJSON ( url );
 
                     switch ( checkResult.status ) {
 
                         case 'ACCEPTED':
                             runInAction (() => {
-                                const assetsSent = _.clone ( this.account.assetsSent || {});
+                                const assetsSent = _.clone ( account.assetsSent || {});
                                 for ( let assetID of memo.assets ) {
                                     assetsSent [ assetID ] = assetID;
                                 }
                                 pendingTransactions.shift ();
-                                this.account.assetsSent = assetsSent;
+                                account.assetsSent = assetsSent;
                             });
                             more = true;
                             break;
 
                         case 'REJECTED':
                             runInAction (() => {
-                                this.account.transactionError = {
+                                account.transactionError = {
                                     message:    checkResult.message,
                                     uuid:       checkResult.uuid,
                                 }
@@ -325,15 +189,11 @@ export class AccountStateService extends NetworkStateService {
                 }
             }
         }
-
-        this.revocable.timeout (() => { this.processTransactionsAsync ()}, 5000 );
     }
 
     //----------------------------------------------------------------//
     @action
     pushTransaction ( transaction ) {
-
-        this.assertHasAccount ();
 
         let memo = {
             type:               transaction.type,
@@ -344,16 +204,17 @@ export class AccountStateService extends NetworkStateService {
             uuid:               util.generateUUIDV4 (),
         }
 
-        this.account.stagedTransactions.push ( memo );
+        const appState = this.appState;
+        appState.account.stagedTransactions.push ( memo );
+        appState.flags.promptFirstTransaction = false;
         this.setNextTransactionCost ( 0 );
-        this.flags.promptFirstTransaction = false;
     }
 
     //----------------------------------------------------------------//
     async putTransactionAsync ( memo ) {
 
         const accountName   = memo.body.maker.accountName;
-        const url           = `${ this.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
+        const url           = `${ this.appState.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
 
         const result = await this.revocable.fetchJSON ( url, {
             method :    'PUT',
@@ -365,58 +226,15 @@ export class AccountStateService extends NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    renameAccount ( oldName, newName ) {
-
-        super.renameAccount ( oldName, newName );
-
-        if ( this.accountID === oldName ) {
-            this.accountID = newName;
-        }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setAccountInfo ( accountInfo ) {
-
-        if ( accountInfo ) {
-
-            if ( !this.accountInfo ) {
-                this.accountInfo = {};
-            }
-
-            this.accountInfo.balance            = accountInfo.balance;
-            this.accountInfo.nonce              = accountInfo.nonce;
-            this.accountInfo.inventoryNonce     = accountInfo.inventoryNonce;
-            this.accountInfo.height             = accountInfo.height || 0;
-        }
-        else {
-            this.accountInfo = false;
-        }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setAccountInventoryNonce ( inventoryNonce ) {
-
-        this.account.inventoryNonce = inventoryNonce;
-    }
-
-    //----------------------------------------------------------------//
-    @action
     setNextTransactionCost ( cost ) {
 
-        this.nextTransactionCost = cost || 0;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    transactionError () {
-        return this.account.transactionError || false;
+        this.appState.nextTransactionCost = cost || 0;
     }
 
     //----------------------------------------------------------------//
     @computed get
     stagedTransactions () {
+
         return this.account.stagedTransactions;
     }
 
@@ -424,16 +242,18 @@ export class AccountStateService extends NetworkStateService {
     @action
     async submitTransactions ( password ) {
 
-        this.assertHasAccount ();
-        this.assertPassword ( password );
+        this.appState.assertHasAccount ();
+        this.appState.assertPassword ( password );
 
-        let stagedTransactions      = this.account.stagedTransactions;
-        let pendingTransactions     = this.account.pendingTransactions;
+        let account = this.account;
+
+        let stagedTransactions      = account.stagedTransactions;
+        let pendingTransactions     = account.pendingTransactions;
 
         try {
 
             const queue = [];
-            const currentNonce = this.nonce;
+            const currentNonce = this.appState.nonce;
 
             for ( let i = 0; i < pendingTransactions.length; ++i ) {
                 queue.push ( _.cloneDeep ( pendingTransactions [ i ]));
@@ -461,7 +281,7 @@ export class AccountStateService extends NetworkStateService {
                     body: JSON.stringify ( body ),
                 };
 
-                const hexKey            = this.account.keys [ body.maker.keyName ];
+                const hexKey            = account.keys [ body.maker.keyName ];
                 const privateKeyHex     = crypto.aesCipherToPlain ( hexKey.privateKeyHexAES, password );
                 const key               = await crypto.keyFromPrivateHex ( privateKeyHex );
 
@@ -488,14 +308,20 @@ export class AccountStateService extends NetworkStateService {
             }
 
             runInAction (() => {
-                this.account.stagedTransactions     = queue;
-                this.account.pendingTransactions    = submitted;
-                this.account.transactionError       = false; // OK to clear the transaction error no.
+                account.stagedTransactions     = queue;
+                account.pendingTransactions    = submitted;
+                account.transactionError       = false; // OK to clear the transaction error no.
             });
         }
         catch ( error ) {
              console.log ( 'AN ERROR!', error );
         }
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    transactionError () {
+        return this.account.transactionError || false;
     }
 
     //----------------------------------------------------------------//

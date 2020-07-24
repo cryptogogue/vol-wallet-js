@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppStateService }                  from './AppStateService';
 import { NetworkNavigationBar }             from './NetworkNavigationBar';
 import { PasswordInputField }               from './PasswordInputField';
+import { AppStateService }                  from './services/AppStateService';
 import { assert, crypto, excel, FilePickerMenuItem, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
