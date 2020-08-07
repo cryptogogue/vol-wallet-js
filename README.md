@@ -29,7 +29,7 @@ A winner is you.
 
 TL;DR: No.
 
-Browser local storage is inherently *insecure*. VOLWAL also uses a ton of public, 3rd party Javascript modules (including crypto libraries), wantonly installed from npm. We haven't made even the slightest effort to audit these modules and we rely on them for even the most trivial concerns.
+Browser local storage is inherently *insecure*. VOLWAL also uses a ton of public, 3rd party Javascript modules (including crypto libraries), wantonly installed from npm. We haven't made the slightest effort to audit these modules and we rely on them for even the most trivial concerns.
 
 While we do encrypt your private keys with whatever password you give us, that is no substitute for a secure key store. Unfortunately, to the best of our knowledge, there is no viable implementation of a secure key store available for a browser-based Javascript environment.
 
