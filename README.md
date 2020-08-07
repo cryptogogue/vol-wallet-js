@@ -35,7 +35,7 @@ While we do encrypt your private keys with whatever password you give us, that i
 
 In other words, the only way to "securely" interface with a Volition network is to generate your private keys offline, using cryptography-grade implementations, and to keep those keys offline. This means also preparing and signing your transactions offline.
 
-In the future, we'll support "side-loading" offline-generated transactions into VOLWAL. But for now, here some things you can do to mitigate the risks of using VOLWAL (and any browser-based wallet):
+In the future, we'll support "side-loading" offline-generated transactions into VOLWAL. But for now, here are some things you can do to mitigate the risks of using VOLWAL (and any browser-based wallet):
 
 - Don't use VOLWAL to generate your keys. Generate them on the command line and import them instead.
 - Use Volition's key permissioning features to limit the permissions of any keys you use with VOLWAL.
