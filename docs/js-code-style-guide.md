@@ -44,7 +44,7 @@ Use empty lines wherever you think they increase readability.
 
 ##### Module Dividers
 
-Place a "thick" divider with the name of the class before a module-scoped class declaration. Place a "this" divider before any class-scoped or module-scoped function. Locally scoped functions do not need a divider.
+Place a "thick" divider with the name of the class before a module-scoped class declaration. Place a "thin" divider before any class-scoped or module-scoped function. Locally scoped functions do not need a divider.
 
 ```
 //================================================================//
@@ -99,7 +99,7 @@ if ( foo ) return;
 
 ##### Alignment
 
-Don't hesitate to align long blocks of initializers on tab stops if if makes your code more readable. If list alignment is good enough for menus and tables of contents, it is certainly good enough for code:
+Don't hesitate to align long blocks of initializers on tab stops if if makes your code more readable. If list alignment is good enough for (restaurant) menus and tables of contents, it is certainly good enough for code:
 
 ```
 const foo       = 1;
@@ -126,7 +126,7 @@ funcWithLongParamList (
 
 ##### Organization
 
-Organize functions in modules and classes alphabetically. If your module or class is complicated enough that you think you need something other than alphabetical order, that is probably a sign that you should are doing too much. Modules and classes are the correct way to separate concerns, not name-grouping by convention.
+Organize functions in modules and classes alphabetically. If your module or class is complicated enough that you think you need something other than alphabetical order, that is probably a sign that you are doing too much. Modules and classes are the correct way to separate concerns, not arbitrary name-grouping.
 
 ##### var, let, const
 
