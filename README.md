@@ -12,7 +12,7 @@ If your browser local storage is deleted, then your encrypted private keys will 
 
 ### Try it Out
 
-The beta version of VOLWAL is hosted at our development server [here](https://volwal.pancakehermit.com). The development (singleton) node is [here](https://volition-node.pancakehermit.com).
+The beta version of VOLWAL is hosted at our development server [here](https://beta.volwal.com). The development (singleton) node is [here](https://volition-node-beta.pancakehermit.com).
 
 ### Run it Locally
 
