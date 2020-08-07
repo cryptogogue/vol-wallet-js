@@ -120,7 +120,7 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     @computed get
     hasTransactionError () {
-        return this.account.transactionError !== false;
+        return Boolean ( this.account.transactionError );
     }
 
     //----------------------------------------------------------------//

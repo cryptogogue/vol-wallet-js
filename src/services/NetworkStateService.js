@@ -37,6 +37,7 @@ export class NetworkStateService extends AppStateService {
             keys: {},
             pendingTransactions: [],
             stagedTransactions: [],
+            transactionError: false,
         };
 
         let key = account.keys [ keyName ] || {};
