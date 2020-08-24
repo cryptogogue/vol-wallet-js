@@ -41,7 +41,7 @@ export class TransactionFormController_SendVOL extends TransactionFormController
 		}
 		
 		if ( this.fields.amount.value != parseInt(this.fields.amount.value,10)) {
-			this.fields.amount.error = 'Amount must be a positive integer';
+			this.fields.amount.error = 'Amount must be a positive integer.';
 		}
 		
 		if ( this.fields.gratuity.value < 0) {
@@ -49,7 +49,7 @@ export class TransactionFormController_SendVOL extends TransactionFormController
 		}
 		
 		if ( this.fields.gratuity.value != parseInt(this.fields.gratuity.value,10)) {
-			this.fields.gratuity.error = 'Gratuity must be a positive integer';
+			this.fields.gratuity.error = 'Gratuity must be a positive integer.';
 		}
     }
 };
