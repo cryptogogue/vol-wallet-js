@@ -35,5 +35,21 @@ export class TransactionFormController_SendVOL extends TransactionFormController
         if ( this.fields.amount.value === 0 ) {
             this.fields.amount.error = 'Pick a non-zero amount.';
         }
+		
+		if ( this.fields.amount.value < 0) {
+			this.fields.amount.error = 'Amount cannot be a negative number.';
+		}
+		
+		if ( this.fields.amount.value != parseInt(this.fields.amount.value,10)) {
+			this.fields.amount.error = 'Amount must be a positive integer.';
+		}
+		
+		if ( this.fields.gratuity.value < 0) {
+			this.fields.gratuity.error = 'Gratuity cannot be a negative number.';
+		}
+		
+		if ( this.fields.gratuity.value != parseInt(this.fields.gratuity.value,10)) {
+			this.fields.gratuity.error = 'Gratuity must be a positive integer.';
+		}
     }
 };
