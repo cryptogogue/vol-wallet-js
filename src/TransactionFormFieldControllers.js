@@ -24,8 +24,14 @@ export class TransactionFormFieldController {
 
     //----------------------------------------------------------------//
     @computed
+    get hasValue () {
+        return ( this.inputString !== '' );
+    }
+
+    //----------------------------------------------------------------//
+    @computed
     get isComplete () {
-        return ( this.inputString || !this.isRequired );
+        return ( this.hasValue || !this.isRequired );
     }
 
     //----------------------------------------------------------------//
@@ -44,15 +50,18 @@ export class TransactionFormFieldController {
     //----------------------------------------------------------------//
     @action
     setError ( error ) {
-
         this.error = error;
     }
 
     //----------------------------------------------------------------//
     @action
     setInputString ( inputString ) {
-
         this.inputString = String ( inputString ) || '';
+    }
+
+    //----------------------------------------------------------------//
+    validate () {
+        this.virtual_validate ();
     }
 
     //----------------------------------------------------------------//
@@ -63,6 +72,10 @@ export class TransactionFormFieldController {
     //----------------------------------------------------------------//
     virtual_format ( value ) {
         return value;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_validate () {
     }
 }
 
@@ -166,6 +179,32 @@ export class TransactionFormFieldController_Text extends TransactionFormFieldCon
     }
 }
 
+//================================================================//
+// TransactionFormFieldController_VOL
+//================================================================//
+export class TransactionFormFieldController_VOL extends TransactionFormFieldController {
+
+    //----------------------------------------------------------------//
+    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
+        super ( fieldName, friendlyName, defaultValue, initialValue );
+    }
+
+    //----------------------------------------------------------------//
+    virtual_coerce ( inputValue ) {
+        return parseFloat ( inputValue ) * 1000;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_validate () {
+
+        if ( !this.hasValue ) return;
+
+        if ( this.value < 0 ) {
+            this.error = 'Cannot be a negative number.';
+        }
+    }
+}
+
 export const FIELD_CLASS = {
     ACCOUNT_KEY:        TransactionFormFieldController_AccountKey,
     ASSET_SELECTION:    TransactionFormFieldController_AssetSelection,
@@ -175,4 +214,5 @@ export const FIELD_CLASS = {
     SCHEMA:             TransactionFormFieldController_Schema,
     STRING:             TransactionFormFieldController_String,
     TEXT:               TransactionFormFieldController_Text,
+    VOL:                TransactionFormFieldController_VOL,
 }

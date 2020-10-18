@@ -17,8 +17,10 @@ export const TRANSACTION_TYPE = {
     RENAME_ACCOUNT:             'RENAME_ACCOUNT',
     RESERVE_ACCOUNT_NAME:       'RESERVE_ACCOUNT_NAME',
     RUN_SCRIPT:                 'RUN_SCRIPT',
+    SELECT_REWARD:              'SELECT_REWARD',
     SEND_ASSETS:                'SEND_ASSETS',
     SEND_VOL:                   'SEND_VOL',
+    SET_MINIMUM_GRATUITY:       'SET_MINIMUM_GRATUITY',
     UPGRADE_ASSETS:             'UPGRADE_ASSETS',
 };
 
@@ -57,8 +59,10 @@ export class Transaction {
             case TRANSACTION_TYPE.RENAME_ACCOUNT:               return 'Rename Account';
             case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return 'Reserve Account Name';
             case TRANSACTION_TYPE.RUN_SCRIPT:                   return 'Run Script';
+            case TRANSACTION_TYPE.SELECT_REWARD:                return 'Select Reward';
             case TRANSACTION_TYPE.SEND_ASSETS:                  return 'Send Assets';
             case TRANSACTION_TYPE.SEND_VOL:                     return 'Send VOL';
+            case TRANSACTION_TYPE.SET_MINIMUM_GRATUITY:         return 'Set Minimum Gratuity';
             case TRANSACTION_TYPE.UPGRADE_ASSETS:               return 'Upgrade Assets';
         }
         return 'UNKNOWN';

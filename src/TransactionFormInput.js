@@ -2,6 +2,7 @@
 
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { FIELD_CLASS }                      from './TransactionFormFieldControllers';
+import * as vol                             from './util/vol';
 import { ScannerReportMessages, SchemaScannerXLSX } from 'cardmotron';
 import { assert, excel, hooks, FilePickerMenuItem, util } from 'fgc';
 import JSONTree                             from 'react-json-tree';
@@ -417,6 +418,21 @@ export const TransactionFormInput = observer (( props ) => {
             return (
                  <UI.Form.TextArea
                     rows = { field.rows || 8 }
+                    { ...commonProps }
+                />
+            );
+
+        case FIELD_CLASS.VOL:
+            return (
+                 <UI.Form.Input
+                    fluid
+                    type = 'number'
+                    step = '0.001'
+                    onBlur = {() => {
+                        const value = event.target.value ? vol.format ( Number ( event.target.value ) * 1000 ) : '';
+                        field.setInputString ( value );
+                        controller.validate ();
+                    }}
                     { ...commonProps }
                 />
             );

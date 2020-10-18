@@ -64,7 +64,7 @@ export class TransactionFormController {
 
         fieldsArray = fieldsArray || [];
         fieldsArray.push (
-            new FIELD_CLASS.INTEGER         ( 'gratuity',       'Gratuity', 0 ),
+            new FIELD_CLASS.VOL             ( 'gratuity',       'Gratuity', 0 ),
             new FIELD_CLASS.ACCOUNT_KEY     ( 'makerKeyName',   'Maker Key', appState.getDefaultAccountKeyName ()),
         );
 
@@ -127,6 +127,7 @@ export class TransactionFormController {
         // reset errors
         for ( let field of this.fieldsArray ) {
             field.error = false;
+            field.validate ();
         }
 
         // check error free

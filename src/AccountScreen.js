@@ -3,6 +3,7 @@
 import { AccountInfoService }               from './services/AccountInfoService';
 import { AccountStateService }              from './services/AccountStateService';
 import { TransactionModal }                 from './TransactionModal';
+import * as vol                             from './util/vol';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
@@ -43,7 +44,7 @@ const AccountDetailsView = observer (( props ) => {
 
             <div style = {{ visibility: hasInfo ? 'visible' : 'hidden' }}>
                 <UI.Header as = 'h3'>
-                    { `Balance: ${ appState.balance }` }
+                    { `Balance: ${ vol.format ( appState.balance )}` }
                 </UI.Header>
 
                 <UI.Header.Subheader>

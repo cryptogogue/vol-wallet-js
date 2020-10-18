@@ -19,7 +19,7 @@ export class TransactionFormController_SendVOL extends TransactionFormController
 
         const fieldsArray = [
             new FIELD_CLASS.STRING      ( 'accountName',    'Recipient' ),
-            new FIELD_CLASS.INTEGER     ( 'amount',         'Amount' ),
+            new FIELD_CLASS.VOL         ( 'amount',         'Amount' ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.SEND_VOL, fieldsArray );
     }
@@ -32,24 +32,13 @@ export class TransactionFormController_SendVOL extends TransactionFormController
             this.fields.accountName.error = 'Maker cannot also be recipient.';
         }
 
-        if ( this.fields.amount.value === 0 ) {
-            this.fields.amount.error = 'Pick a non-zero amount.';
+        console.log ( 'AMOUNT', this.fields.amount.value );
+
+        if ( this.fields.amount.hasValue ) {
+
+            if ( this.fields.amount.value === 0 ) {
+                this.fields.amount.error = 'Pick a non-zero amount.';
+            }
         }
-		
-		if ( this.fields.amount.value < 0) {
-			this.fields.amount.error = 'Amount cannot be a negative number.';
-		}
-		
-		if ( this.fields.amount.value != parseInt(this.fields.amount.value,10)) {
-			this.fields.amount.error = 'Amount must be a positive integer.';
-		}
-		
-		if ( this.fields.gratuity.value < 0) {
-			this.fields.gratuity.error = 'Gratuity cannot be a negative number.';
-		}
-		
-		if ( this.fields.gratuity.value != parseInt(this.fields.gratuity.value,10)) {
-			this.fields.gratuity.error = 'Gratuity must be a positive integer.';
-		}
     }
 };

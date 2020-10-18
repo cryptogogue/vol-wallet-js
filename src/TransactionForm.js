@@ -27,8 +27,10 @@ export const TransactionForm = observer (({ controller }) => {
         case TRANSACTION_TYPE.REGISTER_MINER:
         case TRANSACTION_TYPE.RENAME_ACCOUNT:
         case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:
+        case TRANSACTION_TYPE.SELECT_REWARD:
         case TRANSACTION_TYPE.SEND_ASSETS:
         case TRANSACTION_TYPE.SEND_VOL:
+        case TRANSACTION_TYPE.SET_MINIMUM_GRATUITY:
             return (
                 <BasicTransactionForm controller = { controller }/>
             );

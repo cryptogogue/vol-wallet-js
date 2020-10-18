@@ -2,6 +2,7 @@
 
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormInput }             from './TransactionFormInput';
+import * as vol                             from './util/vol';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
@@ -24,7 +25,7 @@ export const TransactionBalanceHeader = observer (( props ) => {
                 as = 'h4'
                 style = {{ color: textColor, marginBottom: 0 }}
             >
-                Balance: { balance }
+                Balance: { vol.format ( balance )}
             </UI.Header>
             <UI.Header
                 as = 'h4'
