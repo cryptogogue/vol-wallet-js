@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { Transaction }      from './Transaction';
+import { Transaction }      from './transactions/Transaction';
 import _                    from 'lodash';
 import JSONTree             from 'react-json-tree';
 import React, { useState }  from 'react';

@@ -2,7 +2,7 @@
 
 import { AccountInfoService }               from './services/AccountInfoService';
 import { AccountStateService }              from './services/AccountStateService';
-import { TransactionModal }                 from './TransactionModal';
+import { TransactionModal }                 from './transactions/TransactionModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';

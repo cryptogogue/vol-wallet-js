@@ -3,14 +3,14 @@
 import './InventoryScreen.css';
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { CraftingFormController }                           from './CraftingFormController';
+import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { AccountStateService }                              from './services/AccountStateService';
-import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
-import { TransactionModal }                                 from './TransactionModal';
-import { UpgradesFormController }                           from './UpgradesFormController';
+import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
+import { TransactionModal }                                 from './transactions/TransactionModal';
+import { UpgradeAssetsFormController }                      from './transactions/UpgradeAssetsFormController';
 import { AssetModal, AssetTagsModal, InventoryFilter, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
@@ -53,7 +53,7 @@ export const InventoryScreen = observer (( props ) => {
     });
 
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, viewFilter ));
-    const upgradesFormController    = hooks.useFinalizable (() => new UpgradesFormController ( appState, upgradesFilter ));
+    const upgradesFormController    = hooks.useFinalizable (() => new UpgradeAssetsFormController ( appState, upgradesFilter ));
 
     const onAssetSelect = ( asset, toggle ) => {
         controller.toggleAssetSelection ( asset );

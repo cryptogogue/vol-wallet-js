@@ -3,13 +3,13 @@
 import './InventoryScreen.css';
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { CraftingFormController }                           from './CraftingFormController';
+import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { AccountInfoService }                               from './services/AccountInfoService';
 import { AppStateService }                                  from './services/AppStateService';
-import { TransactionFormController_SendAssets }             from './TransactionFormController_SendAssets';
-import { TransactionModal }                                 from './TransactionModal';
+import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
+import { TransactionModal }                                 from './transactions/TransactionModal';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryDownloadModal, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
@@ -52,7 +52,7 @@ export const InventoryMenu = observer (( props ) => {
 
     const onClickSendAssets = () => {
         setTransactionController (
-            new TransactionFormController_SendAssets (
+            new SendAssetsFormController (
                 appState,
                 controller.selection
             )

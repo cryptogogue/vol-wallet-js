@@ -3,7 +3,7 @@
 import { AccountNavigationBar }                         from './AccountNavigationBar';
 import { PasswordInputField }                           from './PasswordInputField';
 import { AccountStateService }                          from './services/AccountStateService';
-import { TransactionForm }                              from './TransactionForm';
+import { TransactionForm }                              from './transactions/TransactionForm';
 import { InventoryController }                          from 'cardmotron';
 import { assert, hooks, ProgressController, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable } from 'mobx';
