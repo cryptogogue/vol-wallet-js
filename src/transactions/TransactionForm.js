@@ -1,9 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                              from './fields/transaction-fields'
+import * as Fields                              from '../fields/fields'
+import * as vol                                 from '../util/vol';
 import { AccountPolicyForm }                    from './AccountPolicyForm';
 import { AffirmKeyForm }                        from './AffirmKeyForm';
-import { BasicTransactionForm }                 from './BasicTransactionForm';
 import { BetaGetAssetsForm }                    from './BetaGetAssetsForm';
 import { BetaGetDeckForm }                      from './BetaGetDeckForm';
 import { CraftingForm }                         from './CraftingForm';
@@ -13,12 +13,10 @@ import { PublishSchemaForm }                    from './PublishSchemaForm';
 import { RegisterMinerForm }                    from './RegisterMinerForm';
 import { RenameAccountForm }                    from './RenameAccountForm';
 import { ReserveAccountNameForm }               from './ReserveAccountNameForm';
-import { SelectRewardForm }                     from './SelectRewardForm';
 import { SendAssetsForm }                       from './SendAssetsForm';
 import { SendVOLForm }                          from './SendVOLForm';
-import { SetMinimumGratuityForm }               from './SetMinimumGratuityForm';
-import { UpgradeAssetsForm }                    from './UpgradeAssetsForm';
 import { TRANSACTION_TYPE }                     from './Transaction';
+import { UpgradeAssetsForm }                    from './UpgradeAssetsForm';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                             from 'mobx-react';
@@ -26,9 +24,37 @@ import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
-// TransactionForm
+// TransactionBalanceHeader
 //================================================================//
-export const TransactionForm = observer (({ controller }) => {
+export const TransactionBalanceHeader = observer (( props ) => {
+
+    const { controller } = props;
+
+    const balance       = controller.balance > 0 ? controller.balance : 0;
+    const textColor     = balance > 0 ? 'black' : 'red';
+
+    return (
+        <React.Fragment>
+            <UI.Header
+                as = 'h4'
+                style = {{ color: textColor, marginBottom: 0 }}
+            >
+                Balance: { vol.format ( balance )}
+            </UI.Header>
+            <UI.Header
+                as = 'h4'
+                style = {{ marginTop: 0 }}
+            >
+                Weight: { controller.weight }
+            </UI.Header>
+        </React.Fragment>
+    );
+});
+
+//================================================================//
+// TransactionFormBody
+//================================================================//
+export const TransactionFormBody = observer (({ controller }) => {
 
     switch ( controller.type ) {
         case TRANSACTION_TYPE.ACCOUNT_POLICY:               return ( <AccountPolicyForm controller = { controller }/> );
@@ -43,13 +69,30 @@ export const TransactionForm = observer (({ controller }) => {
         case TRANSACTION_TYPE.RENAME_ACCOUNT:               return ( <RenameAccountForm controller = { controller }/> );
         case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return ( <ReserveAccountNameForm controller = { controller }/> );
         case TRANSACTION_TYPE.RUN_SCRIPT:                   return ( <CraftingForm controller = { controller }/> );
-        case TRANSACTION_TYPE.SELECT_REWARD:                return ( <SelectRewardForm controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm controller = { controller }/> );
-        case TRANSACTION_TYPE.SET_MINIMUM_GRATUITY:         return ( <SetMinimumGratuityForm controller = { controller }/> );
         case TRANSACTION_TYPE.UPGRADE_ASSETS:               return ( <UpgradeAssetsForm controller = { controller }/> );
     }
     return (
         <div/>
+    );
+});
+
+//================================================================//
+// TransactionForm
+//================================================================//
+export const TransactionForm = observer (( props ) => {
+
+    const { controller } = props;
+
+    return (
+        <UI.Segment>
+            <TransactionBalanceHeader controller = { controller }/>
+            <UI.Form>    
+                <TransactionFormBody controller = { controller }/>
+                <Fields.VOLField field = { controller.fields.gratuity }/>
+                <Fields.AccountKeyField field = { controller.fields.makerKeyName }/>
+            </UI.Form>
+        </UI.Segment>
     );
 });

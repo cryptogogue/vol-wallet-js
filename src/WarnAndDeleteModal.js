@@ -12,6 +12,30 @@ import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
+// DeleteModal
+//================================================================//
+const DeleteModal = observer (( props ) => {
+
+    const { trigger, header, content, action, onDelete } = props;
+
+    return (
+        <UI.Modal
+            size        = 'small'
+            closeIcon   = 'close'
+            trigger     = { trigger }
+            header      = { header }
+            content     = { content }
+            actions     = {[{
+                key:        'action',
+                content:    action,
+                negative:   true
+            }]}
+            onActionClick = { onDelete }
+        />
+    );
+});
+
+//================================================================//
 // WarnAndDeleteModal
 //================================================================//
 export const WarnAndDeleteModal = observer (( props ) => {
@@ -25,35 +49,42 @@ export const WarnAndDeleteModal = observer (( props ) => {
     const action1 = props.action1 || 'I understand. Do it already!';
 
     return (
-        <UI.Modal
-            closeIcon = 'close'
-            trigger = { trigger }
-        >
-            <UI.Modal.Header>{ header0 }</UI.Modal.Header>
 
-            <UI.Modal.Content>
-                <UI.Modal.Description>
-                    { warning0 }
-                </UI.Modal.Description>
-            </UI.Modal.Content>
-
-            <UI.Modal.Actions>
+        <Choose>
+            <When condition = { warning1 }>
                 <UI.Modal
-                    size        = 'small'
-                    closeIcon   = 'close'
-                    trigger     = {
-                        <UI.Button negative>{ action0 }</UI.Button>
-                    }
-                    header      = { header1 }
-                    content     = { warning1 }
-                    actions     = {[{
-                        key:        'action',
-                        content:    action1,
-                        negative:   true
-                    }]}
-                    onActionClick = { onDelete }
+                    closeIcon = 'close'
+                    trigger = { trigger }
+                >
+                    <UI.Modal.Header>{ header0 }</UI.Modal.Header>
+
+                    <UI.Modal.Content>
+                        <UI.Modal.Description>
+                            { warning0 }
+                        </UI.Modal.Description>
+                    </UI.Modal.Content>
+
+                    <UI.Modal.Actions>
+                        <DeleteModal
+                            trigger     = {<UI.Button negative>{ action0 }</UI.Button>}
+                            header      = { header1 }
+                            content     = { warning1 }
+                            action      = { action1 }
+                            onDelete    = { onDelete }
+                        />
+                    </UI.Modal.Actions>
+                </UI.Modal>
+            </When>
+
+            <Otherwise>
+                <DeleteModal
+                    trigger     = { trigger }
+                    header      = { header0 }
+                    content     = { warning0 }
+                    action      = { action0 }
+                    onDelete    = { onDelete }
                 />
-            </UI.Modal.Actions>
-        </UI.Modal>
+            </Otherwise>
+        </Choose>
     );
 });

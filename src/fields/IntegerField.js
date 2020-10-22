@@ -9,9 +9,9 @@ import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
-// StringField
+// IntegerField
 //================================================================//
-export const StringField = observer (( props ) => {
+export const IntegerField = observer (( props ) => {
 
     const { field, controller } = props;
 
@@ -20,13 +20,12 @@ export const StringField = observer (( props ) => {
 
     const onChange = ( event ) => {
         field.setInputString ( event.target.value );
-        controller.validate ();
     };
 
     return (
          <UI.Form.Input
             fluid
-            type            = 'string'
+            type            = 'number'
             placeholder     = { field.friendlyName }
             name            = { field.fieldName }
             value           = { field.inputString }

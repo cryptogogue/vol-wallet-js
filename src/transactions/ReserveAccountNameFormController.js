@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                          from './fields/transaction-fields'
+import * as Fields                          from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { checkName }                        from './RenameAccountFormController';
@@ -19,7 +19,7 @@ export class ReserveAccountNameFormController extends TransactionFormController 
         super ();
 
         const fieldsArray = [
-            new Fields.FIELD_CLASS.STRING      ( 'secretName',     'Reserve Name' ),
+            new Fields.StringFieldController    ( 'secretName',     'Reserve Name' ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME, fieldsArray );
     }

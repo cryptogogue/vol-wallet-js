@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                          from './fields/transaction-fields'
+import * as Fields                          from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { assert, randomBytes, util }        from 'fgc';
@@ -25,9 +25,9 @@ export class OpenAccountFormController extends TransactionFormController {
         console.log ( 'SUFFIX:', suffix );
 
         const fieldsArray = [
-            new Fields.FIELD_CLASS.CONST           ( 'suffix',         'Suffix', suffix ),
-            new Fields.FIELD_CLASS.CRYPTO_KEY      ( 'request',        'New Account Request', 6 ),
-            new Fields.FIELD_CLASS.INTEGER         ( 'grant',          'Grant', 0 ),
+            new Fields.ConstFieldController         ( 'suffix',         'Suffix', suffix ),
+            new Fields.CryptoKeyFieldController     ( 'request',        'New Account Request', 6 ),
+            new Fields.IntegerFieldController       ( 'grant',          'Grant', 0 ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.OPEN_ACCOUNT, fieldsArray );
     }

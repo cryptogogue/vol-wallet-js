@@ -1,12 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionFormFieldController } from './TransactionFormFieldController'
+import { FieldController } from './FieldController'
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
 // VOLFieldController
 //================================================================//
-export class VOLFieldController extends TransactionFormFieldController {
+export class VOLFieldController extends FieldController {
 
     //----------------------------------------------------------------//
     constructor ( fieldName, friendlyName, defaultValue, initialValue ) {

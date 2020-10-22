@@ -20,7 +20,7 @@ export const TextField = observer (( props ) => {
 
     const onChange = ( event ) => {
         field.setInputString ( event.target.value );
-        controller.validate ();
+        controller && controller.validate && controller.validate ();
     };
 
     return (

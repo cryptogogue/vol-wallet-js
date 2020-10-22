@@ -19,6 +19,7 @@ import { CraftingScreen }               from './CraftingScreen';
 import { DashboardScreen }              from './DashboardScreen';
 import { InventoryScreen }              from './InventoryScreen';
 import { KeysScreen }                   from './KeysScreen';
+import { MinerControlScreen }           from './MinerControlScreen';
 import { NetworkScreen }                from './NetworkScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
 import registerServiceWorker            from './util/registerServiceWorker';
@@ -47,8 +48,9 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/debug"          component = { AccountDebugScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
+                <Route exact path = "/net/:networkID/admin"                             component = { MinerControlScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
-                
+
                 <Route exact path = "/util/schema"              component = { SchemaUtilScreen }/>
 
                 <Route exact path = "/debug/aes"                component = { fgc.debug.AESScreen }/>

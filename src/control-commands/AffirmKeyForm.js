@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                              from './fields/transaction-fields'
+import * as Fields                              from '../fields/fields'
 import { BasicTransactionForm }                 from './BasicTransactionForm';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
@@ -9,9 +9,9 @@ import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
-// SelectRewardForm
+// AffirmKeyForm
 //================================================================//
-export const SelectRewardForm = observer (({ controller }) => {
+export const AffirmKeyForm = observer (({ controller }) => {
 
     return (
         <BasicTransactionForm controller = { controller }/>

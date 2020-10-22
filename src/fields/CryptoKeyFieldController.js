@@ -1,20 +1,16 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionFormFieldController } from './TransactionFormFieldController'
+import { FieldController } from './FieldController'
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
-// IntegerFieldController
+// CryptoKeyFieldController
 //================================================================//
-export class IntegerFieldController extends TransactionFormFieldController {
+export class CryptoKeyFieldController extends FieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
+    constructor ( fieldName, friendlyName, rows, defaultValue, initialValue ) {
         super ( fieldName, friendlyName, defaultValue, initialValue );
-    }
-
-    //----------------------------------------------------------------//
-    virtual_coerce ( inputValue ) {
-        return Number ( inputValue );
+        this.rows = rows;
     }
 }

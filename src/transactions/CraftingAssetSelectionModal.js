@@ -1,7 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionBalanceHeader, TransactionFormFields } from './BasicTransactionForm';
-import { TransactionFormInput }             from './fields/TransactionFormInput';
 import { AssetCardView, InventoryFilter, inventoryMenuItems, InventoryViewController, InventoryView } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';

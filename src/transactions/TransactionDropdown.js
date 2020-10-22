@@ -5,7 +5,6 @@ import { AccountPolicyFormController }                      from './AccountPolic
 import { AffirmKeyFormController }                          from './AffirmKeyFormController';
 import { BetaGetAssetsFormController }                      from './BetaGetAssetsFormController';
 import { BetaGetDeckFormController }                        from './BetaGetDeckFormController';
-import { HardResetFormController }                          from './HardResetFormController';
 import { KeyPolicyFormController }                          from './KeyPolicyFormController';
 import { OpenAccountFormController }                        from './OpenAccountFormController';
 import { PublishSchemaFormController }                      from './PublishSchemaFormController';
@@ -44,7 +43,6 @@ function makeControllerForTransactionType ( appState, transactionType ) {
         case TRANSACTION_TYPE.AFFIRM_KEY:                   return new AffirmKeyFormController ( appState );
         case TRANSACTION_TYPE.BETA_GET_ASSETS:              return new BetaGetAssetsFormController ( appState );
         case TRANSACTION_TYPE.BETA_GET_DECK:                return new BetaGetDeckFormController ( appState );
-        case TRANSACTION_TYPE.HARD_RESET:                   return new HardResetFormController ( appState );
         case TRANSACTION_TYPE.KEY_POLICY:                   return new KeyPolicyFormController ( appState );
         case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return new OpenAccountFormController ( appState );
         case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return new PublishSchemaFormController ( appState );

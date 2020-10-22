@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionBalanceHeader, TransactionFormFields } from './BasicTransactionForm';
-import { TransactionFormInput }             from './fields/TransactionFormInput';
+import { TransactionBalanceHeader }         from './TransactionForm';
 import { AssetView }                        from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
@@ -195,15 +194,13 @@ export const UpgradeAssetsForm = observer (( props ) => {
     }
 
     return (
-        <UI.Segment>
+        <React.Fragment>
 
             <UpgradeModal
                 controller  = { controller }
                 upgradeID   = { upgradeForModal }
                 setUpgrade  = { setUpgradeForModal }
             />
-
-            <TransactionBalanceHeader controller = { controller }/>
 
             <UI.Table celled unstackable>
                 <UI.Table.Header>
@@ -247,9 +244,6 @@ export const UpgradeAssetsForm = observer (( props ) => {
                 </UI.Table.Footer>
             </UI.Table>
 
-            <UI.Form>
-                <TransactionFormFields controller = { controller }/>
-            </UI.Form>
-        </UI.Segment>
+        </React.Fragment>
     );
 });

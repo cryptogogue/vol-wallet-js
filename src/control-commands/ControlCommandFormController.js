@@ -1,33 +1,17 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                          from '../fields/fields'
-import { Transaction, TRANSACTION_TYPE }    from './Transaction';
-import { assert, excel, hooks, randomBytes, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { COMMAND_TYPE }                      from './ControlCommand';
+import { assert, crypto, randomBytes, RevocableContext, StorageContext, util } from 'fgc';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 
-const SPECIAL_FIELDS = [
-    'gratuity',
-    'makerKeyName',
-];
-
 // TODO: factor common functionality out into the fields module 
 
 //================================================================//
-// TransactionFormController
+// ControlCommandFormController
 //================================================================//
-export class TransactionFormController {
-
-    @observable     cost    = 0;
-    @observable     weight  = 0;
-
-    //----------------------------------------------------------------//
-    @computed get
-    balance () {
-
-        return this.appState.balance - this.cost;
-    }
+export class ControlCommandFormController {
 
     //----------------------------------------------------------------//
     constructor () {
@@ -38,23 +22,10 @@ export class TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    formatBody () {
-        
-        let result = {};
-        for ( let field of this.fieldsArray ) {
-            const fieldName = field.fieldName;
-            if ( !SPECIAL_FIELDS.includes ( fieldName )) {
-                result [ fieldName ] = field.value;
-            }
-        }
-        return result;
-    }
-
-    //----------------------------------------------------------------//
     @computed get
     friendlyName () {
 
-        return Transaction.friendlyNameForType ( this.type );
+        return COMMAND_TYPE.friendlyNameForType ( this.type );
     }
 
     //----------------------------------------------------------------//
@@ -65,10 +36,6 @@ export class TransactionFormController {
         this.makerAccountName       = appState.accountID;
 
         fieldsArray = fieldsArray || [];
-        fieldsArray.push (
-            new Fields.VOLFieldController           ( 'gratuity',       'Gratuity', 0 ),
-            new Fields.AccountKeyFieldController    ( 'makerKeyName',   'Maker Key', appState.getDefaultAccountKeyName ()),
-        );
 
         const fields = {};
         for ( let field of fieldsArray ) {
@@ -83,7 +50,6 @@ export class TransactionFormController {
             isErrorFree:        false,
         });
 
-        this.transaction = this.makeTransaction ();
         this.validate ();
     }
 
@@ -95,28 +61,37 @@ export class TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    @action
-    makeTransaction () {
+    async makeSignedEnvelope ( password ) {
 
-        const body = this.virtual_composeBody ();
-        body.maker = {
-            gratuity:           this.fields.gratuity.value,
-            accountName:        this.makerAccountName,
-            keyName:            this.fields.makerKeyName.value,
-            nonce:              -1,
+        this.appState.assertPassword ( password );
+
+        let body = {
+            type: this.type,
+        };
+        for ( let field of this.fieldsArray ) {
+            body [ field.fieldName ] = field.value;
         }
-        const transaction = Transaction.transactionWithBody ( this.type, body );
-        this.virtual_decorateTransaction ( transaction );
-        return transaction;
+        
+        let envelope = {
+            body: JSON.stringify ( body ),
+        };
+
+        const key               = this.appState.network.controlKey;
+        const privateKeyHex     = crypto.aesCipherToPlain ( key.privateKeyHexAES, password );
+        const privateKey        = await crypto.keyFromPrivateHex ( privateKeyHex );
+
+        envelope.signature = {
+            hashAlgorithm:  'SHA256',
+            digest:         privateKey.hash ( envelope.body ),
+            signature:      privateKey.sign ( envelope.body ),
+        };
+
+        return envelope;
     }
 
     //----------------------------------------------------------------//
     @action
     validate () {
-
-        this.transaction    = this.makeTransaction ();
-        this.cost           = this.transaction.getCost ();
-        this.weight         = this.transaction.getWeight ();
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();
@@ -142,28 +117,12 @@ export class TransactionFormController {
                 break;
             }
         }
-
-        // check balance
-        const cost = this.transaction.getCost ();
-        if ( this.appState.balance < cost ) {
-            this.isErrorFree = false;
-        }
     }
 
     //----------------------------------------------------------------//
     virtual_checkComplete () {
 
         return true;
-    }
-
-    //----------------------------------------------------------------//
-    virtual_composeBody () {
-
-        return this.formatBody ();
-    }
-
-    //----------------------------------------------------------------//
-    virtual_decorateTransaction ( transaction ) {
     }
 
     //----------------------------------------------------------------//

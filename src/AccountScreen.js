@@ -79,7 +79,6 @@ export const AccountActionsSegment = observer (( props ) => {
                 <UI.Button
                     fluid
                     color = 'teal'
-                    attached = 'bottom'
                     onClick = {() => { setTransactionModalOpen ( true )}}
                 >
                     <UI.Icon name = 'envelope'/>

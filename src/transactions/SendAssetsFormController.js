@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                          from './fields/transaction-fields'
+import * as Fields                          from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { assert, randomBytes, util }        from 'fgc';
@@ -18,8 +18,8 @@ export class SendAssetsFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.FIELD_CLASS.STRING              ( 'accountName',        'Recipient' ),
-            new Fields.FIELD_CLASS.ASSET_SELECTION     ( 'assetIdentifiers',   'Assets', _.cloneDeep ( selection )),
+            new Fields.StringFieldController            ( 'accountName',        'Recipient' ),
+            new Fields.AssetSelectionFieldController    ( 'assetIdentifiers',   'Assets', _.cloneDeep ( selection )),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.SEND_ASSETS, fieldsArray );
     }

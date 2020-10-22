@@ -8,12 +8,13 @@ import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
-// BetaGetDeckForm
+// SetMinimumGratuityForm
 //================================================================//
-export const BetaGetDeckForm = observer (({ controller }) => {
+export const SetMinimumGratuityForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
+        	<Fields.VOLField field = { controller.fields.minimum }/>
         </React.Fragment>
     );
 });

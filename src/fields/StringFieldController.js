@@ -1,16 +1,15 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionFormFieldController } from './TransactionFormFieldController'
+import { FieldController } from './FieldController'
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
-// TextFieldController
+// StringFieldController
 //================================================================//
-export class TextFieldController extends TransactionFormFieldController {
+export class StringFieldController extends FieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, rows, defaultValue, initialValue ) {
+    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
         super ( fieldName, friendlyName, defaultValue, initialValue );
-        this.rows = rows;
     }
 }

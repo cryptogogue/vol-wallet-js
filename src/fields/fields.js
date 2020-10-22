@@ -19,6 +19,4 @@ module.exports = {
     TextFieldController:                require ( './TextFieldController.js' ).TextFieldController,
     VOLField:                           require ( './VOLField.js' ).VOLField,
     VOLFieldController:                 require ( './VOLFieldController.js' ).VOLFieldController,
-
-    FIELD_CLASS:                        require ( './TransactionFormFieldControllers.js' ).FIELD_CLASS,
 };

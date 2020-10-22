@@ -3,9 +3,9 @@
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
-// TransactionFormFieldController
+// FieldController
 //================================================================//
-export class TransactionFormFieldController {
+export class FieldController {
 
     //----------------------------------------------------------------//
     constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
@@ -42,7 +42,6 @@ export class TransactionFormFieldController {
     //----------------------------------------------------------------//
     @computed
     get value () {
-
         return this.virtual_format ( this.inputString ? this.virtual_coerce ( this.inputString ) : this.defaultValue );
     }
 
@@ -56,6 +55,7 @@ export class TransactionFormFieldController {
     @action
     setInputString ( inputString ) {
         this.inputString = String ( inputString ) || '';
+        this.controller && this.controller.validate ? this.controller.validate () : this.validate ();
     }
 
     //----------------------------------------------------------------//

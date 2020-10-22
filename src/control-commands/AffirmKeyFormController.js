@@ -9,17 +9,19 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import { observer }                         from 'mobx-react';
 
 //================================================================//
-// BetaGetAssetsFormController
+// AffirmKeyFormController
 //================================================================//
-export class BetaGetAssetsFormController extends TransactionFormController {
+export class AffirmKeyFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
     constructor ( appState ) {
         super ();
 
         const fieldsArray = [
-            new Fields.IntegerFieldController	( 'numAssets',      'Copies', 1 ),
+            new Fields.StringFieldController      ( 'keyName',        'Key Name' ),
+            new Fields.StringFieldController      ( 'key',            'Key' ),
+            new Fields.StringFieldController      ( 'policyName',     'Policy' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.BETA_GET_ASSETS, fieldsArray );
+        this.initialize ( appState, TRANSACTION_TYPE.AFFIRM_KEY, fieldsArray );
     }
 }

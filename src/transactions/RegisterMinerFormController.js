@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields 							from './fields/transaction-fields'
+import * as Fields 							from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { assert, randomBytes, util }        from 'fgc';
@@ -18,7 +18,7 @@ export class RegisterMinerFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.FIELD_CLASS.STRING      ( 'url',            'Miner URL' ),
+            new Fields.StringFieldController	( 'url',            'Miner URL' ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.REGISTER_MINER, fieldsArray );
     }

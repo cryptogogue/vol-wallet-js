@@ -2,8 +2,7 @@
 
 import { CraftingAssetSelectionModal }      from './CraftingAssetSelectionModal';
 import { CraftingImagePickerModal }         from './CraftingImagePickerModal';
-import { TransactionBalanceHeader, TransactionFormFields } from './BasicTransactionForm';
-import { TransactionFormInput }             from './fields/TransactionFormInput';
+import { TransactionBalanceHeader }         from './TransactionForm';
 import { AssetCardView }                    from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';

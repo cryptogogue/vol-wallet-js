@@ -8,9 +8,9 @@ import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
-// BetaGetDeckForm
+// HardResetForm
 //================================================================//
-export const BetaGetDeckForm = observer (({ controller }) => {
+export const HardResetForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>

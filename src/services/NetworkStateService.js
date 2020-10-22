@@ -52,6 +52,25 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
+    @action
+    affirmMinerControlKey ( password, phraseOrKey, privateKeyHex, publicKeyHex ) {
+
+        this.assertHasNetwork ();
+
+        if ( password ) {
+            this.assertPassword ( password );
+        }
+
+        let key = {};
+
+        key.phraseOrKeyAES      = password ? crypto.aesPlainToCipher ( phraseOrKey, password ) : phraseOrKey;
+        key.privateKeyHexAES    = password ? crypto.aesPlainToCipher ( privateKeyHex, password ) : privateKeyHex;
+        key.publicKeyHex        = publicKeyHex;
+
+        this.network.controlKey = key;
+    }
+
+    //----------------------------------------------------------------//
     assertHasNetwork () {
         if ( !this.hasNetwork ) throw new Error ( 'No network selected.' );
     }
@@ -95,6 +114,13 @@ export class NetworkStateService extends AppStateService {
     deleteAccountRequest ( requestID ) {
 
         delete this.pendingAccounts [ requestID ];
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    deleteMinerControlKey () {
+
+        delete this.network.controlKey;
     }
 
     //----------------------------------------------------------------//

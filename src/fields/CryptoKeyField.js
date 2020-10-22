@@ -20,7 +20,6 @@ export const CryptoKeyField = observer (( props ) => {
 
     const onChange = ( event ) => {
         field.setInputString ( event.target.value );
-        controller.validate ();
     };
 
     return (

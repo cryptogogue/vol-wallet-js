@@ -1,15 +1,20 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionFormFieldController } from './TransactionFormFieldController'
+import { FieldController } from './FieldController'
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
-// StringFieldController
+// IntegerFieldController
 //================================================================//
-export class StringFieldController extends TransactionFormFieldController {
+export class IntegerFieldController extends FieldController {
 
     //----------------------------------------------------------------//
     constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
         super ( fieldName, friendlyName, defaultValue, initialValue );
+    }
+
+    //----------------------------------------------------------------//
+    virtual_coerce ( inputValue ) {
+        return Number ( inputValue );
     }
 }

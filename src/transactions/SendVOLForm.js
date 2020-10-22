@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                              from './fields/transaction-fields'
-import { BasicTransactionForm }                 from './BasicTransactionForm';
+import * as Fields                              from '../fields/fields'
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                             from 'mobx-react';
@@ -14,6 +13,9 @@ import * as UI                                  from 'semantic-ui-react';
 export const SendVOLForm = observer (({ controller }) => {
 
     return (
-        <BasicTransactionForm controller = { controller }/>
+        <React.Fragment>
+            <Fields.StringField field = { controller.fields.accountName }/>
+            <Fields.VOLField field = { controller.fields.amount }/>
+        </React.Fragment>
     );
 });

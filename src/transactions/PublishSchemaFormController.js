@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields                          from './fields/transaction-fields'
+import * as Fields                          from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { assert, randomBytes, util }        from 'fgc';
@@ -24,7 +24,7 @@ export class PublishSchemaFormController extends TransactionFormController {
 
         // TODO: using a field for this is just silly; refactor into its own view (like the crafting form.)
         const fieldsArray = [
-            new Fields.FIELD_CLASS.SCHEMA  ( 'schema',     'Schema' ),
+            new Fields.SchemaFieldController    ( 'schema',     'Schema' ),
         ];
 
         const transactionType = andReset ? TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET : TRANSACTION_TYPE.PUBLISH_SCHEMA;

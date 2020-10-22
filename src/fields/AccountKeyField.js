@@ -13,8 +13,9 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const AccountKeyField = observer (( props ) => {
 
-    const { field, controller } = props;
+    const { field } = props;
 
+    const controller = field.controller;
     const appState = controller.appState;
     const account = appState.account;
     const accountKeyNames = appState.getKeyNamesForTransaction ( controller.type );
@@ -36,7 +37,6 @@ export const AccountKeyField = observer (( props ) => {
 
     const onChange = ( event, data ) => {
         field.setInputString ( data.value )
-        controller.validate ();
     };
 
     return (

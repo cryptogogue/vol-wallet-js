@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields 							from './fields/transaction-fields'
+import * as Fields                          from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { assert, randomBytes, util }        from 'fgc';
@@ -18,8 +18,8 @@ export class AccountPolicyFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.FIELD_CLASS.STRING  ( 'policyName',     'Policy Name' ),
-            new Fields.FIELD_CLASS.TEXT    ( 'policy',         'Policy', 8 ),
+            new Fields.StringFieldController	( 'policyName',     'Policy Name' ),
+            new Fields.TextFieldController		( 'policy',         'Policy', 8 ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.ACCOUNT_POLICY, fieldsArray );
     }

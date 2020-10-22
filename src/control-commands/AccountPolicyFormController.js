@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as Fields 							from './fields/transaction-fields'
+import * as Fields 							from '../fields/fields'
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { assert, randomBytes, util }        from 'fgc';
@@ -9,11 +9,18 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import { observer }                         from 'mobx-react';
 
 //================================================================//
-// SetMinimumGratuityForm
+// AccountPolicyFormController
 //================================================================//
-export const SetMinimumGratuityForm = observer (({ controller }) => {
+export class AccountPolicyFormController extends TransactionFormController {
 
-    return (
-        <BasicTransactionForm controller = { controller }/>
-    );
-});
+    //----------------------------------------------------------------//
+    constructor ( appState ) {
+        super ();
+
+        const fieldsArray = [
+            new Fields.StringFieldController  ( 'policyName',     'Policy Name' ),
+            new Fields.TextFieldController    ( 'policy',         'Policy', 8 ),
+        ];
+        this.initialize ( appState, TRANSACTION_TYPE.ACCOUNT_POLICY, fieldsArray );
+    }
+}
