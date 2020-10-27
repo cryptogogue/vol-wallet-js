@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { CraftingForm }                         from './CraftingForm';
 import { PasswordInputField }                   from '../PasswordInputField';
 import { Transaction, TRANSACTION_TYPE }        from './Transaction';
 import { TransactionForm }                      from './TransactionForm';

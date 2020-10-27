@@ -54,6 +54,7 @@ export const DashboardNavigationBar = observer (( props ) => {
                     >
                         <Dropdown.Menu>
                             <Dropdown.Item icon = "wrench"          text = 'Schema Util'            as = { Link } to = { `/util/schema` }/>
+                            <Dropdown.Item icon = "wrench"          text = 'Transaction Util'       as = { Link } to = { `/util/transaction` }/>
                             <Dropdown.Item icon = "lock"            text = 'Change Password'        onClick = {() => { setChangePasswordModalOpen ( true )}}/>
                             { deleteStorageModal }
                             <Dropdown.Divider />

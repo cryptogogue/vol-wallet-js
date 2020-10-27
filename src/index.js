@@ -22,6 +22,7 @@ import { KeysScreen }                   from './KeysScreen';
 import { MinerControlScreen }           from './MinerControlScreen';
 import { NetworkScreen }                from './NetworkScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
+import { TransactionUtilScreen }        from './TransactionUtilScreen';
 import registerServiceWorker            from './util/registerServiceWorker';
 import React                            from 'react';
 import { useClearCache }                from "react-clear-cache";
@@ -52,6 +53,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
                 <Route exact path = "/util/schema"              component = { SchemaUtilScreen }/>
+                <Route exact path = "/util/transaction"         component = { TransactionUtilScreen }/>
 
                 <Route exact path = "/debug/aes"                component = { fgc.debug.AESScreen }/>
                 <Route exact path = "/debug/barcode/pdf417"     component = { fgc.debug.BarcodePDF417Screen }/>
@@ -68,8 +70,6 @@ const App = () => {
                 <Route exact path = "/debug/svgtopng"           component = { cardmotron.debug.SVGtoPNGScreen }/>
                 <Route exact path = "/debug/textfitter"         component = { fgc.debug.TextFitterScreen }/>
                 <Route exact path = "/debug/textstyle"          component = { fgc.debug.TextStyleScreen }/>
-
-                <Route exact path = "/util/schema"              component = { cardmotron.SchemaScreen }/>
 
                 <Route exact path = "/"                         component = { DashboardScreen }/>
             </Switch>

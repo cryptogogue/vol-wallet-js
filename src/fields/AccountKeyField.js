@@ -26,8 +26,6 @@ export const AccountKeyField = observer (( props ) => {
     const options = [];
     for ( let keyName of accountKeyNames ) {
 
-        const key = account.keys [ keyName ];
-
         options.push ({
             key:        keyName,
             text:       keyName,

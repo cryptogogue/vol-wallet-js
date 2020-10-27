@@ -9,6 +9,9 @@ module.exports = {
     ConstFieldController:               require ( './ConstFieldController.js' ).ConstFieldController,
     CryptoKeyField:                     require ( './CryptoKeyField.js' ).CryptoKeyField,
     CryptoKeyFieldController:           require ( './CryptoKeyFieldController.js' ).CryptoKeyFieldController,
+    
+    FormController:                     require ( './FormController.js' ).FormController,
+
     IntegerField:                       require ( './IntegerField.js' ).IntegerField,
     IntegerFieldController:             require ( './IntegerFieldController.js' ).IntegerFieldController,
     SchemaField:                        require ( './SchemaField.js' ).SchemaField,

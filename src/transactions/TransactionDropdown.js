@@ -103,6 +103,7 @@ export const TransactionDropdown = observer (( props ) => {
                 item
                 placeholder     = 'Create Transaction'
                 text            = { controller ? controller.friendlyName : '' }
+                disabled        = { props.disabled }
             >
                 <UI.Dropdown.Menu>
                     { options }

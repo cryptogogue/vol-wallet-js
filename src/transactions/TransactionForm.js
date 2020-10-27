@@ -87,11 +87,15 @@ export const TransactionForm = observer (( props ) => {
 
     return (
         <UI.Segment>
-            <TransactionBalanceHeader controller = { controller }/>
-            <UI.Form>    
+            <If condition = { !controller.standalone }>
+                <TransactionBalanceHeader controller = { controller }/>
+            </If>
+            <UI.Form>
                 <TransactionFormBody controller = { controller }/>
                 <Fields.VOLField field = { controller.fields.gratuity }/>
-                <Fields.AccountKeyField field = { controller.fields.makerKeyName }/>
+                <If condition = { !controller.standalone }>
+                    <Fields.AccountKeyField field = { controller.fields.makerKeyName }/>
+                </If>
             </UI.Form>
         </UI.Segment>
     );

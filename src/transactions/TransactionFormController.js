@@ -19,8 +19,9 @@ const SPECIAL_FIELDS = [
 //================================================================//
 export class TransactionFormController {
 
-    @observable     cost    = 0;
-    @observable     weight  = 0;
+    @observable     standalone      = false;
+    @observable     cost            = 0;
+    @observable     weight          = 0;
 
     //----------------------------------------------------------------//
     @computed get
@@ -58,17 +59,24 @@ export class TransactionFormController {
     }
 
     //----------------------------------------------------------------//
+    @action
     initialize ( appState, type, fieldsArray ) {
+
+        this.standalone             = Boolean ( appState.isStandaloneTransactionContext ); // yes, this is a hack. but not worth refactoring over.
+
+        console.log ( 'IS STANDALONE', this.standalone );
 
         this.appState               = appState;
         this.type                   = type;
-        this.makerAccountName       = appState.accountID;
 
         fieldsArray = fieldsArray || [];
-        fieldsArray.push (
-            new Fields.VOLFieldController           ( 'gratuity',       'Gratuity', 0 ),
-            new Fields.AccountKeyFieldController    ( 'makerKeyName',   'Maker Key', appState.getDefaultAccountKeyName ()),
-        );
+
+        fieldsArray.push ( new Fields.VOLFieldController ( 'gratuity',       'Gratuity', 0 ));
+
+        if ( !this.standalone ) {
+            console.log ( 'HELLO ACCOUNT KEY' );
+            fieldsArray.push ( new Fields.AccountKeyFieldController ( 'makerKeyName',   'Maker Key', appState.getDefaultAccountKeyName ()));
+        }
 
         const fields = {};
         for ( let field of fieldsArray ) {
@@ -95,19 +103,31 @@ export class TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    @action
+    @computed get
+    makerAccountName () {
+
+        return this.appState.accountID;
+    }
+
+    //----------------------------------------------------------------//
     makeTransaction () {
+
+        const transaction = Transaction.transactionWithBody ( this.type, this.makeTransactionBody ());
+        this.virtual_decorateTransaction ( transaction );
+        return transaction;
+    }
+
+    //----------------------------------------------------------------//
+    makeTransactionBody () {
 
         const body = this.virtual_composeBody ();
         body.maker = {
             gratuity:           this.fields.gratuity.value,
-            accountName:        this.makerAccountName,
-            keyName:            this.fields.makerKeyName.value,
+            accountName:        this.standalone ? '' : this.makerAccountName,
+            keyName:            this.standalone ? '' : this.fields.makerKeyName.value,
             nonce:              -1,
         }
-        const transaction = Transaction.transactionWithBody ( this.type, body );
-        this.virtual_decorateTransaction ( transaction );
-        return transaction;
+        return body;
     }
 
     //----------------------------------------------------------------//
@@ -144,9 +164,10 @@ export class TransactionFormController {
         }
 
         // check balance
-        const cost = this.transaction.getCost ();
-        if ( this.appState.balance < cost ) {
-            this.isErrorFree = false;
+        if ( !this.standalone ) {
+            if ( this.appState.balance < this.cost ) {
+                this.isErrorFree = false;
+            }
         }
     }
 
