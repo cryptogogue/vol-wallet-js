@@ -73,9 +73,10 @@ export class PublishSchemaFormController extends TransactionFormController {
                     Object.keys ( schema.fonts ).length +
                     Object.keys ( schema.icons ).length +
                     Object.keys ( schema.layouts ).length +
+                    Object.keys ( schema.methods ).length +
+                    Object.keys ( schema.rewards ).length +
                     Object.keys ( schema.upgrades ).length +
-                    Object.keys ( schema.sets ).sets +
-                    Object.keys ( schema.methods ).length
+                    Object.keys ( schema.sets ).sets
                 ;
 
                 if ( size === 0 ) {
