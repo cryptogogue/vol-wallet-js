@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AccountInfoService }               from './services/AccountInfoService';
 import { AccountStateService }              from './services/AccountStateService';
 import { TransactionModal }                 from './transactions/TransactionModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';

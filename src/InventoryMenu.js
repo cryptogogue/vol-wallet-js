@@ -6,7 +6,6 @@ import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavig
 import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
-import { AccountInfoService }                               from './services/AccountInfoService';
 import { AppStateService }                                  from './services/AppStateService';
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';

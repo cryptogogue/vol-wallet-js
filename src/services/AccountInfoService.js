@@ -40,17 +40,20 @@ export class AccountInfoService {
             }
 
             const accountInfo = data.account;
-            const entitlements = data.entitlements;
 
             if ( accountInfo ) {
 
                 appState.setAccountInfo ( accountInfo );
-                appState.updateAccount ( accountInfo, entitlements );
+                appState.updateAccount (
+                    accountInfo,
+                    data.entitlements,
+                    data.feeSchedule
+                );
 
                 if ( accountInfo.name !== accountID ) {
                     appState.renameAccount ( accountID, accountInfo.name );
                 }
-            }                
+            }
         }
         catch ( error ) {
             this.appState.setAccountInfo ();

@@ -70,14 +70,20 @@ export class Transaction {
 
     //----------------------------------------------------------------//
     getCost () {
+        
+        return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.getSendVOL ();
+    }
 
-        return this.virtual_getCost ();
+    //----------------------------------------------------------------//
+    getSendVOL () {
+
+        return this.virtual_getSendVOL ? this.virtual_getSendVOL () : 0;
     }
 
     //----------------------------------------------------------------//
     getWeight () {
 
-        return this.virtual_getWeight ();
+        return this.virtual_getWeight ? this.virtual_getWeight () : 1;
     }
 
     //----------------------------------------------------------------//
@@ -111,18 +117,6 @@ export class Transaction {
             default:                            return new Transaction ( type, body );
         }
     }
-
-    //----------------------------------------------------------------//
-    virtual_getCost () {
-
-        return this.body.maker.gratuity || 0;
-    }
-
-    //----------------------------------------------------------------//
-    virtual_getWeight () {
-
-        return 1;
-    }
 };
 
 //================================================================//
@@ -131,9 +125,9 @@ export class Transaction {
 class Transaction_OpenAccount extends Transaction {
 
     //----------------------------------------------------------------//
-    virtual_getCost () {
+    virtual_getSendVOL () {
 
-        return super.virtual_getCost () + ( this.body.grant || 0 );
+        return this.body.grant || 0;
     }
 };
 
@@ -155,8 +149,8 @@ class Transaction_RunScript extends Transaction {
 class Transaction_SendVOL extends Transaction {
 
     //----------------------------------------------------------------//
-    virtual_getCost () {
+    virtual_getSendVOL () {
 
-        return super.virtual_getCost () + ( this.body.amount || 0 );
+        return this.body.amount || 0;
     }
 };

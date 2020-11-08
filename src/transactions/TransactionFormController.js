@@ -74,8 +74,12 @@ export class TransactionFormController {
         fieldsArray.push ( new Fields.VOLFieldController ( 'gratuity',       'Gratuity', 0 ));
 
         if ( !this.standalone ) {
-            console.log ( 'HELLO ACCOUNT KEY' );
             fieldsArray.push ( new Fields.AccountKeyFieldController ( 'makerKeyName',   'Maker Key', appState.getDefaultAccountKeyName ()));
+        }
+        else {
+            // these get calculated automatically if not standalone
+            fieldsArray.push ( new Fields.VOLFieldController ( 'profitShare',   'Profit Share',     0 ));
+            fieldsArray.push ( new Fields.VOLFieldController ( 'transferTax',   'Transfer Tax',     0 ));
         }
 
         const fields = {};
@@ -114,6 +118,22 @@ export class TransactionFormController {
 
         const transaction = Transaction.transactionWithBody ( this.type, this.makeTransactionBody ());
         this.virtual_decorateTransaction ( transaction );
+
+        const feeSchedule = this.appState.getFeeSchedule ();
+        if ( feeSchedule ) {
+            const feeProfile = feeSchedule.transactionProfiles [ this.type ] || feeSchedule.defaultProfile || false;
+            if ( feeProfile ) {
+
+                const maker = transaction.body.maker;
+
+                const calculate = ( amount, percent ) => {
+                    const shareF = Math.floor ((( amount * percent.scale ) * percent.percent ) / percent.scale ); // I shot the shareF?
+                    return Math.floor ( shareF / percent.scale ) + ((( shareF % percent.scale ) == 0 ) ? 0 : 1 );
+                }
+                maker.profitShare      = calculate ( maker.gratuity, feeProfile.profitShare );
+                maker.transferTax      = calculate ( transaction.getSendVOL (), feeProfile.transferTax );
+            }
+        }
         return transaction;
     }
 
@@ -123,6 +143,8 @@ export class TransactionFormController {
         const body = this.virtual_composeBody ();
         body.maker = {
             gratuity:           this.fields.gratuity.value,
+            profitShare:        this.standalone ? this.fields.profitShare.value : 0,
+            transferTax:        this.standalone ? this.fields.transferTax.value : 0,
             accountName:        this.standalone ? '' : this.makerAccountName,
             keyName:            this.standalone ? '' : this.fields.makerKeyName.value,
             nonce:              -1,

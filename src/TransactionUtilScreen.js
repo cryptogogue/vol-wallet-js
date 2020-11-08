@@ -39,6 +39,11 @@ export class TransactionContext {
     }
 
     //----------------------------------------------------------------//
+    getFeeSchedule () {
+        return false;
+    }
+
+    //----------------------------------------------------------------//
     getKeyNamesForTransaction () {
         return [ 'master' ];
     }

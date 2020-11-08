@@ -126,6 +126,12 @@ export class AccountStateService extends NetworkStateService {
     }
 
     //----------------------------------------------------------------//
+    getFeeSchedule () {
+        
+        return this.account.feeSchedule;
+    }
+
+    //----------------------------------------------------------------//
     getKey ( keyName ) {
         const account = this.getAccount ();
         return account ? account.keys [ keyName || this.getDefaultAccountKeyName ()] : null;
@@ -249,7 +255,7 @@ export class AccountStateService extends NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    updateAccount ( accountUpdate, entitlements ) {
+    updateAccount ( accountUpdate, entitlements, feeSchedule ) {
 
         let account = this.account;
         if ( !account ) return;
@@ -257,6 +263,7 @@ export class AccountStateService extends NetworkStateService {
         account.policy          = accountUpdate.policy;
         account.bequest         = accountUpdate.bequest;
         account.entitlements    = entitlements.account;
+        account.feeSchedule     = feeSchedule || {};
 
         for ( let keyName in accountUpdate.keys ) {
 
