@@ -35,18 +35,30 @@ export const TransactionBalanceHeader = observer (( props ) => {
 
     return (
         <React.Fragment>
+
             <UI.Header
                 as = 'h4'
                 style = {{ color: textColor, marginBottom: 0 }}
             >
                 Balance: { vol.format ( balance )}
             </UI.Header>
+
             <UI.Header
-                as = 'h4'
-                style = {{ marginTop: 0 }}
+                as = 'h6'
+                style = {{ marginTop: 0, marginBottom: controller.suggestedGratuity ? 0 : undefined }}
             >
                 Weight: { controller.weight }
             </UI.Header>
+
+            <If condition = { controller.suggestedGratuity }>
+                <UI.Header
+                    as = 'h6'
+                    style = {{ marginTop: 0 }}
+                >
+                    Suggested Gratuity: { vol.format ( controller.suggestedGratuity )}
+                </UI.Header>
+            </If>
+
         </React.Fragment>
     );
 });

@@ -19,9 +19,10 @@ const SPECIAL_FIELDS = [
 //================================================================//
 export class TransactionFormController {
 
-    @observable     standalone      = false;
-    @observable     cost            = 0;
-    @observable     weight          = 0;
+    @observable     standalone              = false;
+    @observable     cost                    = 0;
+    @observable     weight                  = 0;
+    @observable     suggestedGratuity       = 0;
 
     //----------------------------------------------------------------//
     @computed get
@@ -63,8 +64,6 @@ export class TransactionFormController {
     initialize ( appState, type, fieldsArray ) {
 
         this.standalone             = Boolean ( appState.isStandaloneTransactionContext ); // yes, this is a hack. but not worth refactoring over.
-
-        console.log ( 'IS STANDALONE', this.standalone );
 
         this.appState               = appState;
         this.type                   = type;
@@ -156,9 +155,10 @@ export class TransactionFormController {
     @action
     validate () {
 
-        this.transaction    = this.makeTransaction ();
-        this.cost           = this.transaction.getCost ();
-        this.weight         = this.transaction.getWeight ();
+        this.transaction            = this.makeTransaction ();
+        this.cost                   = this.transaction.getCost ();
+        this.weight                 = this.transaction.getWeight ();
+        this.suggestedGratuity      = this.appState.getMinimumGratuity () * this.weight;
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();

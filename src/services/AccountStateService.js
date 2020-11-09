@@ -128,7 +128,7 @@ export class AccountStateService extends NetworkStateService {
     //----------------------------------------------------------------//
     getFeeSchedule () {
         
-        return this.account.feeSchedule;
+        return this.account.feeSchedule || {};
     }
 
     //----------------------------------------------------------------//
@@ -152,6 +152,12 @@ export class AccountStateService extends NetworkStateService {
             }
         }
         return keyNames;
+    }
+
+    //----------------------------------------------------------------//
+    getMinimumGratuity () {
+        
+        return this.account.minGratuity || 0;
     }
 
     //----------------------------------------------------------------//
@@ -255,7 +261,7 @@ export class AccountStateService extends NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    updateAccount ( accountUpdate, entitlements, feeSchedule ) {
+    updateAccount ( accountUpdate, entitlements, feeSchedule, minGratuity ) {
 
         let account = this.account;
         if ( !account ) return;
@@ -264,6 +270,7 @@ export class AccountStateService extends NetworkStateService {
         account.bequest         = accountUpdate.bequest;
         account.entitlements    = entitlements.account;
         account.feeSchedule     = feeSchedule || {};
+        account.minGratuity     = minGratuity || 0;
 
         for ( let keyName in accountUpdate.keys ) {
 

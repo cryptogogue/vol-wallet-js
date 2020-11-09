@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { Transaction }      from './transactions/Transaction';
+import * as vol             from './util/vol';
 import _                    from 'lodash';
 import JSONTree             from 'react-json-tree';
 import React, { useState }  from 'react';
@@ -57,7 +58,7 @@ export const TransactionQueueView = observer (( props ) => {
                         }
                     />
                 </UI.Table.Cell>
-                <UI.Table.Cell collapsing>{ transaction.cost }</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{ vol.format ( transaction.cost )}</UI.Table.Cell>
                 <UI.Table.Cell>{ transaction.note }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ typeof ( transaction.nonce ) === 'number' ? transaction.nonce : '--' }</UI.Table.Cell>
             </UI.Table.Row>

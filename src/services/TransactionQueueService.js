@@ -167,6 +167,7 @@ export class TransactionQueueService {
                             break;
 
                         case 'REJECTED':
+                        case 'IGNORED':
                             runInAction (() => {
                                 account.transactionError = {
                                     message:    checkResult.message,
@@ -220,7 +221,7 @@ export class TransactionQueueService {
             headers :   { 'content-type': 'application/json' },
             body :      JSON.stringify ( memo.envelope, null, 4 ),
         });
-        return ( result.status === 'RETRY' );
+        return ( result.status === 'OK' );
     }
 
     //----------------------------------------------------------------//

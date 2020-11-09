@@ -47,7 +47,8 @@ export class AccountInfoService {
                 appState.updateAccount (
                     accountInfo,
                     data.entitlements,
-                    data.feeSchedule
+                    data.feeSchedule,
+                    data.minGratuity
                 );
 
                 if ( accountInfo.name !== accountID ) {
