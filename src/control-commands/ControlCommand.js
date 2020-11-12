@@ -2,6 +2,7 @@
 
 //----------------------------------------------------------------//
 export const COMMAND_TYPE = {
+	EXTEND_NETWORK:				'EXTEND_NETWORK',
     HARD_RESET:                 'HARD_RESET',
     SELECT_REWARD:              'SELECT_REWARD',
     SET_MINIMUM_GRATUITY:       'SET_MINIMUM_GRATUITY',
@@ -11,6 +12,7 @@ export const COMMAND_TYPE = {
 COMMAND_TYPE.friendlyNameForType = ( type ) => {
 
     switch ( type ) {
+    	case COMMAND_TYPE.EXTEND_NETWORK:				return 'Extend Network';
         case COMMAND_TYPE.HARD_RESET:					return 'Hard Reset';
         case COMMAND_TYPE.SELECT_REWARD:				return 'Select Reward';
         case COMMAND_TYPE.SET_MINIMUM_GRATUITY:			return 'Set Minimum Gratuity';

@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { COMMAND_TYPE }                                     from './ControlCommand';
+import { ExtendNetworkFormController }                      from './ExtendNetworkFormController';
 import { HardResetFormController }                          from './HardResetFormController';
 import { SelectRewardFormController }                       from './SelectRewardFormController';
 import { SetMinimumGratuityFormController }                 from './SetMinimumGratuityFormController';
@@ -13,6 +14,7 @@ import * as UI                                              from 'semantic-ui-re
 
 //----------------------------------------------------------------//
 export const gCommandTypes = [
+    COMMAND_TYPE.EXTEND_NETWORK,
     COMMAND_TYPE.HARD_RESET,
     COMMAND_TYPE.SELECT_REWARD,
     COMMAND_TYPE.SET_MINIMUM_GRATUITY,
@@ -22,6 +24,7 @@ export const gCommandTypes = [
 function makeControllerForCommandType ( appState, commandType ) {
 
     switch ( commandType ) {
+        case COMMAND_TYPE.EXTEND_NETWORK:           return new ExtendNetworkFormController ( appState );
         case COMMAND_TYPE.HARD_RESET:               return new HardResetFormController ( appState );
         case COMMAND_TYPE.SELECT_REWARD:            return new SelectRewardFormController ( appState );
         case COMMAND_TYPE.SET_MINIMUM_GRATUITY:     return new SetMinimumGratuityFormController ( appState );
@@ -43,32 +46,20 @@ export const ControlCommandDropdown = observer (( props ) => {
     }
 
     let options = [];
-    const disabledOptions = [];
 
     for ( let typeID in gCommandTypes ) {
         const commandType = gCommandTypes [ typeID ];
         if ( controller && ( controller.type === commandType )) continue;
-
-        // const disabled = !appState.checkTransactionEntitlements ( commandType );
-        const disabled = false;
 
         const item = (
             <UI.Dropdown.Item
                 key         = { commandType }
                 text        = { COMMAND_TYPE.friendlyNameForType ( commandType )}
                 onClick     = {() => { onSelection ( commandType )}}
-                disabled    = { disabled }
             />
         );
-
-        if ( disabled ) {
-            disabledOptions.push ( item );
-        }
-        else {
-            options.push ( item );
-        }
+        options.push ( item );
     }
-    options = options.concat ( disabledOptions );
 
     return (
         <UI.Menu>

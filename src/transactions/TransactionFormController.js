@@ -33,10 +33,14 @@ export class TransactionFormController {
 
     //----------------------------------------------------------------//
     constructor () {
+
+        this.revocable = new RevocableContext ();
     }
 
     //----------------------------------------------------------------//
     finalize () {
+
+        this.revocable.finalize ();
     }
 
     //----------------------------------------------------------------//
@@ -169,6 +173,8 @@ export class TransactionFormController {
             }
         }
 
+        this.isErrorFree = true;
+
         // reset errors
         for ( let field of this.fieldsArray ) {
             field.error = false;
@@ -176,7 +182,6 @@ export class TransactionFormController {
         }
 
         // check error free
-        this.isErrorFree = true;
         this.virtual_validate ();
         for ( let field of this.fieldsArray ) {
             if ( field.error ) {

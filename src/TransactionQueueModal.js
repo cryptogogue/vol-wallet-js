@@ -23,7 +23,7 @@ export const TransactionQueueModal = observer (( props ) => {
         setCount ( count + 1 );
     }
     let onClickSubmit = () => {
-        appState.transactionQueue,submitTransactions ( password );
+        appState.transactionQueue.submitTransactions ( password );
         clearPassword ();
     };
     
