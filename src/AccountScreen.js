@@ -23,8 +23,8 @@ const AccountDetailsView = observer (( props ) => {
 
     if ( !account ) return;
 
-    const accountURL    = `${ appState.network.nodeURL }/accounts/${ appState.accountID }`;
-    const hasInfo       = appState.hasAccountInfo;
+    const accountURL    = appState.getServiceURL ( `/accounts/${ appState.accountID }` );
+    const hasInfo       = appState.hasAccountInfo && appState.consensus.isCurrent;
     
     return (
         <div style = {{ textAlign: 'center' }}>
@@ -48,6 +48,10 @@ const AccountDetailsView = observer (( props ) => {
 
                 <UI.Header.Subheader>
                     { `Nonce: ${ appState.nonce }` }
+                </UI.Header.Subheader>
+
+                <UI.Header.Subheader>
+                    { `Height: ${ appState.consensus.height }` }
                 </UI.Header.Subheader>
             </div>
         </div>
@@ -102,7 +106,7 @@ export const AccountScreen = observer (( props ) => {
     const networkID = util.getMatch ( props, 'networkID' );
     const accountID = util.getMatch ( props, 'accountID' );
 
-    const appState              = hooks.useFinalizable (() => new AccountStateService ( networkID, accountID ));
+    const appState = hooks.useFinalizable (() => new AccountStateService ( networkID, accountID ));
 
     return (
         <SingleColumnContainerView>

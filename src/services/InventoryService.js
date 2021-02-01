@@ -171,13 +171,6 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
-    @computed
-    get nodeURL () {
-
-        return this.appState.network.nodeURL;
-    }
-
-    //----------------------------------------------------------------//
     @action
     async reset () {
 
@@ -211,7 +204,7 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Updating Inventory' );
 
-        const data          = await this.revocable.fetchJSON ( `${ this.nodeURL }/accounts/${ this.accountID }/inventory` );
+        const data          = await this.revocable.fetchJSON ( this.appState.getServiceURL ( `/accounts/${ this.accountID }/inventory` ));
 
         const nonce         = data.inventoryNonce;
         const timestamp     = data.inventoryTimestamp;
@@ -258,7 +251,7 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 
-        const inventoryJSON = await this.revocable.fetchJSON ( this.nodeURL + '/accounts/' + this.accountID + '/inventory/assets' );
+        const inventoryJSON = await this.revocable.fetchJSON ( this.appState.getServiceURL ( `/accounts/${ this.accountID }/inventory/assets` ));
 
         const assets = {};
         for ( let asset of inventoryJSON.inventory ) {
@@ -282,9 +275,9 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 
-        const count = nextNonce - currentNonce;
-        const url = `${ this.nodeURL }/accounts/${ this.accountID }/inventory/log/${ currentNonce }?count=${ count }`;
-        const data = await this.revocable.fetchJSON ( url );
+        const count     = nextNonce - currentNonce;
+        const url       = appState.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }?count=${ count }` );
+        const data      = await this.revocable.fetchJSON ( url );
 
         const assetsSent = _.clone ( this.appState.account.assetsSent || {});
 
@@ -330,7 +323,7 @@ export class InventoryService {
 
         await this.db.schemas.where ({ networkID: this.networkID }).delete ();
 
-        const schemaInfo = ( await this.revocable.fetchJSON ( this.nodeURL + '/schema' ));
+        const schemaInfo = ( await this.revocable.fetchJSON ( appState.getServiceURL ( '/schema' )));
 
         schemaKey = this.formatSchemaKey ( schemaInfo.schemaHash, schemaInfo.schema.version );
         await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, json: JSON.stringify ( schemaInfo.schema )});

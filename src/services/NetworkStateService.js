@@ -7,6 +7,7 @@ import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import React                            from 'react';
+import url                              from 'url';
 
 //================================================================//
 // NetworkStateService
@@ -79,16 +80,24 @@ export class NetworkStateService extends AppStateService {
     constructor ( networkID ) {
         super ();
 
-        runInAction (() => {
-            if ( _.has ( this.networks, networkID )) {
+        if ( !_.has ( this.networks, networkID )) throw new Error ( 'Network not found.' );
 
-                this.networkID = networkID;
-                const network = this.network;
-            }
-            else {
-                throw new Error ( 'Network not found.' );
-            }
+        const consensus = {
+            height:             0,
+            digest:             false,
+            step:               0,
+            isCurrent:          false,
+            isConflicted:       false,
+            urls:               [],
+        };
+
+        this.storage.persist ( this, 'consensus',       `.vol_consensus_${ networkID }`,        consensus );
+
+        runInAction (() => {
+            this.networkID = networkID;
         });
+
+        this.networkInfoServiceLoop ();
     }
 
     //----------------------------------------------------------------//
@@ -146,6 +155,17 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
+    formatServiceURL ( base, path, query ) {
+
+        const serviceURL        = url.parse ( base );
+        serviceURL.pathname     = path;
+        serviceURL.query        = _.cloneDeep ( query || {} );
+        serviceURL.query.at     = this.consensus.height;
+
+        return url.format ( serviceURL );
+    }
+
+    //----------------------------------------------------------------//
     getAccount ( accountID ) {
 
         if ( this.hasNetwork ) {
@@ -159,6 +179,36 @@ export class NetworkStateService extends AppStateService {
     //----------------------------------------------------------------//
     getNetwork ( networkID ) {
         return super.getNetwork ( networkID || this.networkID );
+    }
+
+    //----------------------------------------------------------------//
+    getServiceURL ( path, query ) {
+
+        return this.formatServiceURL ( this.network.nodeURL, path, query );
+    }
+
+    //----------------------------------------------------------------//
+    getServiceURLs ( path, query ) {
+
+        const urls = [];
+
+        for ( let nodeURL of this.consensus.urls ) {
+            if ( nodeURL !== undefined ) {
+                urls.push ( nodeURL );
+            }
+        }
+
+        if ( urls.length === 0 ) {
+            urls.push ( this.network.nodeURL ); 
+        }
+
+        const serviceURLs = [];
+
+        for ( let nodeURL of urls ) {
+            serviceURLs.push ( this.formatServiceURL ( this.network.nodeURL, path, query ));
+        }
+
+        return serviceURLs;
     }
 
     //----------------------------------------------------------------//
@@ -193,6 +243,14 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
+    async networkInfoServiceLoop () {
+
+        let timeout = 5000;
+        await this.scanNetwork ();
+        this.revocable.timeout (() => { this.networkInfoServiceLoop ()}, timeout );
+    }
+
+    //----------------------------------------------------------------//
     @computed get
     pendingAccounts () {
         return this.network.pendingAccounts;
@@ -206,6 +264,108 @@ export class NetworkStateService extends AppStateService {
         
         this.accounts [ newName ] = _.cloneDeep ( this.accounts [ oldName ]); // or mobx will bitch at us
         delete this.accounts [ oldName ];
+    }
+
+    //----------------------------------------------------------------//
+    async scanNetwork () {
+
+        const consensus = this.consensus;
+
+        const promises = [];
+        const nextHeight = consensus.height + consensus.step;
+
+        const fetchChain = async ( nodeURL ) => {
+
+            try {
+
+                const peekURL = url.parse ( nodeURL );
+                peekURL.pathname = `/consensus/peek`;
+                peekURL.query = { peek: nextHeight, prev: consensus.height, sampleMiners : 16 };
+
+                return await this.revocable.fetchJSON ( url.format ( peekURL ));
+            }
+            catch ( error ) {
+            }
+            return false;
+        }
+
+        // fetch all the chains
+        for ( let nodeURL of consensus.urls ) {
+            if ( nodeURL !== undefined ) {
+                promises.push ( fetchChain ( nodeURL ));
+            }
+        }
+
+        if ( promises.length === 0 ) {
+            promises.push ( fetchChain ( this.network.nodeURL )); 
+        }
+
+        const results = await this.revocable.all ( promises );
+
+        let maxCount        = 0;
+        let frontRunner     = '';
+        let prevDigest      = '';
+        const histogram     = {};
+        const resultURLs    = {};
+
+        runInAction (() => {
+
+            for ( let result of results ) {
+
+                if ( typeof ( result.url ) !== 'string' ) continue;
+
+                const header = result && result.peek;
+
+                if ( header && ( header.height === nextHeight )) {
+
+                    const digest = header.digest;
+                    const count = ( histogram [ digest ] || 0 ) + 1;
+                    histogram [ digest ] = count;
+
+                    if ( maxCount < count ) {
+                        maxCount        = count;
+                        frontRunner     = digest;
+                        prevDigest      = result.prev.digest;
+                    }
+                }
+
+                if ( result.miners ) {
+                    for ( let minerURL of result.miners ) {
+                        resultURLs [ minerURL ] = true;
+                    }
+                }
+                resultURLs [ result.url ] = true;
+            }
+            
+            consensus.urls = _.cloneDeep ( _.keys ( resultURLs ));
+
+            if ( maxCount && ( maxCount === consensus.urls.length )) {
+
+                // we skipped multiple steps ahead and still found consensus, so we may not be "current."
+                if ( consensus.step > 1 ) {
+                    consensus.isCurrent = false;
+                }
+
+                if ( consensus.digest && ( consensus.digest !== prevDigest )) {
+                    consensus.isConflicted = true;
+                }
+
+                consensus.height = nextHeight;
+                consensus.digest = frontRunner;
+
+                consensus.step = consensus.step ? consensus.step * 2 : 1;
+            }
+            else {
+
+                // the check failed and is only one step ahead, thus the current height must be "current."
+                if ( consensus.step === 1 ) {
+                    consensus.isCurrent = true;
+                }
+                consensus.step = consensus.step > 1 ? consensus.step / 2 : 1;
+            }
+        });
+
+        // console.log ( consensus.urls.length, maxCount, consensus.height, consensus.step, consensus.digest );
     }
 
     //----------------------------------------------------------------//

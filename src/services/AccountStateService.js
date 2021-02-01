@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as entitlements                from '../util/entitlements';
-import { AccountInfoService }           from './AccountInfoService';
 import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
@@ -49,19 +48,7 @@ export class AccountStateService extends NetworkStateService {
     @computed get
     balance () {
 
-        let cost = 0;
-
-        const pendingTransactions = this.pendingTransactions;
-        for ( let i in pendingTransactions ) {
-            cost += pendingTransactions [ i ].cost;
-        }
-
-        const stagedTransactions = this.stagedTransactions;
-        for ( let i in stagedTransactions ) {
-            cost += stagedTransactions [ i ].cost;
-        }
-
-        return this.accountInfo.balance - cost - this.nextTransactionCost;
+        return this.accountInfo.balance - this.transactionQueue.cost;
     }
 
     //----------------------------------------------------------------//
@@ -93,7 +80,6 @@ export class AccountStateService extends NetworkStateService {
 
         this.setAccountInfo ();
 
-        this.accountInfoService     = new AccountInfoService ( this );
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new InventoryController ( this.inventoryProgress );
         this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
@@ -106,7 +92,6 @@ export class AccountStateService extends NetworkStateService {
     //----------------------------------------------------------------//
     finalize () {
 
-        this.accountInfoService.finalize ();
         this.inventoryProgress.finalize ();
         this.inventory.finalize ();
         this.inventoryService.finalize ();
@@ -221,7 +206,7 @@ export class AccountStateService extends NetworkStateService {
 
         let timeout = 5000;
 
-        await this.accountInfoService.syncAccountInfo ();
+        await this.syncAccountInfo ();
 
         if ( this.transactionQueue.pendingTransactions.length > 0 ) {
             await this.transactionQueue.processTransactionsAsync ();
@@ -257,6 +242,44 @@ export class AccountStateService extends NetworkStateService {
     setAccountInventoryNonce ( inventoryNonce ) {
 
         this.account.inventoryNonce = inventoryNonce;
+    }
+
+    //----------------------------------------------------------------//
+    async syncAccountInfo () {
+
+        if ( this.accountID.length === 0 ) return;
+
+        try {
+
+            const accountID = this.accountID;            
+            let data = await this.revocable.fetchJSON ( this.getServiceURL ( `/accounts/${ accountID }` ));
+
+            if ( !data.account ) {
+                const key = Object.values ( this.account.keys )[ 0 ];
+                const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
+                data = await this.revocable.fetchJSON ( this.getServiceURL ( `/keys/${ keyID }/account` ));
+            }
+
+            const accountInfo = data.account;
+
+            if ( accountInfo ) {
+
+                this.setAccountInfo ( accountInfo );
+                this.updateAccount (
+                    accountInfo,
+                    data.entitlements,
+                    data.feeSchedule,
+                    data.minGratuity
+                );
+
+                if ( accountInfo.name !== accountID ) {
+                    this.renameAccount ( accountID, accountInfo.name );
+                }
+            }
+        }
+        catch ( error ) {
+            this.setAccountInfo ();
+        }
     }
 
     //----------------------------------------------------------------//

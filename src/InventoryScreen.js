@@ -74,7 +74,7 @@ export const InventoryScreen = observer (( props ) => {
     }
 
     const assetIDtoAnchor = ( assetID ) => {
-        const assetURL = `${ appState.network.nodeURL }/assets/${ assetID }`;
+        const assetURL = appState.getServiceURL ( `/assets/${ assetID }` );
         return <a href = { assetURL } target = '_blank'>{ assetID }</a>
     }
 

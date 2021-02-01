@@ -79,7 +79,6 @@ export const SchemaField = observer (( props ) => {
         if ( book ) {
 
             const appState      = controller.appState;
-            const nodeURL       = appState.network.nodeURL;
 
             let scanner = false;
             try {
@@ -95,7 +94,7 @@ export const SchemaField = observer (( props ) => {
                 let current = false;
 
                 try {
-                    current = await appState.revocable.fetchJSON ( nodeURL + '/schema' );
+                    current = await appState.revocable.fetchJSON ( appState.getServiceURL ( '/schema' ));
                     if ( !( current && current.schema )) throw 'Could not download current schema.'
                 }
                 catch ( error ) {

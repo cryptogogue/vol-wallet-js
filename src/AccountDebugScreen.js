@@ -21,7 +21,7 @@ export const AccountDebugScreen = observer (( props ) => {
     const accountID = util.getMatch ( props, 'accountID' );
 
     const appState      = hooks.useFinalizable (() => new AccountStateService ( networkID, accountID ));
-    const accountURL    = `${ appState.network.nodeURL }/accounts/${ appState.accountID }`;
+    const accountURL    = appState.getServiceURL ( `/accounts/${ appState.accountID }` );
     const hasInfo       = appState.hasAccountInfo;
 
     return (

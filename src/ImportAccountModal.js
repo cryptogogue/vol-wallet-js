@@ -61,7 +61,7 @@ class ImportAccountController {
 
         try {
 
-            const data = await this.revocable.fetchJSON ( `${ appState.network.nodeURL }/keys/${ keyID }` );
+            const data = await this.revocable.fetchJSON ( appState.getServiceURL ( `/keys/${ keyID }` ));
 
             const keyInfo = data && data.keyInfo;
 

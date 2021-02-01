@@ -65,19 +65,6 @@ export class TransactionQueueService {
         return false;
     }
 
-    // //----------------------------------------------------------------//
-    // checkTransactionEntitlements ( transactionType ) {
-
-    //     const account = this.appState.account;
-    //     if ( account ) {
-    //         for ( let keyName in account.keys ) {
-    //             const key = account.keys [ keyName ];
-    //             if ( key.entitlements && entitlements.check ( key.entitlements.policy, transactionType )) return true;
-    //         }
-    //     }
-    //     return false;
-    // }
-
     //----------------------------------------------------------------//
     @action
     clearPendingTransactions () {
@@ -100,6 +87,25 @@ export class TransactionQueueService {
         this.appState = appState;
 
         this.processTransactionsAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    cost () {
+
+        let cost = 0;
+
+        const pendingTransactions = this.pendingTransactions;
+        for ( let i in pendingTransactions ) {
+            cost += pendingTransactions [ i ].cost;
+        }
+
+        const stagedTransactions = this.stagedTransactions;
+        for ( let i in stagedTransactions ) {
+            cost += stagedTransactions [ i ].cost;
+        }
+
+        return cost;
     }
 
     //----------------------------------------------------------------//
@@ -149,12 +155,52 @@ export class TransactionQueueService {
                 
                 try {
 
-                    const url = `${ appState.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
-                    const checkResult = await this.revocable.fetchJSON ( url );
+                    // get every active URL.
+                    const urls = appState.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
 
-                    switch ( checkResult.status ) {
+                    // check status of transaction on them all.
+                    const promises = [];
+                    for ( let serviceURL of urls ) {
+                        promises.push ( this.revocable.fetchJSON ( serviceURL ));
+                    }
 
-                        case 'ACCEPTED':
+                    // wait for them all to respond.
+                    const results = await this.revocable.all ( promises );
+
+                    let acceptedCount = 0;
+                    let rejected = [];
+
+                    // iterate through the results and tabulate.
+                    for ( let result of results ) {
+
+                        switch ( result.status ) {
+
+                            case 'ACCEPTED':
+                                acceptedCount++;
+                                break;
+
+                            case 'REJECTED':
+                            case 'IGNORED':
+                                rejected.push ( result );
+                                break;
+
+                            case 'UNKNOWN':
+                                // re-send he transaction if not recognized.
+                                await this.putTransactionAsync ( memo );
+                                break;
+
+                            default:
+                                break;
+                        }
+                    }
+
+                    if ( results.length ) {
+
+                        // if *all* nodes have accepted the transaction, remove it from the queue and advance.
+                        if ( acceptedCount === results.length ) {
+
+                            console.log ( 'ACCEPTED:', acceptedCount );
+
                             runInAction (() => {
                                 const assetsSent = _.clone ( account.assetsSent || {});
                                 for ( let assetID of memo.assets ) {
@@ -163,25 +209,19 @@ export class TransactionQueueService {
                                 pendingTransactions.shift ();
                                 account.assetsSent = assetsSent;
                             });
+                            
                             more = true;
-                            break;
+                        }
 
-                        case 'REJECTED':
-                        case 'IGNORED':
+                        // if *all* nodes have rejected the transaction, stop and report.
+                        if ( rejected.length === results.length ) {
                             runInAction (() => {
                                 account.transactionError = {
-                                    message:    checkResult.message,
-                                    uuid:       checkResult.uuid,
+                                    message:    rejected [ 0 ].message,
+                                    uuid:       rejected [ 0 ].uuid,
                                 }
                             });
-                            break;
-
-                        case 'UNKNOWN':
-                            await this.putTransactionAsync ( memo );
-                            break;
-
-                        default:
-                            break;
+                        }
                     }
                 }
                 catch ( error ) {
@@ -207,28 +247,48 @@ export class TransactionQueueService {
         const appState = this.appState;
         appState.account.stagedTransactions.push ( memo );
         appState.flags.promptFirstTransaction = false;
-        this.setNextTransactionCost ( 0 );
     }
 
     //----------------------------------------------------------------//
     async putTransactionAsync ( memo ) {
 
         const accountName   = memo.body.maker.accountName;
-        const url           = `${ this.appState.network.nodeURL }/accounts/${ accountName }/transactions/${ memo.uuid }`;
+        const serviceURL    = this.appState.getServiceURL ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
 
-        const result = await this.revocable.fetchJSON ( url, {
+        const result = await this.revocable.fetchJSON ( serviceURL, {
             method :    'PUT',
             headers :   { 'content-type': 'application/json' },
             body :      JSON.stringify ( memo.envelope, null, 4 ),
         });
+
         return ( result.status === 'OK' );
     }
 
     //----------------------------------------------------------------//
-    @action
-    setNextTransactionCost ( cost ) {
+    async putTransactionsAsync ( memo ) {
 
-        this.appState.nextTransactionCost = cost || 0;
+        const accountName   = memo.body.maker.accountName;
+        const urls          = this.appState.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
+        const headers       = { 'content-type': 'application/json' };
+        const body          = JSON.stringify ( memo.envelope, null, 4 );
+
+        const promises = [];
+        for ( let serviceURL of urls ) {
+            promises.push ( this.revocable.fetchJSON ( serviceURL, {
+                method :    'PUT',
+                headers :   headers,
+                body :      body,
+            }));
+        }
+
+        const results = await this.revocable.all ( promises );
+
+        let okCount = 0;
+        for ( let result of results ) {
+            okCount += ( result.status === 'OK' ) ? 1 : 0;
+        }
+
+        return ( results.length === okCount );
     }
 
     //----------------------------------------------------------------//
@@ -299,7 +359,7 @@ export class TransactionQueueService {
             const submitted = [];
             while ( queue.length ) {
                 const memo = queue.shift ();
-                if ( await this.putTransactionAsync ( memo )) {
+                if ( await this.putTransactionsAsync ( memo )) {
                     submitted.push ( memo );
                 }
                 else {
@@ -322,33 +382,5 @@ export class TransactionQueueService {
     @computed get
     transactionError () {
         return this.account.transactionError || false;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    updateAccount ( accountUpdate, entitlements ) {
-
-        let account = this.account;
-        if ( !account ) return;
-
-        account.policy          = accountUpdate.policy;
-        account.bequest         = accountUpdate.bequest;
-        account.entitlements    = entitlements.account;
-
-        for ( let keyName in accountUpdate.keys ) {
-
-            let key = account.keys [ keyName ];
-            if ( !key ) continue;
-
-            let keyUpdate = accountUpdate.keys [ keyName ];
-            let publicKeyHex = keyUpdate.key.publicKey;
-
-            // TODO: handle all the business around expiring keys
-            if ( key.publicKeyHex === keyUpdate.key.publicKey ) {
-                key.policy          = keyUpdate.policy;
-                key.bequest         = keyUpdate.bequest;
-                key.entitlements    = entitlements.keys [ keyName ];
-            }
-        }
     }
 }

@@ -17,6 +17,8 @@ import { AccountScreen }                from './AccountScreen';
 import { AccountDebugScreen }           from './AccountDebugScreen';
 import { CraftingScreen }               from './CraftingScreen';
 import { DashboardScreen }              from './DashboardScreen';
+import { DebugNetMonScreen }            from './debug/DebugNetMonScreen';
+import { DebugNetStatScreen }           from './debug/DebugNetStatScreen';
 import { InventoryScreen }              from './InventoryScreen';
 import { KeysScreen }                   from './KeysScreen';
 import { MinerControlScreen }           from './MinerControlScreen';
@@ -65,6 +67,8 @@ const App = () => {
                 <Route exact path = "/debug/handlebars"         component = { fgc.debug.HandlebarsScreen }/>
                 <Route exact path = "/debug/infinitescroll"     component = { fgc.debug.InfiniteScrollScreen }/>
                 <Route exact path = "/debug/mobx"               component = { fgc.debug.MobXScreen }/>
+                <Route exact path = "/debug/netmon"             component = { DebugNetMonScreen }/>
+                <Route exact path = "/debug/netstat"            component = { DebugNetStatScreen }/>
                 <Route exact path = "/debug/print"              component = { fgc.debug.PrintScreen }/>
                 <Route exact path = "/debug/squap"              component = { cardmotron.debug.SquapScreen }/>
                 <Route exact path = "/debug/svgtopng"           component = { cardmotron.debug.SVGtoPNGScreen }/>

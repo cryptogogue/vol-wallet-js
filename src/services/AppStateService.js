@@ -43,7 +43,7 @@ export class AppStateService {
             };
         }
         else {
-            this.networks [ name ].nodeUTL = nodeURL;
+            this.networks [ name ].nodeURL = nodeURL;
         }
     }
 
@@ -98,7 +98,6 @@ export class AppStateService {
             networkID:              '',
             accountID:              '',
             accountInfo:            false,
-            nextTransactionCost:    0,
         });
 
         this.revocable          = new RevocableContext ();

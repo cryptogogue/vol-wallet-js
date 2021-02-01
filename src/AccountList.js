@@ -29,13 +29,13 @@ export const AccountList = observer (( props ) => {
 
     const asyncGetInfo = async ( revocable, accountID ) => {
         
-        let json = await revocable.fetchJSON ( `${ appState.network.nodeURL }/accounts/${ accountID }` );
+        let json = await revocable.fetchJSON ( appState.getServiceURL ( `/accounts/${ accountID }` ));
 
         if ( !json.account ) {
             const account = appState.getAccount ( accountID );
             const key = Object.values ( account.keys )[ 0 ];
             const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
-            json = await revocable.fetchJSON ( `${ appState.network.nodeURL }/keys/${ keyID }/account` );
+            json = await revocable.fetchJSON ( appState.getServiceURL ( `/keys/${ keyID }/account` ));
         }
         return json;
     }
