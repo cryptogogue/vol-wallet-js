@@ -205,7 +205,7 @@ export class NetworkStateService extends AppStateService {
         const serviceURLs = [];
 
         for ( let nodeURL of urls ) {
-            serviceURLs.push ( this.formatServiceURL ( this.network.nodeURL, path, query ));
+            serviceURLs.push ( this.formatServiceURL ( nodeURL, path, query ));
         }
 
         return serviceURLs;
@@ -245,8 +245,7 @@ export class NetworkStateService extends AppStateService {
     //----------------------------------------------------------------//
     async networkInfoServiceLoop () {
 
-        let timeout = 5000;
-        await this.scanNetwork ();
+        let timeout = await this.scanNetwork ();
         this.revocable.timeout (() => { this.networkInfoServiceLoop ()}, timeout );
     }
 
@@ -282,7 +281,9 @@ export class NetworkStateService extends AppStateService {
                 peekURL.pathname = `/consensus/peek`;
                 peekURL.query = { peek: nextHeight, prev: consensus.height, sampleMiners : 16 };
 
-                return await this.revocable.fetchJSON ( url.format ( peekURL ));
+                const result = await this.revocable.fetchJSON ( url.format ( peekURL ));
+                result.url = nodeURL;
+                return result;
             }
             catch ( error ) {
             }
@@ -366,6 +367,8 @@ export class NetworkStateService extends AppStateService {
         });
 
         // console.log ( consensus.urls.length, maxCount, consensus.height, consensus.step, consensus.digest );
+
+        return consensus.isCurrent ? 15000 : 1;
     }
 
     //----------------------------------------------------------------//

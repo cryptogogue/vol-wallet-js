@@ -49,11 +49,15 @@ const AccountDetailsView = observer (( props ) => {
                 <UI.Header.Subheader>
                     { `Nonce: ${ appState.nonce }` }
                 </UI.Header.Subheader>
-
-                <UI.Header.Subheader>
-                    { `Height: ${ appState.consensus.height }` }
-                </UI.Header.Subheader>
             </div>
+
+            <UI.Header.Subheader>
+                { `Height: ${ appState.consensus.height }` }
+            </UI.Header.Subheader>
+
+            <UI.Header.Subheader style = {{ fontSize: 9 }}>
+                { `${ appState.consensus.digest }` }
+            </UI.Header.Subheader>
         </div>
     );
 });

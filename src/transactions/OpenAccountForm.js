@@ -14,6 +14,8 @@ export const OpenAccountForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
+            <Fields.TextField field = { controller.fields.request }/>
+            <Fields.VOLField field = { controller.fields.grant }/>
         </React.Fragment>
     );
 });
