@@ -155,12 +155,15 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
-    formatServiceURL ( base, path, query ) {
+    formatServiceURL ( base, path, query, mostCurrent ) {
 
         const serviceURL        = url.parse ( base );
         serviceURL.pathname     = path;
         serviceURL.query        = _.cloneDeep ( query || {} );
-        serviceURL.query.at     = this.consensus.height;
+
+        if ( mostCurrent !== true ) {
+            serviceURL.query.at = this.consensus.height;
+        }
 
         return url.format ( serviceURL );
     }
@@ -182,13 +185,13 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
-    getServiceURL ( path, query ) {
+    getServiceURL ( path, query, mostCurrent ) {
 
-        return this.formatServiceURL ( this.network.nodeURL, path, query );
+        return this.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
-    getServiceURLs ( path, query ) {
+    getServiceURLs ( path, query, mostCurrent ) {
 
         const urls = [];
 
@@ -205,7 +208,7 @@ export class NetworkStateService extends AppStateService {
         const serviceURLs = [];
 
         for ( let nodeURL of urls ) {
-            serviceURLs.push ( this.formatServiceURL ( nodeURL, path, query ));
+            serviceURLs.push ( this.formatServiceURL ( nodeURL, path, query, mostCurrent ));
         }
 
         return serviceURLs;
