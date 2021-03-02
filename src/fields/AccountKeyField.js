@@ -15,10 +15,10 @@ export const AccountKeyField = observer (( props ) => {
 
     const { field } = props;
 
-    const controller = field.controller;
-    const appState = controller.appState;
-    const account = appState.account;
-    const accountKeyNames = appState.getKeyNamesForTransaction ( controller.type );
+    const formController    = field.formController;
+    const appState          = formController.appState;
+    const account           = appState.account;
+    const accountKeyNames   = appState.getKeyNamesForTransaction ( formController.type );
 
     let defaultKeyName = appState.getDefaultAccountKeyName ();
     defaultKeyName = accountKeyNames.includes ( defaultKeyName ) ? defaultKeyName : accountKeyNames [ 0 ];

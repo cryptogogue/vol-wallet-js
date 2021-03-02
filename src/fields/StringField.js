@@ -13,10 +13,10 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const StringField = observer (( props ) => {
 
-    const { field, controller } = props;
+    const { field } = props;
 
-    const errorMsg      = field.error || '';
-    const hasError      = ( errorMsg.length > 0 );
+    const errorMsg          = field.error || '';
+    const hasError          = ( errorMsg.length > 0 );
 
     const onChange = ( event ) => {
         field.setInputString ( event.target.value );

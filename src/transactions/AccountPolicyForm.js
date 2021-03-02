@@ -14,6 +14,8 @@ export const AccountPolicyForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
+            <Fields.StringField field = { controller.fields.policyName }/>
+            <Fields.TextFieldController field = { controller.fields.policy }/>
         </React.Fragment>
     );
 });

@@ -13,7 +13,7 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const IntegerField = observer (( props ) => {
 
-    const { field, controller } = props;
+    const { field } = props;
 
     const errorMsg      = field.error || '';
     const hasError      = ( errorMsg.length > 0 );

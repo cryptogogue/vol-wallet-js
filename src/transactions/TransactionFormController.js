@@ -87,7 +87,8 @@ export class TransactionFormController {
 
         const fields = {};
         for ( let field of fieldsArray ) {
-            field.controller            = this;
+            field.formController        = this;
+            field.appState              = appState;
             fields [ field.fieldName ]  = field;
         }
 

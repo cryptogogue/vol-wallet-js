@@ -14,6 +14,7 @@ export const BetaGetAssetsForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
+            <Fields.IntegerField field = { controller.fields.numAssets }/>
         </React.Fragment>
     );
 });

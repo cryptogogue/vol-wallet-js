@@ -13,7 +13,7 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const AssetSelectionField = observer (( props ) => {
 
-    const { field, controller } = props;
+    const { field } = props;
 
     const selection = field.defaultValue;
 

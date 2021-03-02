@@ -6,8 +6,8 @@ import { action, computed, extendObservable, observable, observe, reaction, runI
 import Dexie                        from 'dexie';
 import _                            from 'lodash';
 
-const debugLog = function () {}
-// const debugLog = console.log;
+//const debugLog = function () {}
+const debugLog = console.log;
 
 //================================================================//
 // InventoryService
@@ -276,7 +276,7 @@ export class InventoryService {
         await this.progress.onProgress ( 'Fetching Inventory' );
 
         const count     = nextNonce - currentNonce;
-        const url       = appState.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }?count=${ count }` );
+        const url       = this.appState.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }?count=${ count }` );
         const data      = await this.revocable.fetchJSON ( url );
 
         const assetsSent = _.clone ( this.appState.account.assetsSent || {});
@@ -323,7 +323,7 @@ export class InventoryService {
 
         await this.db.schemas.where ({ networkID: this.networkID }).delete ();
 
-        const schemaInfo = ( await this.revocable.fetchJSON ( appState.getServiceURL ( '/schema' )));
+        const schemaInfo = ( await this.revocable.fetchJSON ( this.appState.getServiceURL ( '/schema' )));
 
         schemaKey = this.formatSchemaKey ( schemaInfo.schemaHash, schemaInfo.schema.version );
         await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, json: JSON.stringify ( schemaInfo.schema )});

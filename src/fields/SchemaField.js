@@ -13,11 +13,14 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const SchemaField = observer (( props ) => {
 
-    const { field, controller }         = props;
+    const { field }                     = props;
     const [ errors, setErrors ]         = useState ([]);
     const [ warnings, setWarnings ]     = useState ([]);
     const [ schema, setSchema ]         = useState ( false );
     const [ isLoading, setIsLoading ]   = useState ( false );
+
+    const formController    = field.formController;
+    const appState          = field.appState;
 
     const filterCollisions = ( tableName, scanner, current, update ) => {
 
@@ -78,8 +81,6 @@ export const SchemaField = observer (( props ) => {
         const book = new excel.Workbook ( binary, { type: 'binary' });
         if ( book ) {
 
-            const appState      = controller.appState;
-
             let scanner = false;
             try {
                 scanner = new SchemaScannerXLSX ( book );
@@ -89,7 +90,7 @@ export const SchemaField = observer (( props ) => {
                 errorMessages.push ({ header: 'Scanner Error', body: error });
             }
             
-            if ( scanner && controller.checkSchema ) {
+            if ( scanner && formController.checkSchema ) {
 
                 let current = false;
 
@@ -144,7 +145,7 @@ export const SchemaField = observer (( props ) => {
             }
         }
 
-        controller.validate ();
+        formController.validate ();
 
         if ( field.error ) {
             errorMessages.push ({ header: 'Field Error', body: field.error });
@@ -156,7 +157,7 @@ export const SchemaField = observer (( props ) => {
     }
 
     let deckOptions = [];
-    if ( schema && controller.isPublishAndReset ) {
+    if ( schema && formController.isPublishAndReset ) {
 
         const sortedDecksAndSets = [];
 
@@ -176,7 +177,7 @@ export const SchemaField = observer (( props ) => {
                 <UI.Dropdown.Item
                     key         = { name }
                     text        = { name }
-                    onClick     = {() => { controller.setDeckName ( name )}}
+                    onClick     = {() => { formController.setDeckName ( name )}}
                 />
             );
         }
@@ -227,7 +228,7 @@ export const SchemaField = observer (( props ) => {
                             item
                             closeOnBlur
                             placeholder     = 'Get Deck'
-                            text            = { controller.deckName }
+                            text            = { formController.deckName }
                         >
                             <UI.Dropdown.Menu>
                                 { deckOptions }

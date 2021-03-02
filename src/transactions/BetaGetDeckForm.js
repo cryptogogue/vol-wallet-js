@@ -14,6 +14,7 @@ export const BetaGetDeckForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
+            <Fields.StringFieldController field = { controller.fields.deckName }/>
         </React.Fragment>
     );
 });

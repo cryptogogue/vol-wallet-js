@@ -55,7 +55,7 @@ export class FieldController {
     @action
     setInputString ( inputString ) {
         this.inputString = String ( inputString ) || '';
-        this.controller && this.controller.validate ? this.controller.validate () : this.validate ();
+        this.formController && this.formController.validate ? this.formController.validate () : this.validate ();
     }
 
     //----------------------------------------------------------------//

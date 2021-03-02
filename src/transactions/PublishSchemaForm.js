@@ -14,6 +14,7 @@ export const PublishSchemaForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
+            <Fields.SchemaField field = { controller.fields.schema }/>
         </React.Fragment>
     );
 });
