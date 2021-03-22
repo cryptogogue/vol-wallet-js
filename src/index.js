@@ -21,7 +21,9 @@ import { DebugNetMonScreen }            from './debug/DebugNetMonScreen';
 import { DebugNetStatScreen }           from './debug/DebugNetStatScreen';
 import { InventoryScreen }              from './InventoryScreen';
 import { KeysScreen }                   from './KeysScreen';
+import { KeyUtilScreen }                from './KeyUtilScreen';
 import { MinerControlScreen }           from './MinerControlScreen';
+import { MinerInfoUtilScreen }          from './MinerInfoUtilScreen';
 import { NetworkScreen }                from './NetworkScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
 import { TransactionUtilScreen }        from './TransactionUtilScreen';
@@ -45,6 +47,7 @@ const App = () => {
     return (
         <div>
             <Switch key = { location.pathname }>
+            
                 <Route exact path = "/net/:networkID/account/:accountID"                component = { AccountScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/crafting"       component = { CraftingScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/crafting"       component = { CraftingScreen }/>
@@ -54,6 +57,8 @@ const App = () => {
                 <Route exact path = "/net/:networkID/admin"                             component = { MinerControlScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
+                <Route exact path = "/util/key"                 component = { KeyUtilScreen }/>
+                <Route exact path = "/util/miner"               component = { MinerInfoUtilScreen }/>
                 <Route exact path = "/util/schema"              component = { SchemaUtilScreen }/>
                 <Route exact path = "/util/transaction"         component = { TransactionUtilScreen }/>
 

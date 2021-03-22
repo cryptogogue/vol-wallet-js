@@ -24,6 +24,7 @@ export class FormController {
     //----------------------------------------------------------------//
     finalize () {
     }
+
     //----------------------------------------------------------------//
     initialize ( appState, fieldsArray ) {
 
@@ -33,7 +34,7 @@ export class FormController {
 
         const fields = {};
         for ( let field of fieldsArray ) {
-            field.controller            = this;
+            field.formController        = this;
             fields [ field.fieldName ]  = field;
         }
 
@@ -82,12 +83,20 @@ export class FormController {
                 break;
             }
         }
+
+        if ( this.isCompleteAndErrorFree ) {
+            this.virtual_compute ();
+        }
     }
 
     //----------------------------------------------------------------//
     virtual_checkComplete () {
 
         return true;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_compute () {
     }
 
     //----------------------------------------------------------------//

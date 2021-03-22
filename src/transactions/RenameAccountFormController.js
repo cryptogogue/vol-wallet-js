@@ -61,7 +61,7 @@ export class RenameAccountFormController extends TransactionFormController {
         this.fieldErrors = {};
         const fieldErrors = this.fieldErrors;
 
-        if ( revealedName.length > 0 ){
+        if ( revealedName.length > 0 ) {
             const nameErr = checkName ( revealedName );
             if ( nameErr !== false ) {
                 this.fields.revealedName.error = nameErr;

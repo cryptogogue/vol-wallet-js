@@ -22,6 +22,10 @@ export class FieldController {
     }
 
     //----------------------------------------------------------------//
+    finalize () {
+    }
+
+    //----------------------------------------------------------------//
     @computed
     get hasValue () {
         return ( this.inputString !== '' );
@@ -30,7 +34,13 @@ export class FieldController {
     //----------------------------------------------------------------//
     @computed
     get isComplete () {
-        return ( this.hasValue || !this.isRequired );
+        return ( this.virtual_isComplete () || !this.isRequired );
+    }
+
+    //----------------------------------------------------------------//
+    @computed
+    get isCompleteAndErrorFree () {
+        return ( this.isComplete && ( this.error === false ));
     }
 
     //----------------------------------------------------------------//
@@ -71,6 +81,11 @@ export class FieldController {
     //----------------------------------------------------------------//
     virtual_format ( value ) {
         return value;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_isComplete () {
+        return this.hasValue;
     }
 
     //----------------------------------------------------------------//

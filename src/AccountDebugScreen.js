@@ -75,6 +75,14 @@ export const AccountDebugScreen = observer (( props ) => {
                 >
                     Reset Inventory Nonce
                 </UI.Button>
+            
+                <UI.Button
+                    fluid
+                    color       = 'teal'
+                    onClick     = {() => { appState.resetConsensus ()}}
+                >
+                    Reset Consensus
+                </UI.Button>
             </If>
 
         </SingleColumnContainerView>
