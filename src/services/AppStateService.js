@@ -7,7 +7,7 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import React                            from 'react';
 
 const STORE_FLAGS               = '.vol_flags';
-const STORE_NETWORKS            = '.vol_networks';
+const STORE_NETWORK_IDS         = '.vol_network_ids';
 const STORE_PASSWORD_HASH       = '.vol_password_hash';
 const STORE_SESSION             = '.vol_session';
 
@@ -30,21 +30,22 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @action
-    affirmNetwork ( name, identity, nodeURL ) {
+    affirmNetwork ( networkID, identity, nodeURL ) {
 
+        if ( !this.networkIDs.includes ( networkID )) {
+            this.networkIDs.push ( networkID );
+        }
+
+        const network = {
+            nodeURL:            nodeURL || '',
+            identity:           identity,
+            accounts:           {},
+            pendingAccounts:    {},
+        };        
+
+        this.loadNetwork ( networkID, network );
+        this.networks [ networkID ].nodeURL = nodeURL;
         this.flags.promptFirstNetwork = false;
-
-        if ( !_.has ( this.networks, name )) {
-            this.networks [ name ] = {
-                nodeURL:            nodeURL,
-                identity:           identity,
-                accounts:           {},
-                pendingAccounts:    {},
-            };
-        }
-        else {
-            this.networks [ name ].nodeURL = nodeURL;
-        }
     }
 
     //----------------------------------------------------------------//
@@ -109,8 +110,12 @@ export class AppStateService {
             promptFirstTransaction:     true,
         };
 
+        this.networks   = {};
+        this.consensus  = {};
+
         storageContext.persist ( this, 'flags',             STORE_FLAGS,                flags );
-        storageContext.persist ( this, 'networks',          STORE_NETWORKS,             {}); // account names index by network name
+        // storageContext.persist ( this, 'networks',          STORE_NETWORKS,             {}); // account names index by network name
+        storageContext.persist ( this, 'networkIDs',        STORE_NETWORK_IDS,          []);
         storageContext.persist ( this, 'passwordHash',      STORE_PASSWORD_HASH,        '' );
         storageContext.persist ( this, 'session',           STORE_SESSION,              this.makeSession ( false ));
 
@@ -119,9 +124,13 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @action
-    deleteNetwork ( networkName ) {
+    deleteNetwork ( networkID ) {
 
-        delete this.networks [ networkName ];
+        if ( this.networkIDs.includes ( networkID )) {
+            this.networkIDs.splice ( this.networkIDs.indexOf ( networkID ), 1 );
+            this.storage.remove ( this.networks, `.vol_network_${ networkID }` );
+            this.storage.remove ( this.networks, `.vol_consensus_${ networkID }` );
+        }
     }
 
     //----------------------------------------------------------------//
@@ -155,6 +164,23 @@ export class AppStateService {
     @computed get
     isLoggedIn () {
         return ( this.session.isLoggedIn === true );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    loadNetwork ( networkID, networkInit ) {
+
+        const consensus = {
+            height:             0,
+            digest:             false,
+            genesis:            false,
+            step:               0,
+            isCurrent:          false,
+            urls:               {},
+        };
+
+        this.storage.persist ( this.networks, networkID, `.vol_network_${ networkID }`, networkInit );
+        this.storage.persist ( this.consensus, networkID, `.vol_consensus_${ networkID }`, consensus );
     }
 
     //----------------------------------------------------------------//

@@ -23,8 +23,9 @@ const AccountDetailsView = observer (( props ) => {
 
     if ( !account ) return;
 
+    const consensus     = appState.consensus [ appState.networkID ];
     const accountURL    = appState.getServiceURL ( `/accounts/${ appState.accountID }` );
-    const hasInfo       = appState.hasAccountInfo && appState.consensus.isCurrent;
+    const hasInfo       = appState.hasAccountInfo && consensus.isCurrent;
     
     return (
         <div style = {{ textAlign: 'center' }}>
@@ -52,11 +53,11 @@ const AccountDetailsView = observer (( props ) => {
             </div>
 
             <UI.Header.Subheader>
-                { `Height: ${ appState.consensus.height }` }
+                { `Height: ${ consensus.height }` }
             </UI.Header.Subheader>
 
             <UI.Header.Subheader style = {{ fontSize: 9 }}>
-                { `${ appState.consensus.digest }` }
+                { `${ consensus.digest }` }
             </UI.Header.Subheader>
         </div>
     );

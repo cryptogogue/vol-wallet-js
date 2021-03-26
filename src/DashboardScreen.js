@@ -48,6 +48,8 @@ export const NetworkList = observer (( props ) => {
 
     const makeItemMessageBody = ( networkName, info ) => {
 
+        appState.loadNetwork ( networkName );
+
         const nodeURL = appState.networks [ networkName ].nodeURL;
         const schema = info && info.schemaVersion;
         const schemaString = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
@@ -73,7 +75,7 @@ export const NetworkList = observer (( props ) => {
 
     return (
         <PollingList
-            items                   = { appState.networks }
+            items                   = { appState.networkIDs }
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
             onDelete                = { onDelete }

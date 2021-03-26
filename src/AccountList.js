@@ -3,6 +3,7 @@
 import { PollingList }                      from './PollingList';
 import * as bitcoin                         from 'bitcoinjs-lib';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState, useRef }          from 'react';
@@ -65,7 +66,7 @@ export const AccountList = observer (( props ) => {
 
     return (
         <PollingList
-            items                   = { appState.network.accounts }
+            items                   = { _.keys ( appState.network.accounts )}
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
             onlineIcon              = 'trophy'

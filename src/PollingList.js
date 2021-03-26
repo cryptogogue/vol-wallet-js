@@ -34,7 +34,7 @@ export const PollingList = observer (( props ) => {
     const onlineIcon = props.onlineIcon || 'check circle';
 
     const networkList = [];
-    for ( let networkName in items ) {
+    for ( let networkName of items ) {
 
         const polling = pollingService.getStatus ( networkName, asyncGetInfo, checkIdentifier );
 

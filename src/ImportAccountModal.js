@@ -25,9 +25,10 @@ class ImportAccountController {
     @observable status          = STATUS_WAITING_FOR_INPUT;
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( appState, onDone ) {
 
         this.revocable  = new RevocableContext ();
+        this.onDone     = onDone;
     }
 
     //----------------------------------------------------------------//
@@ -49,6 +50,7 @@ class ImportAccountController {
         if ( accountID ) {
             this.accountID = accountID;
             this.status = STATUS_DONE;
+            this.onDone ();
             return;
         }
 
@@ -91,6 +93,7 @@ class ImportAccountController {
 
                 this.accountID = accountID;
                 this.status = STATUS_DONE;
+                this.onDone ();
             }
             else {
                 this.status = STATUS_WAITING_FOR_INPUT;
@@ -106,7 +109,7 @@ const ImportAccountModalBody = observer (( props ) => {
 
     const { appState, open, onClose } = props;
 
-    const controller = hooks.useFinalizable (() => new ImportAccountController ( appState ));
+    const controller = hooks.useFinalizable (() => new ImportAccountController ( appState, onClose ));
 
     const [ key, setKey ]                   = useState ( false );
     const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
@@ -117,9 +120,9 @@ const ImportAccountModalBody = observer (( props ) => {
         controller.import ( appState, key, phraseOrKey, password );
     }
 
-    if ( controller.status === STATUS_DONE ) {
-        onClose ();
-    }
+    // if ( controller.status === STATUS_DONE ) {
+    //     onClose ();
+    // }
 
     const submitEnabled = key && phraseOrKey && password;
 
