@@ -50,6 +50,10 @@ const AccountDetailsView = observer (( props ) => {
                 <UI.Header.Subheader>
                     { `Nonce: ${ appState.nonce }` }
                 </UI.Header.Subheader>
+
+                <UI.Header.Subheader>
+                    { `Inventory Nonce: ${ appState.inventoryNonce }` }
+                </UI.Header.Subheader>
             </div>
 
             <UI.Header.Subheader>

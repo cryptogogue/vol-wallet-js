@@ -265,23 +265,11 @@ export class NetworkStateService extends AppStateService {
 
         const urls = [];
 
-        for ( let nodeURL of this.consensus.urls ) {
-            if ( nodeURL !== undefined ) {
-                urls.push ( nodeURL );
-            }
+        for ( let minerID in this.minersByID ) {
+            const miner = this.minersByID [ minerID ];
+            urls.push ( this.formatServiceURL ( miner.url, path, query, mostCurrent ));
         }
-
-        if ( urls.length === 0 ) {
-            urls.push ( this.network.nodeURL ); 
-        }
-
-        const serviceURLs = [];
-
-        for ( let nodeURL of urls ) {
-            serviceURLs.push ( this.formatServiceURL ( nodeURL, path, query, mostCurrent ));
-        }
-
-        return serviceURLs;
+        return urls;
     }
 
     //----------------------------------------------------------------//
@@ -395,7 +383,9 @@ export class NetworkStateService extends AppStateService {
 
         this.updateConsensus ();
 
-        return consensus.isCurrent ? 15000 : 1;
+        const timeout = consensus.isCurrent ? 15000 : 1;
+        console.log ( 'CONSENSUS: Next update in...', timeout );
+        return timeout;
     }
 
     //----------------------------------------------------------------//

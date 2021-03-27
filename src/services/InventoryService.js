@@ -7,7 +7,7 @@ import Dexie                        from 'dexie';
 import _                            from 'lodash';
 
 //const debugLog = function () {}
-const debugLog = console.log;
+const debugLog = function ( ...args ) { console.log ( 'INVENTORY:', ...args ); }
 
 //================================================================//
 // InventoryService

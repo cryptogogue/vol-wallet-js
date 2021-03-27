@@ -11,6 +11,9 @@ import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import React                            from 'react';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( 'TRANSACTIONS:', ...args ); }
+
 //================================================================//
 // TransactionQueueService
 //================================================================//
@@ -69,6 +72,8 @@ export class TransactionQueueService {
     @action
     clearPendingTransactions () {
 
+        debugLog ( 'clearPendingTransactions' );
+
         this.account.pendingTransactions = [];
         this.account.transactionError = false;
     }
@@ -76,6 +81,8 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     @action
     clearStagedTransactions () {
+
+        debugLog ( 'clearStagedTransactions' );
 
         this.account.stagedTransactions = [];
     }
@@ -85,8 +92,6 @@ export class TransactionQueueService {
         
         this.revocable = new RevocableContext ();
         this.appState = appState;
-
-        this.processTransactionsAsync ();
     }
 
     //----------------------------------------------------------------//
@@ -138,6 +143,8 @@ export class TransactionQueueService {
     @action
     async processTransactionsAsync () {
 
+        debugLog ( 'processTransactionsAsync' );
+
         const appState = this.appState;
         const account = this.account;
 
@@ -153,15 +160,31 @@ export class TransactionQueueService {
                 const memo          = pendingTransactions [ 0 ];
                 const accountName   = memo.body.maker.accountName;
                 
+                debugLog ( 'processTransaction', accountName, _.cloneDeep ( memo ));
+
                 try {
 
                     // get every active URL.
                     const urls = appState.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
 
+                    const checkTransactionStatus = async ( url ) => {
+
+                        debugLog ( 'processTransaction checkTransactionStatus', url );
+                        try {
+                            const response = await this.revocable.fetchJSON ( url );
+                            debugLog ( 'response:', response );
+                            return response;
+                        }
+                        catch ( error ) {
+                            debugLog ( 'error or no response' );
+                        }
+                        return false;
+                    }
+
                     // check status of transaction on them all.
                     const promises = [];
-                    for ( let serviceURL of urls ) {
-                        promises.push ( this.revocable.fetchJSON ( serviceURL ));
+                    for ( let url of urls ) {
+                        promises.push ( checkTransactionStatus ( url ));
                     }
 
                     // wait for them all to respond.
@@ -171,7 +194,13 @@ export class TransactionQueueService {
                     let rejected = [];
 
                     // iterate through the results and tabulate.
+                    let responses = 0;
                     for ( let result of results ) {
+
+                        if ( !result ) continue;
+                        responses++;
+
+                        debugLog ( 'processTransaction RESULT', result );
 
                         switch ( result.status ) {
 
@@ -194,12 +223,12 @@ export class TransactionQueueService {
                         }
                     }
 
-                    if ( results.length ) {
+                    if ( responses ) {
 
                         // if *all* nodes have accepted the transaction, remove it from the queue and advance.
-                        if ( acceptedCount === results.length ) {
+                        if ( acceptedCount === responses ) {
 
-                            console.log ( 'ACCEPTED:', acceptedCount );
+                            debugLog ( 'accepted' );
 
                             runInAction (() => {
                                 const assetsSent = _.clone ( account.assetsSent || {});
@@ -214,7 +243,7 @@ export class TransactionQueueService {
                         }
 
                         // if *all* nodes have rejected the transaction, stop and report.
-                        if ( rejected.length === results.length ) {
+                        if ( rejected.length === responses ) {
                             runInAction (() => {
                                 account.transactionError = {
                                     message:    rejected [ 0 ].message,
@@ -235,6 +264,8 @@ export class TransactionQueueService {
     @action
     pushTransaction ( transaction ) {
 
+        debugLog ( 'pushTransaction', transaction );
+
         let memo = {
             type:               transaction.type,
             note:               transaction.note,
@@ -252,6 +283,8 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     async putTransactionAsync ( memo ) {
 
+        debugLog ( 'putTransactionsAsync', memo );
+
         const accountName   = memo.body.maker.accountName;
         const serviceURL    = this.appState.getServiceURL ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
 
@@ -267,28 +300,47 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     async putTransactionsAsync ( memo ) {
 
+        debugLog ( 'putTransactionsAsync', memo );
+
         const accountName   = memo.body.maker.accountName;
         const urls          = this.appState.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
         const headers       = { 'content-type': 'application/json' };
         const body          = JSON.stringify ( memo.envelope, null, 4 );
 
+        const put = async ( url ) => {
+
+            debugLog ( 'processTransaction checkTransactionStatus', url );
+            try {
+                const response = await this.revocable.fetchJSON ( url, {
+                    method :    'PUT',
+                    headers :   headers,
+                    body :      body,
+                });
+                debugLog ( 'response:', response );
+                return response;
+            }
+            catch ( error ) {
+                debugLog ( 'erorr or no response' );
+            }
+            return false;
+        }
+
         const promises = [];
-        for ( let serviceURL of urls ) {
-            promises.push ( this.revocable.fetchJSON ( serviceURL, {
-                method :    'PUT',
-                headers :   headers,
-                body :      body,
-            }));
+        for ( let url of urls ) {
+            promises.push ( put ( url ));
         }
 
         const results = await this.revocable.all ( promises );
 
         let okCount = 0;
+        let responseCount = 0;
         for ( let result of results ) {
+            if ( !result ) continue;
+            responseCount++;
             okCount += ( result.status === 'OK' ) ? 1 : 0;
         }
 
-        return ( results.length === okCount );
+        return ( okCount === responseCount );
     }
 
     //----------------------------------------------------------------//
@@ -301,6 +353,8 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     @action
     async submitTransactions ( password ) {
+
+        debugLog ( 'submitTransactions' );
 
         this.appState.assertHasAccount ();
         this.appState.assertPassword ( password );
