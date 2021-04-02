@@ -82,7 +82,7 @@ export const NetworkScreen = observer (( props ) => {
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const appState                  = hooks.useFinalizable (() => new AppStateService ());
-    const networkService            = hooks.useFinalizable (() => new NetworkStateService ( appState, networkIDFromEndpoint ));
+    const networkService            = appState.assertNetworkService ( networkIDFromEndpoint );
 
     return (
         <SingleColumnContainerView>

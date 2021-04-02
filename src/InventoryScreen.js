@@ -32,11 +32,11 @@ export const InventoryScreen = observer (( props ) => {
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
     const [ assetsUtilized, setAssetsUtilized ]     = useState ( false );
 
-    const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
-    const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
+    const networkID                 = util.getMatch ( props, 'networkID' );
+    const accountID                 = util.getMatch ( props, 'accountID' );
 
     const appState                  = hooks.useFinalizable (() => new AppStateService ());
-    const accountService            = hooks.useFinalizable (() => new AccountStateService ( appState, networkIDFromEndpoint, accountIDFromEndpoint ));
+    const accountService            = appState.assertAccountService ( networkID, accountID );
     const networkService            = accountService.networkService;
 
     const progress                  = accountService.inventoryProgress;

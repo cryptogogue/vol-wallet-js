@@ -17,11 +17,11 @@ import { AccountNavigationBar, ACCOUNT_TABS } from './AccountNavigationBar';
 //================================================================//
 export const AccountDebugScreen = observer (( props ) => {
 
-    const networkID = util.getMatch ( props, 'networkID' );
-    const accountID = util.getMatch ( props, 'accountID' );
+    const networkID     = util.getMatch ( props, 'networkID' );
+    const accountID     = util.getMatch ( props, 'accountID' );
 
     const appState      = hooks.useFinalizable (() => new AccountStateService ( networkID, accountID ));
-    const accountURL    = appState.getServiceURL ( `/accounts/${ appState.accountID }` );
+    const accountURL    = appState.assertAccountService ( networkID, accountID );
     const hasInfo       = appState.hasAccountInfo;
 
     return (

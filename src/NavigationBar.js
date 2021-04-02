@@ -37,7 +37,7 @@ export const NavigationBar = observer (( props ) => {
     const networkDropdown = [];
     const accountDropdown = [];
 
-    for ( let networkID of appState.networkList.networkIDs ) {
+    for ( let networkID of appState.networkIDs ) {
 
         networkDropdown.push (
             <Dropdown.Item

@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { AccountStateService }          from './AccountStateService';
 import { AppStateService }              from './AppStateService';
 import { InventoryController }          from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
@@ -17,11 +18,12 @@ const debugLog = function ( ...args ) { console.log ( '@NETWORK SERVICE:', ...ar
 //================================================================//
 export class NetworkStateService {
 
+    @observable accounts        = {};
     @observable networkID       = '';
     @observable minersByID      = {};
     @observable ignoreURLs      = {};
 
-    @computed get accounts              () { return this.network.accounts; }
+    @computed get accountIDs            () { return this.network.accountIDs; }
     @computed get controlKey            () { return this.network.controlKey; }
     @computed get height                () { return this.consensus.height; }
     @computed get identity              () { return this.network.identity; }
@@ -36,14 +38,7 @@ export class NetworkStateService {
             this.appState.assertPassword ( password );
         }
 
-        const accounts = this.accounts;
-
-        let account = accounts [ accountID ] || {
-            keys: {},
-            pendingTransactions: [],
-            stagedTransactions: [],
-            transactionError: false,
-        };
+        let account = this.accounts [ accountID ] || new AccountStateService ( this, accountID );
 
         let key = account.keys [ keyName ] || {};
 
@@ -53,7 +48,11 @@ export class NetworkStateService {
 
         account.keys [ keyName ] = key;
 
-        accounts [ accountID ] = account;
+        this.accounts [ accountID ] = account;
+
+        if ( !this.accountIDs.includes ( accountID )) {
+            this.accountIDs.push ( accountID );
+        }
     }
 
     //----------------------------------------------------------------//
@@ -75,17 +74,10 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    affirmNetwork ( networkID, identity, nodeURL ) {
+    assertAccountService ( accountID ) {
 
-        const network = {
-            nodeURL:            nodeURL || '',
-            identity:           identity,
-            accounts:           {},
-            pendingAccounts:    {},
-        };
-
-        this.loadNetwork ( networkID, network );
-        this.network.nodeURL = nodeURL;
+        if ( !this.hasAccount ( accountID )) throw new Error ( `Account not found: ${ accountID }` );
+        return this.accounts [ accountID ];
     }
 
     //----------------------------------------------------------------//
@@ -162,14 +154,35 @@ export class NetworkStateService {
         this.revocable      = new RevocableContext ();
         this.storage        = new StorageContext ();
 
-        if ( networkID ) {
-            if ( nodeURL ) {
-                this.affirmNetwork ( networkID, nodeURL, identity );
-            }
-            else {
-                this.loadNetwork ( networkID );
-            }
+        const network = {
+            nodeURL:            nodeURL || '',
+            identity:           identity,
+            accountIDs:         [],
+            pendingAccounts:    {},
+        };
+
+        const consensus = {
+            height:             0,
+            digest:             false,
+            genesis:            false,
+            step:               0,
+            isCurrent:          false,
+            urls:               {},
+        };
+
+        this.storage.persist ( this, 'network',     `.vol.network.${ networkID }`,      network );
+        this.storage.persist ( this, 'consensus',   `.vol.network.${ networkID }.consensus`,    consensus );
+        
+        runInAction (() => {
+            this.networkID = networkID;
+        });
+
+        for ( let accountID of this.accountIDs ) {
+            debugLog ( 'loading account', accountID );
+            const account = new AccountStateService ( this, accountID );
+            this.accounts [ accountID ] = account;
         }
+
         this.networkInfoServiceLoop ();
     }
 
@@ -179,15 +192,12 @@ export class NetworkStateService {
 
         debugLog ( 'DELETING ACCOUNT:', accountID );
 
-        // const accounts = _.cloneDeep ( this.accounts );
-
-        if ( _.has ( this.accounts, accountID )) {
-            debugLog ( 'DELETING ACCOUNT FROM LOCAL STORAGE:', accountID );
-            delete this.accounts [ accountID ];
-            // this.network.accounts = accounts;
-        }
+        const account = this.accounts [ accountID ];
         
-        this.appState.appDB.deleteAccountAsync ( this.networkID, accountID );
+        this.accountIDs.splice ( this.accountIDs.indexOf ( accountID ), 1 );
+        delete this.accounts [ accountID ];
+
+        account.deleteAccount ();
     }
 
     //----------------------------------------------------------------//
@@ -233,9 +243,12 @@ export class NetworkStateService {
     //----------------------------------------------------------------//
     finalize () {
 
+        for ( let accountID in this.accounts ) {
+            this.accounts [ accountID ].finalize ();
+        }
+
         this.revocable.finalize ();
         this.storage.finalize ();
-        this.appState.finalize ();
     }
 
     //----------------------------------------------------------------//
@@ -280,6 +293,13 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
+    @action
+    getAccount ( accountID ) {
+
+        return _.has ( this.accounts, accountID ) ? this.accounts [ accountID ] : false;
+    }
+
+    //----------------------------------------------------------------//
     getServiceURL ( path, query, mostCurrent ) {
 
         return this.formatServiceURL ( this.nodeURL, path, query, mostCurrent );
@@ -295,6 +315,13 @@ export class NetworkStateService {
             urls.push ( this.formatServiceURL ( miner.url, path, query, mostCurrent ));
         }
         return urls;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    hasAccount ( accountID ) {
+
+        return _.has ( this.accounts, accountID );
     }
 
     //----------------------------------------------------------------//
@@ -321,31 +348,6 @@ export class NetworkStateService {
             request.publicKeyHex,
         );
         delete this.pendingAccounts [ requestID ];
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    loadNetwork ( networkID, networkInit ) {
-
-        try {
-
-            const consensus = {
-                height:             0,
-                digest:             false,
-                genesis:            false,
-                step:               0,
-                isCurrent:          false,
-                urls:               {},
-            };
-
-            this.storage.persist ( this, 'network',     `.vol_network_${ networkID }`,      networkInit );
-            this.storage.persist ( this, 'consensus',   `.vol_consensus_${ networkID }`,    consensus );
-        
-            this.networkID = networkID;
-        }
-        catch ( error ) {
-            throw new Error ( 'Network not found.' );
-        }
     }
 
     //----------------------------------------------------------------//

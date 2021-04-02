@@ -86,7 +86,6 @@ export const AddNetworkModalBody = observer (( props ) => {
     const [ suggestName, setSuggestName ]       = useState ( false );
 
     const controller        = hooks.useFinalizable (() => new NodeInfoService ());
-    const networkList       = appState.networkList;
 
     let onChangeName = ( value ) => {
 
@@ -98,7 +97,7 @@ export const AddNetworkModalBody = observer (( props ) => {
             err = `Network names must start with a [a-z] or [0-9] and contain only [a-z], [0-9] and '-'.`
         }
 
-        if ( networkList.networkIDs.includes ( value )) {
+        if ( appState.networkIDs.includes ( value )) {
             err = `Network named ${ value } already exists.`
         }
         setNameError ( err );
@@ -123,7 +122,7 @@ export const AddNetworkModalBody = observer (( props ) => {
     }
 
     let onSubmit = () => {
-        networkList.affirmNetwork ( name, controller.info.identity, testURL );
+        appState.affirmNetwork ( name, controller.info.identity, testURL );
         runInAction (() => {
             appState.flags.promptFirstNetwork = false;
         });

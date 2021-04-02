@@ -61,8 +61,9 @@ export const MinerControlScreen = observer (( props ) => {
 
     const [ importKeyModalOpen, setImportKeyModalOpen ] = useState ( false );
 
-    const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
-    const appState                  = hooks.useFinalizable (() => new NetworkStateService ( networkIDFromEndpoint ));
+    const networkID         = util.getMatch ( props, 'networkID' );
+    const appState          = hooks.useFinalizable (() => new AppStateService ());
+    const networkServie     = appState.assertNetworkService ( networkID );
 
     const controlKey = appState.network.controlKey;
 

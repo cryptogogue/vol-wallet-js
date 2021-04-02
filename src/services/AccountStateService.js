@@ -23,26 +23,14 @@ export class AccountStateService {
     @observable accountID           = false;
     @observable accountInfo         = false;
 
-
+    @computed get accountKeyNames           () { return ( this.account && Object.keys ( this.account.keys )) || []; }
     @computed get balance                   () { return this.accountInfo.balance - this.transactionQueue.cost; }
     @computed get inventoryNonce            () { return this.inventoryService.nonce; }
     @computed get keys                      () { return this.account.keys; }
     @computed get network                   () { return this.networkService; }
+    @computed get networkID                 () { return this.networkService.networkID; }
     @computed get nonce                     () { return this.accountInfo.nonce || 0; }
     @computed get serverInventoryNonce      () { return this.inventoryService.serverNonce; }
-
-    //----------------------------------------------------------------//
-    @computed get
-    account () {
-        return this.networkService.getAccount ( this.accountID );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    accountKeyNames () {
-        const account = this.account;
-        return ( account && Object.keys ( account.keys )) || [];
-    }
 
     //----------------------------------------------------------------//
     @computed get
@@ -66,24 +54,30 @@ export class AccountStateService {
     }
 
     //----------------------------------------------------------------//
-    constructor ( appState, networkID, accountID ) {
+    constructor ( networkService, accountID ) {
 
-        assert ( appState );
+        debugLog ( 'NETWORK SERVICE:', networkService );
 
-        this.appState           = appState;
-        this.networkService     = appState.networkList.getNetworkService ( networkID );
+        assert ( networkService );
+        assert ( networkService.appState, 'Missing networkService.appState' );
+
+        this.appState           = networkService.appState;
+        this.networkService     = networkService;
         this.revocable          = new RevocableContext ();
         this.storage            = new StorageContext ();
 
         runInAction (() => {
-
-            if ( _.has ( this.network.accounts, accountID )) {
-                this.accountID = accountID;
-            }
-            else {
-                throw new Error ( 'Account not found.' );
-            }
+            this.accountID = accountID;
         });
+
+        const accountInit = {
+            keys: {},
+            pendingTransactions: [],
+            stagedTransactions: [],
+            transactionError: false,
+        };
+
+        this.storage.persist ( this, 'account',     `.vol.network.${ networkService.networkID }.account.${ accountID }`,       accountInit );
 
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new InventoryController ( this.inventoryProgress );
@@ -92,6 +86,14 @@ export class AccountStateService {
         this.transactionQueue       = new TransactionQueueService ( this );
 
         this.serviceLoop ();
+    }
+
+    //----------------------------------------------------------------//
+    deleteAccount () {
+
+        this.revocable.revokeAll ();
+        this.storage.remove ( this, 'account' );
+        this.appState.appDB.deleteAccountAsync ( this.networkID, this.accountID );
     }
 
     //----------------------------------------------------------------//
@@ -105,8 +107,6 @@ export class AccountStateService {
 
         this.revocable.finalize ();
         this.storage.finalize ();
-        this.networkService.finalize ();
-        this.appState.finalize ();
     }
 
     //----------------------------------------------------------------//

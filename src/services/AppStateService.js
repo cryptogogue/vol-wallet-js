@@ -1,16 +1,17 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AppDB }                        from './AppDB';
-import { NetworkListService }           from './NetworkListService';
+import { NetworkStateService }          from './NetworkStateService';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SharedStorage, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import React                            from 'react';
 
-const STORE_FLAGS               = '.vol_flags';
-const STORE_PASSWORD_HASH       = '.vol_password_hash';
-const STORE_SESSION             = '.vol_session';
+const STORE_FLAGS               = '.vol.flags';
+const STORE_NETWORK_IDS         = '.vol.networkIDs';
+const STORE_PASSWORD_HASH       = '.vol.passwordHash';
+const STORE_SESSION             = '.vol.session';
 
 export const NODE_TYPE = {
     UNKNOWN:    'UNKNOWN',
@@ -32,6 +33,44 @@ const debugLog = function ( ...args ) { console.log ( 'APP STATE:', ...args ); }
 //================================================================//
 export class AppStateService {
 
+    @observable networksByID    = {};
+
+    //----------------------------------------------------------------//
+    @action
+    affirmNetwork ( networkID, identity, nodeURL ) {
+
+        debugLog ( 'affirm network:', networkID );
+
+        const networkService = this.networksByID [ networkID ] || new NetworkStateService ( this, networkID );
+
+        if ( identity && nodeURL ) {
+            networkService.network.nodeURL      = nodeURL;
+            networkService.network.identity     = identity;
+        }
+
+        this.networksByID [ networkID ] = networkService;
+
+        if ( !this.networkIDs.includes ( networkID )) {
+            this.networkIDs.push ( networkID );
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    assertAccountService ( networkID, accountID ) {
+
+        const networkService = this.assertNetworkService ( networkID );
+        return networkService.assertAccountService ( accountID );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    assertNetworkService ( networkID ) {
+
+        if ( !this.hasNetwork ( networkID )) throw new Error ( `Network not found: ${ networkID }` );
+        return this.networksByID [ networkID ];
+    }
+
     //----------------------------------------------------------------//
     assertPassword ( password ) {
         if ( !this.checkPassword ( password )) throw new Error ( 'Invalid wallet password.' );
@@ -43,8 +82,8 @@ export class AppStateService {
 
         this.assertPassword ( password );
 
-        for ( let networkName in this.networks ) {
-            const network = this.networks [ networkName ];
+        for ( let networkID in this.networksByID ) {
+            const network = this.networksByID [ networkID ];
 
             for ( let accountName in network.accounts ) {
                 const account = network.accounts [ accountName ];
@@ -79,13 +118,15 @@ export class AppStateService {
     //----------------------------------------------------------------//
     constructor () {
 
+        debugLog ( 'CONSTRUCT!' );
+
         extendObservable ( this, {
             accountInfo:            false,
         });
 
         this.revocable          = new RevocableContext ();
+        this.storage            = new StorageContext ();
         this.appDB              = new AppDB ();
-        this.networkList        = new NetworkListService ( this );
 
         const flags = {
             promptFirstNetwork:         true,
@@ -93,16 +134,34 @@ export class AppStateService {
             promptFirstTransaction:     true,
         };
 
-        this.networks   = {};
-        this.consensus  = {};
+        this.storage.persist ( this, 'flags',               STORE_FLAGS,                flags );
+        this.storage.persist ( this, 'passwordHash',        STORE_PASSWORD_HASH,        '' );
+        this.storage.persist ( this, 'session',             STORE_SESSION,              this.makeSession ( false ));
+        this.storage.persist ( this, 'networkIDs',          STORE_NETWORK_IDS,          []);
 
-        const storageContext = new StorageContext ();
+        console.log ( 'NETWORK IDS:', JSON.stringify ( this.networkIDs ));
 
-        storageContext.persist ( this, 'flags',             STORE_FLAGS,                flags );
-        storageContext.persist ( this, 'passwordHash',      STORE_PASSWORD_HASH,        '' );
-        storageContext.persist ( this, 'session',           STORE_SESSION,              this.makeSession ( false ));
+        for ( let networkID of this.networkIDs ) {
+            debugLog ( 'loading network', networkID );
+            this.affirmNetwork ( networkID );
+        }
+        debugLog ( 'DONE!' );
+    }
 
-        this.storage = storageContext;
+    //----------------------------------------------------------------//
+    @action
+    deleteNetwork ( networkID ) {
+
+        if ( !this.networkIDs.includes ( networkID )) return;
+
+        debugLog ( 'deleting network', networkID );
+
+        const network = this.networksByID [ networkID ];
+        
+        this.networkIDs.splice ( this.networkIDs.indexOf ( networkID ), 1 );
+        delete this.networksByID [ networkID ];
+
+        network.deleteNetwork ();
     }
 
     //----------------------------------------------------------------//
@@ -116,9 +175,20 @@ export class AppStateService {
     //----------------------------------------------------------------//
     finalize () {
 
+        for ( let networkID in this.networksByID ) {
+            this.networksByID [ networkID ].finalize ();
+        }
+
         this.appDB.finalize ();
         this.storage.finalize ();
         this.revocable.finalize ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    hasNetwork ( networkID ) {
+
+        return _.has ( this.networksByID, networkID );
     }
 
     //----------------------------------------------------------------//

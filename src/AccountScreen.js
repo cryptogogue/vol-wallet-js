@@ -120,11 +120,13 @@ export const AccountActionsSegment = observer (( props ) => {
 //================================================================//
 export const AccountScreen = observer (( props ) => {
 
+    console.log ( 'RENDER ACCOUNT SCREEN' );
+
     const networkID = util.getMatch ( props, 'networkID' );
     const accountID = util.getMatch ( props, 'accountID' );
 
     const appState          = hooks.useFinalizable (() => new AppStateService ());
-    const accountService    = hooks.useFinalizable (() => new AccountStateService ( appState, networkID, accountID ));
+    const accountService    = appState.assertAccountService ( networkID, accountID );
 
     return (
         <SingleColumnContainerView>

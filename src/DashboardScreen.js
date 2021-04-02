@@ -6,7 +6,6 @@ import { LoginForm }                        from './LoginForm';
 import { PollingList }                      from './PollingList';
 import { RegisterForm }                     from './RegisterForm';
 import { AppStateService }                  from './services/AppStateService';
-import { NetworkListService }               from './services/NetworkListService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';
@@ -33,25 +32,24 @@ const NETWORK_DELETE_WARNING_1 = `
 export const NetworkList = observer (( props ) => {
 
     const { appState }  = props;
-    const networkList   = appState.networkList;
 
     const asyncGetInfo = async ( revocable, networkID ) => {
-        const networkService = networkList.networksByID [ networkID ];
+        const networkService = appState.networksByID [ networkID ];
         const info = await revocable.fetchJSON ( networkService.nodeURL );
         return info && info.type === 'VOL_MINING_NODE' ? info : false;
     }
 
     const checkIdentifier = ( networkID ) => {
-        return _.has ( networkList.networksByID, networkID );
+        return _.has ( appState.networksByID, networkID );
     }
 
     const onDelete = ( networkID ) => {
-        networkList.deleteNetwork ( networkID );
+        appState.deleteNetwork ( networkID );
     }
 
     const makeItemMessageBody = ( networkID, info ) => {
 
-        const networkService = networkList.networksByID [ networkID ];
+        const networkService = appState.networksByID [ networkID ];
 
         const nodeURL       = networkService.nodeURL;
         const schema        = info && info.schemaVersion;
@@ -78,7 +76,7 @@ export const NetworkList = observer (( props ) => {
 
     return (
         <PollingList
-            items                   = { networkList.networkIDs }
+            items                   = { appState.networkIDs }
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
             onDelete                = { onDelete }

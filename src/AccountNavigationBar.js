@@ -11,10 +11,8 @@ import { Button, Dropdown, Header, Icon, Label, Menu } from 'semantic-ui-react';
 
 export const ACCOUNT_TABS = {
     ACCOUNT:        'ACCOUNT',
-    CRAFTING:       'CRAFTING',
     INVENTORY:      'INVENTORY',
     KEYS:           'KEYS',
-    UPGRADES:       'UPGRADES',
 };
 
 //----------------------------------------------------------------//
@@ -22,10 +20,8 @@ function getAccountTabTitle ( tab ) {
 
     switch ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return 'Account';
-        case ACCOUNT_TABS.CRAFTING:     return 'Crafting';
         case ACCOUNT_TABS.INVENTORY:    return 'Inventory';
         case ACCOUNT_TABS.KEYS:         return 'Keys';
-        case ACCOUNT_TABS.UPGRADES:     return 'Upgrades';
     }
     return '';
 };
@@ -35,10 +31,8 @@ function getAccountTabURL ( tab ) {
 
     switch ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return '';
-        case ACCOUNT_TABS.CRAFTING:     return '/crafting';
         case ACCOUNT_TABS.INVENTORY:    return '/inventory';
         case ACCOUNT_TABS.KEYS:         return '/keys';
-        case ACCOUNT_TABS.UPGRADES:     return '/upgrades';
     }
     return '/';
 };
