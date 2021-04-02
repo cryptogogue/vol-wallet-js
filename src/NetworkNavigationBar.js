@@ -39,21 +39,22 @@ function getAccountTabURL ( tab ) {
 //================================================================//
 export const NetworkNavigationBar = observer (( props ) => {
 
-    const { appState, navTitle, networkID, tab } = props;
+    const { networkService, navTitle, networkID, tab } = props;
 
     const adminURL              = `/net/${ networkID }${ getAccountTabURL ( NETWORK_TABS.ADMIN )}`;
     const chainURL              = `/net/${ networkID }${ getAccountTabURL ( NETWORK_TABS.CHAIN )}`;
     const networkURL            = `/net/${ networkID }${ getAccountTabURL ( NETWORK_TABS.NETWORK )}`;
 
-    const controlKey = appState.network.controlKey;
+    const controlKey = networkService.network.controlKey;
 
     return (
         <React.Fragment>
+
             <NavigationBar
-                appState    = { appState }
-                networkID   = { networkID }
-                networkTab  = { getAccountTabURL ( tab )}
-                accountID   = { '' }
+                networkService  = { networkService }
+                networkID       = { networkID }
+                networkTab      = { getAccountTabURL ( tab )}
+                accountID       = { '' }
             />
 
             <Menu borderless attached = 'bottom'>

@@ -14,14 +14,14 @@ import { observer }                         from 'mobx-react';
 export class SendAssetsFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState, selection ) {
+    constructor ( accountService, selection ) {
         super ();
 
         const fieldsArray = [
             new Fields.StringFieldController            ( 'accountName',        'Recipient' ),
             new Fields.AssetSelectionFieldController    ( 'assetIdentifiers',   'Assets', _.cloneDeep ( selection )),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.SEND_ASSETS, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.SEND_ASSETS, fieldsArray );
     }
 
     //----------------------------------------------------------------//

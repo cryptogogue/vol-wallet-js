@@ -65,11 +65,11 @@ export class CraftingFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    constructor ( appState, inventory, singleInvocation ) {
+    constructor ( accountService, inventory, singleInvocation ) {
         super ();
 
         this.inventory = inventory;
-        this.initialize ( appState, TRANSACTION_TYPE.RUN_SCRIPT );
+        this.initialize ( accountService, TRANSACTION_TYPE.RUN_SCRIPT );
 
         extendObservable ( this, {
             singleInvocation: singleInvocation || false,

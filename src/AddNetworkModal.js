@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { NetworkStateService }      from './services/NetworkStateService';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import React, { useState }          from 'react';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
@@ -84,7 +85,8 @@ export const AddNetworkModalBody = observer (( props ) => {
     const [ testURL, setTestURL ]               = useState ( '' );
     const [ suggestName, setSuggestName ]       = useState ( false );
 
-    const controller    = hooks.useFinalizable (() => new NodeInfoService ());
+    const controller        = hooks.useFinalizable (() => new NodeInfoService ());
+    const networkList       = appState.networkList;
 
     let onChangeName = ( value ) => {
 
@@ -96,7 +98,7 @@ export const AddNetworkModalBody = observer (( props ) => {
             err = `Network names must start with a [a-z] or [0-9] and contain only [a-z], [0-9] and '-'.`
         }
 
-        if ( appState.getNetwork ( value )) {
+        if ( networkList.networkIDs.includes ( value )) {
             err = `Network named ${ value } already exists.`
         }
         setNameError ( err );
@@ -121,7 +123,10 @@ export const AddNetworkModalBody = observer (( props ) => {
     }
 
     let onSubmit = () => {
-        appState.affirmNetwork ( name, controller.info.identity, testURL )
+        networkList.affirmNetwork ( name, controller.info.identity, testURL );
+        runInAction (() => {
+            appState.flags.promptFirstNetwork = false;
+        });
         onClose ();
     }
 

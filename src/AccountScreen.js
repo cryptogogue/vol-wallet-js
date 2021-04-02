@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { AppStateService }                  from './services/AppStateService';
 import { AccountStateService }              from './services/AccountStateService';
 import { TransactionModal }                 from './transactions/TransactionModal';
 import * as vol                             from './util/vol';
@@ -13,20 +14,26 @@ import * as UI                              from 'semantic-ui-react';
 
 import { AccountNavigationBar, ACCOUNT_TABS } from './AccountNavigationBar';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( 'ACCOUNT SCREEN:', ...args ); }
+
 //================================================================//
 // AccountDetailsView
 //================================================================//
 const AccountDetailsView = observer (( props ) => {
 
-    const { appState }  = props;
-    const account       = appState.account;
+    const { accountService }    = props;
+    const networkService        = accountService.networkService;
+    const account               = accountService.account;
 
     if ( !account ) return;
 
-    const consensus     = appState.consensus [ appState.networkID ];
-    const accountURL    = appState.getServiceURL ( `/accounts/${ appState.accountID }` );
-    const hasInfo       = appState.hasAccountInfo && consensus.isCurrent;
+    const consensus     = networkService.consensus;
+    const accountURL    = networkService.getServiceURL ( `/accounts/${ accountService.accountID }` );
+    const hasInfo       = accountService.hasAccountInfo && consensus.isCurrent;
     
+    debugLog ( 'HAS INFO', accountService.hasAccountInfo );
+
     return (
         <div style = {{ textAlign: 'center' }}>
 
@@ -39,20 +46,20 @@ const AccountDetailsView = observer (( props ) => {
                         <UI.Icon name = 'circle notched' loading circular/>
                     </Otherwise>
                 </Choose>
-                <a href = { accountURL } target = '_blank'>{ appState.accountID }</a>
+                <a href = { accountURL } target = '_blank'>{ accountService.accountID }</a>
             </UI.Header>
 
             <div style = {{ visibility: hasInfo ? 'visible' : 'hidden' }}>
                 <UI.Header as = 'h3'>
-                    { `Balance: ${ vol.format ( appState.balance )}` }
+                    { `Balance: ${ vol.format ( accountService.balance )}` }
                 </UI.Header>
 
                 <UI.Header.Subheader>
-                    { `Nonce: ${ appState.nonce }` }
+                    { `Nonce: ${ accountService.nonce }` }
                 </UI.Header.Subheader>
 
                 <UI.Header.Subheader>
-                    { `Inventory Nonce: ${ appState.inventoryNonce }` }
+                    { `Inventory Nonce: ${ accountService.serverInventoryNonce }` }
                 </UI.Header.Subheader>
             </div>
 
@@ -72,7 +79,8 @@ const AccountDetailsView = observer (( props ) => {
 //================================================================//
 export const AccountActionsSegment = observer (( props ) => {
 
-    const { appState } = props;
+    const { accountService } = props;
+    const appState = accountService.appState;
 
     const segmentRef = useRef ();
     const [ transactionModalOpen, setTransactionModalOpen ] = useState ( false );
@@ -99,9 +107,9 @@ export const AccountActionsSegment = observer (( props ) => {
             </UI.Segment>
 
             <TransactionModal
-                appState = { appState }
-                open = { transactionModalOpen }
-                onClose = {() => { setTransactionModalOpen ( false )}}
+                accountService  = { accountService }
+                open            = { transactionModalOpen }
+                onClose         = {() => { setTransactionModalOpen ( false )}}
             />
         </div>
     );
@@ -115,23 +123,24 @@ export const AccountScreen = observer (( props ) => {
     const networkID = util.getMatch ( props, 'networkID' );
     const accountID = util.getMatch ( props, 'accountID' );
 
-    const appState = hooks.useFinalizable (() => new AccountStateService ( networkID, accountID ));
+    const appState          = hooks.useFinalizable (() => new AppStateService ());
+    const accountService    = hooks.useFinalizable (() => new AccountStateService ( appState, networkID, accountID ));
 
     return (
         <SingleColumnContainerView>
 
             <AccountNavigationBar
-                appState    = { appState }
-                tab         = { ACCOUNT_TABS.ACCOUNT }
+                accountService      = { accountService }
+                tab                 = { ACCOUNT_TABS.ACCOUNT }
             />
 
-            <If condition = { appState.hasAccount }>
+            <If condition = { accountService.hasAccount }>
 
                 <UI.Segment>
-                    <AccountDetailsView appState = { appState }/>
+                    <AccountDetailsView accountService  = { accountService }/>
                 </UI.Segment>
 
-                <AccountActionsSegment appState = { appState }/>
+                <AccountActionsSegment accountService   = { accountService }/>
             </If>
 
         </SingleColumnContainerView>

@@ -15,13 +15,13 @@ import { observer }                         from 'mobx-react';
 export class ReserveAccountNameFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         const fieldsArray = [
             new Fields.StringFieldController    ( 'secretName',     'Reserve Name' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME, fieldsArray );
     }
 
     //----------------------------------------------------------------//

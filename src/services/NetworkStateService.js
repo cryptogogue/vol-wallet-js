@@ -5,37 +5,38 @@ import { InventoryController }          from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
+import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
 import React                            from 'react';
 import url                              from 'url';
+
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@NETWORK SERVICE:', ...args ); }
 
 //================================================================//
 // NetworkStateService
 //================================================================//
-export class NetworkStateService extends AppStateService {
+export class NetworkStateService {
 
+    @observable networkID       = '';
     @observable minersByID      = {};
     @observable ignoreURLs      = {};
 
-    //----------------------------------------------------------------//
-    @computed get
-    accounts () {
-        return this.network.accounts;
-    }
+    @computed get accounts              () { return this.network.accounts; }
+    @computed get controlKey            () { return this.network.controlKey; }
+    @computed get height                () { return this.consensus.height; }
+    @computed get identity              () { return this.network.identity; }
+    @computed get nodeURL               () { return this.network.nodeURL; }
+    @computed get pendingAccounts       () { return this.network.pendingAccounts; }    
 
     //----------------------------------------------------------------//
     @action
     affirmAccountAndKey ( password, accountID, keyName, phraseOrKey, privateKeyHex, publicKeyHex ) {
 
-        this.flags.promptFirstAccount = false;
-
-        this.assertHasNetwork ();
-
         if ( password ) {
-            this.assertPassword ( password );
+            this.appState.assertPassword ( password );
         }
 
-        const accounts = this.network.accounts;
+        const accounts = this.accounts;
 
         let account = accounts [ accountID ] || {
             keys: {},
@@ -59,10 +60,8 @@ export class NetworkStateService extends AppStateService {
     @action
     affirmMinerControlKey ( password, phraseOrKey, privateKeyHex, publicKeyHex ) {
 
-        this.assertHasNetwork ();
-
         if ( password ) {
-            this.assertPassword ( password );
+            this.appState.assertPassword ( password );
         }
 
         let key = {};
@@ -75,8 +74,18 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
-    assertHasNetwork () {
-        if ( !this.hasNetwork ) throw new Error ( 'No network selected.' );
+    @action
+    affirmNetwork ( networkID, identity, nodeURL ) {
+
+        const network = {
+            nodeURL:            nodeURL || '',
+            identity:           identity,
+            accounts:           {},
+            pendingAccounts:    {},
+        };
+
+        this.loadNetwork ( networkID, network );
+        this.network.nodeURL = nodeURL;
     }
 
     //----------------------------------------------------------------//
@@ -105,12 +114,12 @@ export class NetworkStateService extends AppStateService {
     @action
     async confirmMinersAsync () {
 
-        const consensus = this.consensus [ this.networkID ];
+        const consensus = this.consensus;
 
         const pendingURLs = {};
 
         // fetch all the chains
-        pendingURLs [ this.network.nodeURL ] = true;
+        pendingURLs [ this.nodeURL ] = true;
         for ( let nodeURL in consensus.urls ) {
             pendingURLs [ nodeURL ] = true;
         }
@@ -145,17 +154,22 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
-    constructor ( networkID ) {
-        super ();
+    constructor ( appState, networkID, nodeURL, identity ) {
 
-        this.loadNetwork ( networkID );
+        assert ( appState );
 
-        if ( !_.has ( this.networks, networkID )) throw new Error ( 'Network not found.' );
+        this.appState       = appState;
+        this.revocable      = new RevocableContext ();
+        this.storage        = new StorageContext ();
 
-        runInAction (() => {
-            this.networkID = networkID;
-        });
-
+        if ( networkID ) {
+            if ( nodeURL ) {
+                this.affirmNetwork ( networkID, nodeURL, identity );
+            }
+            else {
+                this.loadNetwork ( networkID );
+            }
+        }
         this.networkInfoServiceLoop ();
     }
 
@@ -163,18 +177,17 @@ export class NetworkStateService extends AppStateService {
     @action
     deleteAccount ( accountID ) {
 
-        this.assertHasNetwork ();
+        debugLog ( 'DELETING ACCOUNT:', accountID );
 
-        accountID = accountID || this.accountID;
+        // const accounts = _.cloneDeep ( this.accounts );
 
-        if ( accountID in this.network.accounts ) {
-            delete this.network.accounts [ accountID ];
+        if ( _.has ( this.accounts, accountID )) {
+            debugLog ( 'DELETING ACCOUNT FROM LOCAL STORAGE:', accountID );
+            delete this.accounts [ accountID ];
+            // this.network.accounts = accounts;
         }
         
-        if ( accountID === this.accountID ) {
-            this.accountID = '';
-            this.setAccountInfo ();
-        }
+        this.appState.appDB.deleteAccountAsync ( this.networkID, accountID );
     }
 
     //----------------------------------------------------------------//
@@ -188,31 +201,48 @@ export class NetworkStateService extends AppStateService {
     @action
     deleteMinerControlKey () {
 
-        delete this.network.controlKey;
+        delete this.controlKey;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    deleteNetwork () {
+
+        if ( this.networkID ) {
+            
+            debugLog ( 'deleting network', this.networkID );
+            
+            this.revocable.revokeAll ();
+
+            this.storage.remove ( this, 'network' );
+            this.storage.remove ( this, 'consensus' );
+            this.appState.appDB.deleteNetworkAsync ( this.networkID );
+            this.networkID = false;
+        }
     }
 
     //----------------------------------------------------------------//
     @action
     extendNetwork ( minerURLs ) {
 
-        const consensus = this.consensus [ this.networkID ];
-
         for ( let url of minerURLs ) {
-            consensus.urls [ url ] = true;
+            this.consensus.urls [ url ] = true;
         }
     }
 
     //----------------------------------------------------------------//
     finalize () {
 
-        super.finalize ();
+        this.revocable.finalize ();
+        this.storage.finalize ();
+        this.appState.finalize ();
     }
 
     //----------------------------------------------------------------//
     findAccountIdByPublicKey ( publicKey ) {
 
         if ( this.hasNetwork ) {
-            const accounts = this.network.accounts;
+            const accounts = this.accounts;
             for ( let accountID in accounts ) {
                 const account = accounts [ accountID ];
                 for ( let keyName in account.keys ) {
@@ -232,7 +262,7 @@ export class NetworkStateService extends AppStateService {
         serviceURL.query        = _.cloneDeep ( query || {} );
 
         if ( mostCurrent !== true ) {
-            serviceURL.query.at = this.consensus [ this.networkID ].height;
+            serviceURL.query.at = this.consensus.height;
         }
 
         return url.format ( serviceURL );
@@ -243,21 +273,16 @@ export class NetworkStateService extends AppStateService {
 
         if ( this.hasNetwork ) {
             accountID = accountID || this.accountID;
-            const accounts = this.network.accounts;
+            const accounts = this.accounts;
             return _.has ( accounts, accountID ) ? accounts [ accountID ] : false;
         }
         return false;
     }
 
     //----------------------------------------------------------------//
-    getNetwork ( networkID ) {
-        return super.getNetwork ( networkID || this.networkID );
-    }
-
-    //----------------------------------------------------------------//
     getServiceURL ( path, query, mostCurrent ) {
 
-        return this.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
+        return this.formatServiceURL ( this.nodeURL, path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
@@ -275,6 +300,7 @@ export class NetworkStateService extends AppStateService {
     //----------------------------------------------------------------//
     @computed get
     hasNetwork () {
+
         return ( this.networkID && this.network );
     }
 
@@ -298,9 +324,28 @@ export class NetworkStateService extends AppStateService {
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    network () {
-        return this.getNetwork ();
+    @action
+    loadNetwork ( networkID, networkInit ) {
+
+        try {
+
+            const consensus = {
+                height:             0,
+                digest:             false,
+                genesis:            false,
+                step:               0,
+                isCurrent:          false,
+                urls:               {},
+            };
+
+            this.storage.persist ( this, 'network',     `.vol_network_${ networkID }`,      networkInit );
+            this.storage.persist ( this, 'consensus',   `.vol_consensus_${ networkID }`,    consensus );
+        
+            this.networkID = networkID;
+        }
+        catch ( error ) {
+            throw new Error ( 'Network not found.' );
+        }
     }
 
     //----------------------------------------------------------------//
@@ -308,12 +353,6 @@ export class NetworkStateService extends AppStateService {
 
         let timeout = await this.scanNetworkAsync ();
         this.revocable.timeout (() => { this.networkInfoServiceLoop ()}, timeout );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    pendingAccounts () {
-        return this.network.pendingAccounts;
     }
 
     //----------------------------------------------------------------//
@@ -333,7 +372,7 @@ export class NetworkStateService extends AppStateService {
         console.log ( 'CONSENSUS: SCAN NETWORK' );
         console.log ( 'CONSENSUS: IGNORE', JSON.stringify ( this.ignoreURLs ));
 
-        const consensus = this.consensus [ this.networkID ];
+        const consensus = this.consensus;
         const nextHeight = consensus.height + consensus.step;
 
         await this.confirmMinersAsync ();
@@ -392,7 +431,7 @@ export class NetworkStateService extends AppStateService {
     @action
     setAccountRequest ( password, phraseOrKey, keyID, privateKeyHex, publicKeyHex ) {
 
-        this.assertPassword ( password );
+        this.appState.assertPassword ( password );
 
         this.flags.promptFirstAccount = false;
 
@@ -408,7 +447,7 @@ export class NetworkStateService extends AppStateService {
         } while ( _.has ( this.pendingAccounts, requestID ));
 
         const request = {
-            networkID:              this.network.identity,
+            networkID:              this.identity,
             key: {
                 type:               'EC_HEX',
                 groupName:          'secp256k1',
@@ -438,7 +477,7 @@ export class NetworkStateService extends AppStateService {
 
         console.log ( 'CONSENSUS: UPDATE' );
 
-        const consensus = this.consensus [ this.networkID ];
+        const consensus = this.consensus;
         const nextHeight = consensus.height + consensus.step;
 
         let minerCount      = 0;
@@ -534,17 +573,17 @@ export class NetworkStateService extends AppStateService {
     @action
     updateMinerStatus ( minerID, height, url, prev, peek ) {
 
-        const consensus = this.consensus [ this.networkID ];
-        const miner = this.minersByID [ minerID ];
+        const consensus     = this.consensus;
+        const miner         = this.minersByID [ minerID ];
 
         console.log ( 'CONSENSUS: UPDATE MINER', minerID, height, consensus.height, url, prev, peek );
 
-        miner.minerID   = minerID;
-        miner.height    = height;
-        miner.prev      = prev ? prev.digest : false;
-        miner.peek      = peek ? peek.digest : false;
-        miner.url       = url;
-        miner.isBusy    = false;
+        miner.minerID       = minerID;
+        miner.height        = height;
+        miner.prev          = prev ? prev.digest : false;
+        miner.peek          = peek ? peek.digest : false;
+        miner.url           = url;
+        miner.isBusy        = false;
 
         if (( consensus.height === 0 ) && !consensus.genesis ) {
             consensus.genesis = prev.digest;

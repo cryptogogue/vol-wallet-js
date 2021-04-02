@@ -14,12 +14,12 @@ import { observer }                         from 'mobx-react';
 export class BetaGetDeckFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         const fieldsArray = [
             new Fields.StringFieldController	( 'deckName', 'Deck Name' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.BETA_GET_DECK, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.BETA_GET_DECK, fieldsArray );
     }
 }

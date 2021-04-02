@@ -17,12 +17,12 @@ function getShortDateString () {
 //================================================================//
 export const InboxModal = observer (( props ) => {
 
-    const { appState, open, onClose } = props;
+    const { accountService, open, onClose } = props;
 
-    const progress          = appState.inventoryProgress;
-    const inventory         = appState.inventory;
-    const inventoryService  = appState.inventoryService;
-    const tags              = appState.inventoryTags;
+    const progress          = accountService.inventoryProgress;
+    const inventory         = accountService.inventory;
+    const inventoryService  = accountService.inventoryService;
+    const tags              = accountService.inventoryTags;
 
     const [ dateTag ]       = useState ( `New Assets - ${ getShortDateString ()}` );
     const [ tag, setTag ]   = useState ( dateTag );
@@ -49,7 +49,7 @@ export const InboxModal = observer (( props ) => {
 
     const onClickSubmit = () => {
         tags.tagSelection ( inventoryService.newAssets, tag, true );
-        appState.setAccountInventoryNonce ( appState.accountInfo.inventoryNonce );
+        inventoryService.updateNonceAsync ();
         onClose ();
     };
 

@@ -14,12 +14,12 @@ import { observer }                         from 'mobx-react';
 export class BetaGetAssetsFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         const fieldsArray = [
             new Fields.IntegerFieldController	( 'numAssets',      'Copies', 1 ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.BETA_GET_ASSETS, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.BETA_GET_ASSETS, fieldsArray );
     }
 }

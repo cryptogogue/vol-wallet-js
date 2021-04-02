@@ -53,7 +53,7 @@ export const AccountNavigationBar = observer (( props ) => {
     const networkID = params.networkID || '';
     const accountID = params.accountID || '';
 
-    const { appState, tab } = props;
+    const { accountService, tab } = props;
 
     const accountsURL           = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
@@ -62,10 +62,10 @@ export const AccountNavigationBar = observer (( props ) => {
     return (
         <React.Fragment>
             <NavigationBar
-                appState    = { appState }
-                networkID   = { networkID }
-                accountID   = { accountID }
-                accountTab  = { getAccountTabURL ( tab )}
+                networkService      = { accountService.networkService }
+                networkID           = { networkID }
+                accountID           = { accountID }
+                accountTab          = { getAccountTabURL ( tab )}
             />
 
             <Menu borderless attached = 'bottom'>
@@ -80,8 +80,8 @@ export const AccountNavigationBar = observer (( props ) => {
 
                 <Menu.Menu position = 'right'>
                     <Menu.Item>
-                        <InboxLabel appState = { appState }/>
-                        <TransactionQueueLabel appState = { appState }/>
+                        <InboxLabel accountService = { accountService }/>
+                        <TransactionQueueLabel accountService = { accountService }/>
                     </Menu.Item>
                 </Menu.Menu>
             </Menu>

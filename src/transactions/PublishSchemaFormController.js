@@ -16,7 +16,7 @@ export class PublishSchemaFormController extends TransactionFormController {
     @observable deckName = '';
 
     //----------------------------------------------------------------//
-    constructor ( appState, andReset ) {
+    constructor ( accountService, andReset ) {
         super ();
 
         this.isPublishAndReset = Boolean ( andReset );
@@ -28,7 +28,7 @@ export class PublishSchemaFormController extends TransactionFormController {
         ];
 
         const transactionType = andReset ? TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET : TRANSACTION_TYPE.PUBLISH_SCHEMA;
-        this.initialize ( appState, transactionType, fieldsArray );
+        this.initialize ( accountService, transactionType, fieldsArray );
     }
 
     //----------------------------------------------------------------//

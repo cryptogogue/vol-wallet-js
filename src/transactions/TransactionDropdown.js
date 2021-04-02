@@ -35,23 +35,23 @@ export const gTransactionTypes = [
 ];
 
 //----------------------------------------------------------------//
-function makeControllerForTransactionType ( appState, transactionType ) {
+function makeControllerForTransactionType ( accountService, transactionType ) {
 
     switch ( transactionType ) {
-        case TRANSACTION_TYPE.ACCOUNT_POLICY:               return new AccountPolicyFormController ( appState );
-        case TRANSACTION_TYPE.AFFIRM_KEY:                   return new AffirmKeyFormController ( appState );
-        case TRANSACTION_TYPE.BETA_GET_ASSETS:              return new BetaGetAssetsFormController ( appState );
-        case TRANSACTION_TYPE.BETA_GET_DECK:                return new BetaGetDeckFormController ( appState );
-        case TRANSACTION_TYPE.KEY_POLICY:                   return new KeyPolicyFormController ( appState );
-        case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return new OpenAccountFormController ( appState );
-        case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return new PublishSchemaFormController ( appState );
-        case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return new PublishSchemaFormController ( appState, true );
-        case TRANSACTION_TYPE.REGISTER_MINER:               return new RegisterMinerFormController ( appState );
-        case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new RenameAccountFormController ( appState );
-        case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new ReserveAccountNameFormController ( appState );
-        case TRANSACTION_TYPE.SEND_VOL:                     return new SendVOLFormController ( appState );
+        case TRANSACTION_TYPE.ACCOUNT_POLICY:               return new AccountPolicyFormController ( accountService );
+        case TRANSACTION_TYPE.AFFIRM_KEY:                   return new AffirmKeyFormController ( accountService );
+        case TRANSACTION_TYPE.BETA_GET_ASSETS:              return new BetaGetAssetsFormController ( accountService );
+        case TRANSACTION_TYPE.BETA_GET_DECK:                return new BetaGetDeckFormController ( accountService );
+        case TRANSACTION_TYPE.KEY_POLICY:                   return new KeyPolicyFormController ( accountService );
+        case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return new OpenAccountFormController ( accountService );
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return new PublishSchemaFormController ( accountService );
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return new PublishSchemaFormController ( accountService, true );
+        case TRANSACTION_TYPE.REGISTER_MINER:               return new RegisterMinerFormController ( accountService );
+        case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new RenameAccountFormController ( accountService );
+        case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new ReserveAccountNameFormController ( accountService );
+        case TRANSACTION_TYPE.SEND_VOL:                     return new SendVOLFormController ( accountService );
     }
-    return new TransactionFormController ( appState );
+    return new TransactionFormController ( accountService );
 }
 
 //================================================================//
@@ -59,11 +59,11 @@ function makeControllerForTransactionType ( appState, transactionType ) {
 //================================================================//
 export const TransactionDropdown = observer (( props ) => {
 
-    const { appState, controller, setController } = props;
+    const { accountService, controller, setController } = props;
 
     const onSelection = ( transactionType ) => {
         if ( !controller || ( controller.type !== transactionType )) {
-            setController ( makeControllerForTransactionType ( appState, transactionType ));
+            setController ( makeControllerForTransactionType ( accountService, transactionType ));
         }
     }
 
@@ -74,7 +74,7 @@ export const TransactionDropdown = observer (( props ) => {
         const transactionType = gTransactionTypes [ typeID ];
         if ( controller && ( controller.type === transactionType )) continue;
 
-        const disabled = !appState.checkTransactionEntitlements ( transactionType );
+        const disabled = !accountService.checkTransactionEntitlements ( transactionType );
 
         const item = (
             <UI.Dropdown.Item

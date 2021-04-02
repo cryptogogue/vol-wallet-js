@@ -25,10 +25,11 @@ class ImportAccountController {
     @observable status          = STATUS_WAITING_FOR_INPUT;
 
     //----------------------------------------------------------------//
-    constructor ( appState, onDone ) {
+    constructor ( networkService, onDone ) {
 
-        this.revocable  = new RevocableContext ();
-        this.onDone     = onDone;
+        this.revocable          = new RevocableContext ();
+        this.networkService     = networkService;
+        this.onDone             = onDone;
     }
 
     //----------------------------------------------------------------//
@@ -39,13 +40,13 @@ class ImportAccountController {
 
     //----------------------------------------------------------------//
     @action
-    async import ( appState, key, phraseOrKey, password ) {
+    async import ( key, phraseOrKey, password ) {
 
         const publicKey = key.getPublicHex ();
         console.log ( 'PUBLIC_KEY', publicKey );
 
         // check to see if we already have the key, in which case early out
-        let accountID = appState.findAccountIdByPublicKey ( publicKey );
+        let accountID = this.networkService.findAccountIdByPublicKey ( publicKey );
 
         if ( accountID ) {
             this.accountID = accountID;
@@ -63,7 +64,7 @@ class ImportAccountController {
 
         try {
 
-            const data = await this.revocable.fetchJSON ( appState.getServiceURL ( `/keys/${ keyID }`, {}, true ));
+            const data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/keys/${ keyID }`, {}, true ));
 
             const keyInfo = data && data.keyInfo;
 
@@ -82,7 +83,7 @@ class ImportAccountController {
                 console.log ( 'PHRASE OR KEY:', phraseOrKey );
 
                 const privateKey = key.getPrivateHex ();
-                appState.affirmAccountAndKey (
+                this.networkService.affirmAccountAndKey (
                     password,
                     accountID,
                     keyName,
@@ -93,6 +94,9 @@ class ImportAccountController {
 
                 this.accountID = accountID;
                 this.status = STATUS_DONE;
+
+                this.networkService.appState.flags.promptFirstAccount = false;
+
                 this.onDone ();
             }
             else {
@@ -107,9 +111,10 @@ class ImportAccountController {
 //================================================================//
 const ImportAccountModalBody = observer (( props ) => {
 
-    const { appState, open, onClose } = props;
+    const { networkService, open, onClose } = props;
 
-    const controller = hooks.useFinalizable (() => new ImportAccountController ( appState, onClose ));
+    const controller = hooks.useFinalizable (() => new ImportAccountController ( networkService, onClose ));
+    const appState = networkService.appState;
 
     const [ key, setKey ]                   = useState ( false );
     const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
@@ -117,12 +122,8 @@ const ImportAccountModalBody = observer (( props ) => {
 
     const onSubmit = async () => {
         console.log ( 'PHRASE OR KEY:', phraseOrKey );
-        controller.import ( appState, key, phraseOrKey, password );
+        controller.import ( key, phraseOrKey, password );
     }
-
-    // if ( controller.status === STATUS_DONE ) {
-    //     onClose ();
-    // }
 
     const submitEnabled = key && phraseOrKey && password;
 
@@ -162,7 +163,7 @@ const ImportAccountModalBody = observer (( props ) => {
 //================================================================//
 export const ImportAccountModal = observer (( props ) => {
 
-    const { appState, open } = props;
+    const { networkService, open } = props;
     const [ counter, setCounter ] = useState ( 0 );
 
     const onClose = () => {
@@ -173,9 +174,9 @@ export const ImportAccountModal = observer (( props ) => {
     return (
         <div key = { counter }>
             <ImportAccountModalBody
-                appState    = { appState }
-                open        = { open }
-                onClose     = { onClose }
+                networkService  = { networkService }
+                open            = { open }
+                onClose         = { onClose }
             />
         </div>
     );

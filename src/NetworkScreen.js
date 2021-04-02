@@ -5,6 +5,7 @@ import { ImportAccountModal }               from './ImportAccountModal';
 import { NetworkNavigationBar, NETWORK_TABS } from './NetworkNavigationBar';
 import { PendingAccountList }               from './PendingAccountList';
 import { RequestAccountModal }              from './RequestAccountModal';
+import { AppStateService }                  from './services/AppStateService';
 import { NetworkStateService }              from './services/NetworkStateService';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe } from 'mobx';
@@ -18,7 +19,8 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const NetworkActionsSegment = observer (( props ) => {
 
-    const { appState } = props;
+    const { networkService } = props;
+    const appState = networkService.appState;
 
     const segmentRef                                                = useRef ();
     const [ importAccountModalOpen, setImportAccountModalOpen ]     = useState ( false );
@@ -59,13 +61,13 @@ export const NetworkActionsSegment = observer (( props ) => {
             </UI.Segment>
 
             <ImportAccountModal
-                appState = { appState }
+                networkService = { networkService }
                 open = { importAccountModalOpen }
                 onClose = {() => { setImportAccountModalOpen ( false )}}
             />
 
             <RequestAccountModal
-                appState = { appState }
+                networkService = { networkService }
                 open = { requestAccountModalOpen }
                 onClose = {() => { setRequestAccountModalOpen ( false )}}
             />
@@ -79,20 +81,21 @@ export const NetworkActionsSegment = observer (( props ) => {
 export const NetworkScreen = observer (( props ) => {
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
-    const appState                  = hooks.useFinalizable (() => new NetworkStateService ( networkIDFromEndpoint ));
+    const appState                  = hooks.useFinalizable (() => new AppStateService ());
+    const networkService            = hooks.useFinalizable (() => new NetworkStateService ( appState, networkIDFromEndpoint ));
 
     return (
         <SingleColumnContainerView>
 
             <NetworkNavigationBar
-                appState = { appState }
-                tab = { NETWORK_TABS.NETWORK }
-                networkID = { networkIDFromEndpoint }
+                networkService      = { networkService }
+                tab                 = { NETWORK_TABS.NETWORK }
+                networkID           = { networkIDFromEndpoint }
             />
 
-            <AccountList appState = { appState }/>
-            <PendingAccountList appState = { appState }/>
-            <NetworkActionsSegment appState = { appState }/>
+            <AccountList networkService             = { networkService }/>
+            <PendingAccountList networkService      = { networkService }/>
+            <NetworkActionsSegment networkService   = { networkService }/>
 
         </SingleColumnContainerView>
     );

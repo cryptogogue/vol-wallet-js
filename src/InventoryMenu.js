@@ -24,7 +24,7 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 export const InventoryMenu = observer (( props ) => {
 
-    const { appState, controller, printController, craftingFormController, upgradesFormController, tags } = props;
+    const { accountService, controller, printController, craftingFormController, upgradesFormController, tags } = props;
     const [ transactionController, setTransactionController ] = useState ( false );
     const [ downloadOptions, setDownloadOptions ] = useState ( false );
     const binding = craftingFormController.binding;
@@ -52,7 +52,7 @@ export const InventoryMenu = observer (( props ) => {
     const onClickSendAssets = () => {
         setTransactionController (
             new SendAssetsFormController (
-                appState,
+                accountService,
                 controller.selection
             )
         );
@@ -192,15 +192,15 @@ export const InventoryMenu = observer (( props ) => {
             </Menu>
 
             <InventoryDownloadModal
-                options     = { downloadOptions }
-                setOptions  = { setDownloadOptions }
+                options             = { downloadOptions }
+                setOptions          = { setDownloadOptions }
             />
 
             <TransactionModal
-                appState    = { appState }
-                controller  = { transactionController }
-                open        = { transactionController !== false }
-                onClose     = { onCloseTransactionModal }
+                accountService      = { accountService }
+                controller          = { transactionController }
+                open                = { transactionController !== false }
+                onClose             = { onCloseTransactionModal }
             />
 
         </React.Fragment>

@@ -14,14 +14,14 @@ import { observer }                         from 'mobx-react';
 export class SendVOLFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         const fieldsArray = [
             new Fields.StringFieldController    ( 'accountName',    'Recipient' ),
             new Fields.VOLFieldController       ( 'amount',         'Amount' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.SEND_VOL, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.SEND_VOL, fieldsArray );
     }
 
     //----------------------------------------------------------------//

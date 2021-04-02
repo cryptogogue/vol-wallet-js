@@ -20,7 +20,7 @@ export const SchemaField = observer (( props ) => {
     const [ isLoading, setIsLoading ]   = useState ( false );
 
     const formController    = field.formController;
-    const appState          = field.appState;
+    const networkService    = field.networkService;
 
     const filterCollisions = ( tableName, scanner, current, update ) => {
 
@@ -95,7 +95,7 @@ export const SchemaField = observer (( props ) => {
                 let current = false;
 
                 try {
-                    current = await appState.revocable.fetchJSON ( appState.getServiceURL ( '/schema' ));
+                    current = await networkService.revocable.fetchJSON ( networkService.getServiceURL ( '/schema' ));
                     if ( !( current && current.schema )) throw 'Could not download current schema.'
                 }
                 catch ( error ) {

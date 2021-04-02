@@ -16,15 +16,16 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 const KeyInfoModalBody = observer (( props ) => {
 
-    const { appState, keyName, open, onClose }          = props;
+    const { accountService, keyName, open, onClose }          = props;
     const [ password, setPassword ]                     = useState ( '' );
     const [ passwordCount, setPasswordCount ]           = useState ( 0 );
     const [ privateKeyInfo, setPrivateKeyInfo ]         = useState ( false );
 
-    const key = appState.account.keys [ keyName ];
+    const appState      = accountService.appState;
+    const key           = accountService.account.keys [ keyName ];
 
     const onClickShowPrivate = () => {
-        setPrivateKeyInfo ( appState.getPrivateKeyInfo ( keyName, password ));
+        setPrivateKeyInfo ( accountService.getPrivateKeyInfo ( keyName, password ));
         setPasswordCount ( passwordCount + 1 );
     }
 
@@ -98,11 +99,11 @@ const KeyInfoModalBody = observer (( props ) => {
 //================================================================//
 export const KeyInfoMessage = observer (( props ) => {
 
-    const { appState, keyName } = props;
+    const { accountService, keyName } = props;
     const [ open, setOpen ] = useState ( false );
     const [ counter, setCounter ] = useState ( 0 );
 
-    const key = appState.account.keys [ keyName ];
+    const key = accountService.account.keys [ keyName ];
 
     const onClose = () => {
         setCounter ( counter + 1 );
@@ -120,9 +121,9 @@ export const KeyInfoMessage = observer (( props ) => {
             <UI.Message.Content>
 
                 <UI.Modal
-                    header      = 'Entitlements'
-                    trigger     = {<UI.Message.Header style = {{ cursor: 'pointer' }}>{ keyName }</UI.Message.Header>}
-                    content     = {
+                    header              = 'Entitlements'
+                    trigger             = {<UI.Message.Header style = {{ cursor: 'pointer' }}>{ keyName }</UI.Message.Header>}
+                    content             = {
                         <JSONTree
                             hideRoot
                             data = { key.entitlements }
@@ -139,11 +140,11 @@ export const KeyInfoMessage = observer (( props ) => {
                 </p>
 
                 <KeyInfoModalBody
-                    key         = { counter }
-                    appState    = { appState }
-                    keyName     = { keyName }
-                    open        = { open }
-                    onClose     = { onClose }
+                    key                 = { counter }
+                    accountService      = { accountService }
+                    keyName             = { keyName }
+                    open                = { open }
+                    onClose             = { onClose }
                 />
 
             </UI.Message.Content>

@@ -26,27 +26,27 @@ const ACCOUNT_DELETE_WARNING_1 = `
 //================================================================//
 export const AccountList = observer (( props ) => {
 
-    const { appState } = props;
+    const { networkService } = props;
 
     const asyncGetInfo = async ( revocable, accountID ) => {
         
-        let json = await revocable.fetchJSON ( appState.getServiceURL ( `/accounts/${ accountID }` ));
+        let json = await revocable.fetchJSON ( networkService.getServiceURL ( `/accounts/${ accountID }` ));
 
         if ( !json.account ) {
-            const account = appState.getAccount ( accountID );
+            const account = networkService.getAccount ( accountID );
             const key = Object.values ( account.keys )[ 0 ];
             const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
-            json = await revocable.fetchJSON ( appState.getServiceURL ( `/keys/${ keyID }/account` ));
+            json = await revocable.fetchJSON ( networkService.getServiceURL ( `/keys/${ keyID }/account` ));
         }
         return json;
     }
 
     const checkIdentifier = ( accountID ) => {
-        return _.has ( appState.network.accounts, accountID );
+        return _.has ( networkService.accounts, accountID );
     }
 
     const onDelete = ( accountID ) => {
-        appState.deleteAccount ( accountID );
+        networkService.deleteAccount ( accountID );
     }
 
     const makeItemMessageBody = ( accountID, info ) => {
@@ -55,7 +55,7 @@ export const AccountList = observer (( props ) => {
             <React.Fragment>
                 <UI.Message.Header
                     as = { Link }
-                    to = { `/net/${ appState.networkID }/account/${ accountID }` }
+                    to = { `/net/${ networkService.networkID }/account/${ accountID }` }
                 >
                     { `Account: ${ accountID }` }
                 </UI.Message.Header>
@@ -66,7 +66,7 @@ export const AccountList = observer (( props ) => {
 
     return (
         <PollingList
-            items                   = { _.keys ( appState.network.accounts )}
+            items                   = { _.keys ( networkService.accounts )}
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
             onlineIcon              = 'trophy'

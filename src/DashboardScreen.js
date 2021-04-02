@@ -6,6 +6,7 @@ import { LoginForm }                        from './LoginForm';
 import { PollingList }                      from './PollingList';
 import { RegisterForm }                     from './RegisterForm';
 import { AppStateService }                  from './services/AppStateService';
+import { NetworkListService }               from './services/NetworkListService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';
@@ -31,36 +32,38 @@ const NETWORK_DELETE_WARNING_1 = `
 //================================================================//
 export const NetworkList = observer (( props ) => {
 
-    const { appState } = props;
+    const { appState }  = props;
+    const networkList   = appState.networkList;
 
-    const asyncGetInfo = async ( revocable, networkName ) => {
-        const info = await revocable.fetchJSON ( appState.networks [ networkName ].nodeURL );
+    const asyncGetInfo = async ( revocable, networkID ) => {
+        const networkService = networkList.networksByID [ networkID ];
+        const info = await revocable.fetchJSON ( networkService.nodeURL );
         return info && info.type === 'VOL_MINING_NODE' ? info : false;
     }
 
-    const checkIdentifier = ( networkName ) => {
-        return _.has ( appState.networks, networkName );
+    const checkIdentifier = ( networkID ) => {
+        return _.has ( networkList.networksByID, networkID );
     }
 
-    const onDelete = ( networkName ) => {
-        appState.deleteNetwork ( networkName );
+    const onDelete = ( networkID ) => {
+        networkList.deleteNetwork ( networkID );
     }
 
-    const makeItemMessageBody = ( networkName, info ) => {
+    const makeItemMessageBody = ( networkID, info ) => {
 
-        appState.loadNetwork ( networkName );
+        const networkService = networkList.networksByID [ networkID ];
 
-        const nodeURL = appState.networks [ networkName ].nodeURL;
-        const schema = info && info.schemaVersion;
-        const schemaString = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
+        const nodeURL       = networkService.nodeURL;
+        const schema        = info && info.schemaVersion;
+        const schemaString  = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
 
         return (
             <React.Fragment>
                 <UI.Message.Header
                     as = { Link }
-                    to = { `/net/${ networkName }` }
+                    to = { `/net/${ networkID }` }
                 >
-                    { networkName }
+                    { networkID }
                 </UI.Message.Header>
                 <UI.Message.Content>
                     <a href = { nodeURL } target = '_blank'>{ nodeURL }</a>
@@ -75,7 +78,7 @@ export const NetworkList = observer (( props ) => {
 
     return (
         <PollingList
-            items                   = { appState.networkIDs }
+            items                   = { networkList.networkIDs }
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
             onDelete                = { onDelete }
@@ -131,7 +134,7 @@ export const DashboardActionsSegment = observer (( props ) => {
 //================================================================//
 export const DashboardScreen = observer (( props ) => {
 
-    const appState = hooks.useFinalizable (() => new AppStateService ());
+    const appState      = hooks.useFinalizable (() => new AppStateService ());
 
     return (
         <SingleColumnContainerView>

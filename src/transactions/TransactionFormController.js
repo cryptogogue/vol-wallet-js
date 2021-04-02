@@ -28,7 +28,7 @@ export class TransactionFormController {
     @computed get
     balance () {
 
-        return this.appState.balance - this.cost;
+        return this.accountService.balance - this.cost;
     }
 
     //----------------------------------------------------------------//
@@ -65,11 +65,13 @@ export class TransactionFormController {
 
     //----------------------------------------------------------------//
     @action
-    initialize ( appState, type, fieldsArray ) {
+    initialize ( accountService, type, fieldsArray ) {
 
-        this.standalone             = Boolean ( appState.isStandaloneTransactionContext ); // yes, this is a hack. but not worth refactoring over.
+        assert ( accountService );
 
-        this.appState               = appState;
+        this.standalone             = Boolean ( accountService.isStandaloneTransactionContext ); // yes, this is a hack. but not worth refactoring over.
+
+        this.accountService         = accountService;
         this.type                   = type;
 
         fieldsArray = fieldsArray || [];
@@ -77,7 +79,7 @@ export class TransactionFormController {
         fieldsArray.push ( new Fields.VOLFieldController ( 'gratuity',       'Gratuity', 0 ));
 
         if ( !this.standalone ) {
-            fieldsArray.push ( new Fields.AccountKeyFieldController ( 'makerKeyName',   'Maker Key', appState.getDefaultAccountKeyName ()));
+            fieldsArray.push ( new Fields.AccountKeyFieldController ( accountService, 'makerKeyName', 'Maker Key', accountService.getDefaultAccountKeyName ()));
         }
         else {
             // these get calculated automatically if not standalone
@@ -88,7 +90,9 @@ export class TransactionFormController {
         const fields = {};
         for ( let field of fieldsArray ) {
             field.formController        = this;
-            field.appState              = appState;
+            field.accountService        = accountService;
+            field.networkService        = accountService.networkService;
+            field.appState              = accountService.appState;
             fields [ field.fieldName ]  = field;
         }
 
@@ -114,7 +118,7 @@ export class TransactionFormController {
     @computed get
     makerAccountName () {
 
-        return this.appState.accountID;
+        return this.accountService.accountID;
     }
 
     //----------------------------------------------------------------//
@@ -123,7 +127,7 @@ export class TransactionFormController {
         const transaction = Transaction.transactionWithBody ( this.type, this.makeTransactionBody ());
         this.virtual_decorateTransaction ( transaction );
 
-        const feeSchedule = this.appState.getFeeSchedule ();
+        const feeSchedule = this.accountService.getFeeSchedule ();
         if ( feeSchedule ) {
             const feeProfile = feeSchedule.transactionProfiles [ this.type ] || feeSchedule.defaultProfile || false;
             if ( feeProfile ) {
@@ -163,7 +167,7 @@ export class TransactionFormController {
         this.transaction            = this.makeTransaction ();
         this.cost                   = this.transaction.getCost ();
         this.weight                 = this.transaction.getWeight ();
-        this.suggestedGratuity      = this.appState.getMinimumGratuity () * this.weight;
+        this.suggestedGratuity      = this.accountService.getMinimumGratuity () * this.weight;
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();
@@ -193,7 +197,7 @@ export class TransactionFormController {
 
         // check balance
         if ( !this.standalone ) {
-            if ( this.appState.balance < this.cost ) {
+            if ( this.accountService.balance < this.cost ) {
                 this.isErrorFree = false;
             }
         }

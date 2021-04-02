@@ -12,15 +12,29 @@ import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import React                            from 'react';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@ACCOUNT STATE:', ...args ); }
+
 //================================================================//
 // AccountStateService
 //================================================================//
-export class AccountStateService extends NetworkStateService {
+export class AccountStateService {
+
+    @observable accountID           = false;
+    @observable accountInfo         = false;
+
+
+    @computed get balance                   () { return this.accountInfo.balance - this.transactionQueue.cost; }
+    @computed get inventoryNonce            () { return this.inventoryService.nonce; }
+    @computed get keys                      () { return this.account.keys; }
+    @computed get network                   () { return this.networkService; }
+    @computed get nonce                     () { return this.accountInfo.nonce || 0; }
+    @computed get serverInventoryNonce      () { return this.inventoryService.serverNonce; }
 
     //----------------------------------------------------------------//
     @computed get
     account () {
-        return this.getAccount ();
+        return this.networkService.getAccount ( this.accountID );
     }
 
     //----------------------------------------------------------------//
@@ -31,24 +45,11 @@ export class AccountStateService extends NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    assertHasAccount () {
-        this.assertHasNetwork ();
-        if ( !this.hasAccount ) throw new Error ( 'No account selected.' );
-    }
-
-    //----------------------------------------------------------------//
     @computed get
     assetsUtilized () {
 
         let assetsUtilized = this.account.assetsSent ? Object.keys ( this.account.assetsSent ) : [];
         return assetsUtilized.concat ( this.transactionQueue.assetsUtilized );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    balance () {
-
-        return this.accountInfo.balance - this.transactionQueue.cost;
     }
 
     //----------------------------------------------------------------//
@@ -65,8 +66,14 @@ export class AccountStateService extends NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    constructor ( networkID, accountID ) {
-        super ( networkID );
+    constructor ( appState, networkID, accountID ) {
+
+        assert ( appState );
+
+        this.appState           = appState;
+        this.networkService     = appState.networkList.getNetworkService ( networkID );
+        this.revocable          = new RevocableContext ();
+        this.storage            = new StorageContext ();
 
         runInAction (() => {
 
@@ -77,8 +84,6 @@ export class AccountStateService extends NetworkStateService {
                 throw new Error ( 'Account not found.' );
             }
         });
-
-        this.setAccountInfo ();
 
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new InventoryController ( this.inventoryProgress );
@@ -98,7 +103,10 @@ export class AccountStateService extends NetworkStateService {
         this.inventoryTags.finalize ();
         this.transactionQueue.finalize ();
 
-        super.finalize ();
+        this.revocable.finalize ();
+        this.storage.finalize ();
+        this.networkService.finalize ();
+        this.appState.finalize ();
     }
 
     //----------------------------------------------------------------//
@@ -148,7 +156,7 @@ export class AccountStateService extends NetworkStateService {
     //----------------------------------------------------------------//
     getPrivateKeyInfo ( keyName, password ) {
 
-        if ( this.checkPassword ( password )) {
+        if ( this.appState.checkPassword ( password )) {
 
             try {
                 const key = this.account.keys [ keyName ];
@@ -175,19 +183,7 @@ export class AccountStateService extends NetworkStateService {
     @computed get
     hasAccountInfo () {
         return ( this.accountInfo !== false );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    inventoryNonce () {
-        return this.account.inventoryNonce || 0;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    nonce () {
-        return this.accountInfo.nonce;
-    }
+    }    
 
     //----------------------------------------------------------------//
     @action
@@ -204,15 +200,23 @@ export class AccountStateService extends NetworkStateService {
     @action
     async serviceLoop () {
 
+        debugLog ( 'SERVICE LOOP' );
+
         let timeout = 5000;
 
         await this.syncAccountInfo ();
 
         if ( this.transactionQueue.pendingTransactions.length > 0 ) {
+            debugLog ( 'PROCESS TRANSACTIONS' );
             await this.transactionQueue.processTransactionsAsync ();
         }
         else {
-            await this.inventoryService.serviceStep ();
+            debugLog ( 'UPDATE INVENTORY' );
+            const more = await this.inventoryService.serviceStep ();
+            if ( more ) {
+                debugLog ( 'SERVICE LOOP: MORE' );
+                timeout = 1;
+            }
         }
         this.revocable.timeout (() => { this.serviceLoop ()}, timeout );
     }
@@ -220,6 +224,8 @@ export class AccountStateService extends NetworkStateService {
     //----------------------------------------------------------------//
     @action
     setAccountInfo ( accountInfo ) {
+
+        debugLog ( 'setAccountInfo', accountInfo );
 
         if ( accountInfo ) {
 
@@ -229,7 +235,6 @@ export class AccountStateService extends NetworkStateService {
 
             this.accountInfo.balance            = accountInfo.balance;
             this.accountInfo.nonce              = accountInfo.nonce;
-            this.accountInfo.inventoryNonce     = accountInfo.inventoryNonce;
             this.accountInfo.height             = accountInfo.height || 0;
         }
         else {
@@ -238,31 +243,28 @@ export class AccountStateService extends NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    @action
-    setAccountInventoryNonce ( inventoryNonce ) {
-
-        this.account.inventoryNonce = inventoryNonce;
-    }
-
-    //----------------------------------------------------------------//
     async syncAccountInfo () {
+
+        debugLog ( 'syncAccountInfo', this.accountID );
 
         if ( this.accountID.length === 0 ) return;
 
         try {
 
             const accountID = this.accountID;            
-            let data = await this.revocable.fetchJSON ( this.getServiceURL ( `/accounts/${ accountID }` ));
+            let data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ accountID }` ));
 
             if ( !data.account ) {
                 const key = Object.values ( this.account.keys )[ 0 ];
                 const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
-                data = await this.revocable.fetchJSON ( this.getServiceURL ( `/keys/${ keyID }/account` ));
+                data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/keys/${ keyID }/account` ));
             }
 
             const accountInfo = data.account;
 
             if ( accountInfo ) {
+
+                debugLog ( 'accountInfo', accountInfo );
 
                 this.setAccountInfo ( accountInfo );
                 this.updateAccount (
@@ -278,6 +280,8 @@ export class AccountStateService extends NetworkStateService {
             }
         }
         catch ( error ) {
+            debugLog ( 'AN ERROR!' );
+            debugLog ( error );
             this.setAccountInfo ();
         }
     }

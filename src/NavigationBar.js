@@ -19,38 +19,39 @@ export const NavigationBar = observer (( props ) => {
     const accountTab = props.accountTab || '';
     const networkTab = props.networkTab || '';
 
-    const { appState } = props;
+    const networkService    = props.networkService || false;
+    const appState          = props.appState || networkService.appState;
 
     if ( !appState.hasUser )      return (<Redirect to = { '/' }/>);
     if ( !appState.isLoggedIn )   return (<Redirect to = { '/' }/>);
 
-    if (( appState.networkID !== networkID ) || ( appState.accountID !== accountID )) {
+    // if (( appState.networkID !== networkID ) || ( appState.accountID !== accountID )) {
 
-        if ( networkID && accountID ) {
-            return (<Redirect to = { `/net/${ appState.networkID }/account/${ appState.accountID }${ accountTab }` }/>);
-        }
-        if ( networkID ) return (<Redirect to = { `/net/${ appState.networkID }` }/>);
-        return (<Redirect to = { '/' }/>); 
-    }
+    //     if ( networkID && accountID ) {
+    //         return (<Redirect to = { `/net/${ appState.networkID }/account/${ appState.accountID }${ accountTab }` }/>);
+    //     }
+    //     if ( networkID ) return (<Redirect to = { `/net/${ appState.networkID }` }/>);
+    //     return (<Redirect to = { '/' }/>); 
+    // }
 
     const networkDropdown = [];
     const accountDropdown = [];
 
-    for ( let networkName in appState.networks ) {
+    for ( let networkID of appState.networkList.networkIDs ) {
 
         networkDropdown.push (
             <Dropdown.Item
-                key         = { networkName }
+                key         = { networkID }
                 as          = { Link }
-                to          = { `/net/${ networkName }${ networkTab }` }
+                to          = { `/net/${ networkID }${ networkTab }` }
             >
-                <span className='text'>{ networkName }</span>
+                <span className='text'>{ networkID }</span>
             </Dropdown.Item>
         );
     }
 
-    if ( networkID.length > 0 ) {
-        const accounts = appState.networks [ networkID ].accounts;
+    if ( networkService && networkService.network ) {
+        const accounts = networkService.network.accounts;
         for ( let accountID in accounts ) {
             accountDropdown.push (
                 <Dropdown.Item

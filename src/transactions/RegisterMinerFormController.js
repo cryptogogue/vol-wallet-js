@@ -29,10 +29,10 @@ export class RegisterMinerFormController extends TransactionFormController {
 	@observable visage 		= false;
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
-        this.initialize ( appState, TRANSACTION_TYPE.REGISTER_MINER );
+        this.initialize ( accountService, TRANSACTION_TYPE.REGISTER_MINER );
     }
 
     //----------------------------------------------------------------//

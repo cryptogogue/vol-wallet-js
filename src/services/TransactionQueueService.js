@@ -19,11 +19,10 @@ const debugLog = function ( ...args ) { console.log ( 'TRANSACTIONS:', ...args )
 //================================================================//
 export class TransactionQueueService {
 
-    //----------------------------------------------------------------//
-    @computed get
-    account () {
-        return this.appState.account;
-    }
+    @computed get account                   () { return this.accountService.account; }
+    @computed get hasTransactionError       () { return Boolean ( this.account.transactionError ); }
+    @computed get pendingTransactions       () { return this.account.pendingTransactions; }
+    @computed get stagedTransactions        () { return this.account.stagedTransactions; }
 
     //----------------------------------------------------------------//
     @computed get
@@ -60,7 +59,7 @@ export class TransactionQueueService {
     @computed get
     canSubmitTransactions () {
 
-        if ( this.appState.nonce < 0 ) return false;
+        if ( this.accountService.nonce < 0 ) return false;
 
         if ( this.stagedTransactions.length > 0 ) return true;
         if (( this.pendingTransactions.length > 0 ) && ( this.hasTransactionError )) return true;
@@ -88,10 +87,12 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         
         this.revocable = new RevocableContext ();
-        this.appState = appState;
+        this.accountService     = accountService;
+        this.networkService     = accountService.networkService;
+        this.appState           = accountService.appState;
     }
 
     //----------------------------------------------------------------//
@@ -128,24 +129,11 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    hasTransactionError () {
-        return Boolean ( this.account.transactionError );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    pendingTransactions () {
-        return this.appState.account.pendingTransactions;
-    }
-
-    //----------------------------------------------------------------//
     @action
     async processTransactionsAsync () {
 
         debugLog ( 'processTransactionsAsync' );
 
-        const appState = this.appState;
         const account = this.account;
 
         if ( !this.hasTransactionError ) {
@@ -165,7 +153,7 @@ export class TransactionQueueService {
                 try {
 
                     // get every active URL.
-                    const urls = appState.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
+                    const urls = this.networkService.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
 
                     const checkTransactionStatus = async ( url ) => {
 
@@ -275,9 +263,8 @@ export class TransactionQueueService {
             uuid:               util.generateUUIDV4 (),
         }
 
-        const appState = this.appState;
-        appState.account.stagedTransactions.push ( memo );
-        appState.flags.promptFirstTransaction = false;
+        this.stagedTransactions.push ( memo );
+        this.appState.flags.promptFirstTransaction = false;
     }
 
     //----------------------------------------------------------------//
@@ -286,7 +273,7 @@ export class TransactionQueueService {
         debugLog ( 'putTransactionsAsync', memo );
 
         const accountName   = memo.body.maker.accountName;
-        const serviceURL    = this.appState.getServiceURL ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
+        const serviceURL    = this.networkService.getServiceURL ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
 
         const result = await this.revocable.fetchJSON ( serviceURL, {
             method :    'PUT',
@@ -303,7 +290,7 @@ export class TransactionQueueService {
         debugLog ( 'putTransactionsAsync', memo );
 
         const accountName   = memo.body.maker.accountName;
-        const urls          = this.appState.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
+        const urls          = this.networkService.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
         const headers       = { 'content-type': 'application/json' };
         const body          = JSON.stringify ( memo.envelope, null, 4 );
 
@@ -344,19 +331,11 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    stagedTransactions () {
-
-        return this.account.stagedTransactions;
-    }
-
-    //----------------------------------------------------------------//
     @action
     async submitTransactions ( password ) {
 
         debugLog ( 'submitTransactions' );
 
-        this.appState.assertHasAccount ();
         this.appState.assertPassword ( password );
 
         let account = this.account;
@@ -367,7 +346,7 @@ export class TransactionQueueService {
         try {
 
             const queue = [];
-            const currentNonce = this.appState.nonce;
+            const currentNonce = this.accountService.nonce;
 
             for ( let i = 0; i < pendingTransactions.length; ++i ) {
                 queue.push ( _.cloneDeep ( pendingTransactions [ i ]));

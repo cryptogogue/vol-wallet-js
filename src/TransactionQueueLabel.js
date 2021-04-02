@@ -11,10 +11,10 @@ import * as UI                      from 'semantic-ui-react';
 //================================================================//
 export const TransactionQueueLabel = observer (( props ) => {
 
-    const { appState } = props;
+    const { accountService } = props;
     const [ open, setOpen ] = useState ( false );
 
-    const queue = appState.transactionQueue;
+    const queue = accountService.transactionQueue;
 
     const onClose = () => {
         setOpen ( false );
@@ -30,9 +30,9 @@ export const TransactionQueueLabel = observer (( props ) => {
         <React.Fragment>
 
             <TransactionQueueModal
-                appState = { appState }
-                open = { open }
-                onClose = { onClose }
+                accountService  = { accountService }
+                open            = { open }
+                onClose         = { onClose }
             />
 
             <UI.Label

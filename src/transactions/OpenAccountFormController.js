@@ -14,7 +14,7 @@ import { observer }                         from 'mobx-react';
 export class OpenAccountFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         // TODO: replace with something deterministic        
@@ -29,7 +29,7 @@ export class OpenAccountFormController extends TransactionFormController {
             new Fields.TextFieldController          ( 'request',        'New Account Request', 6 ),
             new Fields.VOLFieldController           ( 'grant',          'Grant', 0 ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.OPEN_ACCOUNT, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.OPEN_ACCOUNT, fieldsArray );
     }
 
     //----------------------------------------------------------------//

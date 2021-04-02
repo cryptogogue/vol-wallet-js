@@ -16,16 +16,17 @@ import * as UI                                  from 'semantic-ui-react';
 //================================================================//
 const TransactionModalBody = observer (( props ) => {
 
-    const { appState, open, onClose }                               = props;
+    const { accountService, open, onClose }                         = props;
     const [ password, setPassword ]                                 = useState ( '' );
     const [ controllerFromDropdown, setControllerFromDropdown ]     = useState ( false );
     
+    const appState          = accountService.appState;
     const controller        = props.controller || controllerFromDropdown;
-    const queue             = appState.transactionQueue;
+    const queue             = accountService.transactionQueue;
 
     const showDropdown      = !props.controller;
     const title             = controller ? controller.friendlyName : 'New Transaction';
-    const stageEnabled      = appState.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
+    const stageEnabled      = accountService.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
     const submitLabel       = queue.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
 
@@ -51,7 +52,7 @@ const TransactionModalBody = observer (( props ) => {
 
                 <If condition = { showDropdown }>
                     <TransactionDropdown
-                        appState                = { appState }
+                        accountService          = { accountService }
                         controller              = { controller }
                         setController           = { setControllerFromDropdown }
                     />
@@ -94,7 +95,7 @@ const TransactionModalBody = observer (( props ) => {
 //================================================================//
 export const TransactionModal = observer (( props ) => {
 
-    const { appState } = props;
+    const { accountService } = props;
     const [ counter, setCounter ] = useState ( 0 );
 
     const onClose = () => {
@@ -105,7 +106,7 @@ export const TransactionModal = observer (( props ) => {
     return (
         <div key = { `${ counter }` }>
             <TransactionModalBody
-                appState                = { appState }
+                accountService          = { accountService }
                 open                    = { props.open }
                 onClose                 = { onClose }
                 controller              = { props.controller || false }

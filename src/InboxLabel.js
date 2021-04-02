@@ -10,19 +10,20 @@ import * as UI                      from 'semantic-ui-react';
 //================================================================//
 export const InboxLabel = observer (( props ) => {
 
-    const { appState } = props;
+    const { accountService } = props;
     const [ open, setOpen ] = useState ( false );
     const [ count, setCount ] = useState ( 0 );
+
+    const appState = accountService;
 
     const onClose = () => {
         setOpen ( false );
         setCount ( count + 1 )
     }
 
-    const inboxSize                     = appState.inventoryService.inboxSize;
-    const accountInventoryNonce         = appState.account.inventoryNonce || 0;
-    const accountInfoInventoryNonce     = appState.accountInfo.inventoryNonce || 0;
-    const showLabel                     = (( accountInventoryNonce < accountInfoInventoryNonce ) && ( inboxSize > 0 ));
+    const inventoryService              = accountService.inventoryService;
+    const inboxSize                     = inventoryService.inboxSize;
+    const showLabel                     = ( inboxSize > 0 );
 
     return (
         <React.Fragment>
@@ -30,15 +31,15 @@ export const InboxLabel = observer (( props ) => {
             <If condition = { showLabel }>
 
                 <InboxModal
-                    key         = { `InboxModal:${ count }` }
-                    appState    = { appState }
-                    open        = { open }
-                    onClose     = { onClose }
+                    key                 = { `InboxModal:${ count }` }
+                    accountService      = { accountService }
+                    open                = { open }
+                    onClose             = { onClose }
                 />
 
                 <UI.Label
-                    color       = 'green'
-                    onClick     = {() => { setOpen ( true )}}
+                    color               = 'green'
+                    onClick             = {() => { setOpen ( true )}}
                 >
                     <UI.Icon name = 'mail'/>
                     { `${ inboxSize }` }

@@ -33,14 +33,14 @@ export const PollingList = observer (( props ) => {
 
     const onlineIcon = props.onlineIcon || 'check circle';
 
-    const networkList = [];
-    for ( let networkName of items ) {
+    const list = [];
+    for ( let name of items ) {
 
-        const polling = pollingService.getStatus ( networkName, asyncGetInfo, checkIdentifier );
+        const polling = pollingService.getStatus ( name, asyncGetInfo, checkIdentifier );
 
-        networkList.push (
+        list.push (
             <UI.Message
-                key = { networkName }
+                key = { name }
                 icon
                 positive = { polling.status === POLLING_STATUS.ONLINE }
                 negative = { polling.status === POLLING_STATUS.OFFLINE }
@@ -67,10 +67,10 @@ export const PollingList = observer (( props ) => {
                             }
                             warning0 = { warning0 }
                             warning1 = { warning1 }
-                            onDelete = {() => { onDelete ( networkName )}}
+                            onDelete = {() => { onDelete ( name )}}
                         />
                     </If>
-                    { makeItemMessageBody ( networkName, polling.info )}
+                    { makeItemMessageBody ( name, polling.info )}
                 </UI.Message.Content>
 
             </UI.Message>
@@ -79,7 +79,7 @@ export const PollingList = observer (( props ) => {
 
     return (
         <UI.List>
-            { networkList }
+            { list }
         </UI.List>
     );
 });

@@ -233,30 +233,30 @@ export const CraftingForm = observer (( props ) => {
     const showDropdown = controller.singleInvocation !== true;
 
     return (
-        <UI.Segment>
-            <TransactionBalanceHeader controller = { controller }/>
-            <UI.Form>
-                { invocationFields }
+        <React.Fragment>
+            <UI.Segment>
+                <UI.Form>
+                    { invocationFields }
 
-                <If condition = { controller.hasErrors }>
-                    <UI.Message icon negative>
-                        <UI.Icon name = 'warning circle'/>
-                        <UI.Message.Content>
-                            <UI.Message.Header>Error</UI.Message.Header>
-                            <p>One or more multi-parameter constraints have not been satisfied.</p>
-                        </UI.Message.Content>
-                    </UI.Message>
-                </If>
+                    <If condition = { controller.hasErrors }>
+                        <UI.Message icon negative>
+                            <UI.Icon name = 'warning circle'/>
+                            <UI.Message.Content>
+                                <UI.Message.Header>Error</UI.Message.Header>
+                                <p>One or more multi-parameter constraints have not been satisfied.</p>
+                            </UI.Message.Content>
+                        </UI.Message>
+                    </If>
 
-                <If condition = { showDropdown }>
-                    <MethodDropdown
-                        key             = { controller.invocations.length }
-                        controller      = { controller }
-                        addInvocation   = { addInvocation }
-                    />
-                </If>
-                <TransactionFormFields controller = { controller }/>
-            </UI.Form>
-        </UI.Segment>
+                    <If condition = { showDropdown }>
+                        <MethodDropdown
+                            key             = { controller.invocations.length }
+                            controller      = { controller }
+                            addInvocation   = { addInvocation }
+                        />
+                    </If>
+                </UI.Form>
+            </UI.Segment>
+        </React.Fragment>
     );
 });

@@ -9,7 +9,8 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 export class AccountKeyFieldController extends FieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, value ) {
+    constructor ( accountService, fieldName, friendlyName, value ) {
         super ( fieldName, friendlyName, value );
+        this.accountService = accountService;
     }
 }

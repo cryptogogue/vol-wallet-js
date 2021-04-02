@@ -11,9 +11,10 @@ import * as UI                      from 'semantic-ui-react';
 //================================================================//
 export const TransactionQueueModal = observer (( props ) => {
 
-    const { appState, open, onClose } = props;
+    const { accountService, open, onClose } = props;
 
-    const queue = appState.transactionQueue;
+    const appState      = accountService.appState;
+    const queue         = accountService.transactionQueue;
 
     const [ count, setCount ] = useState ( 0 );
     const [ password, setPassword ] = useState ( '' );
@@ -23,13 +24,13 @@ export const TransactionQueueModal = observer (( props ) => {
         setCount ( count + 1 );
     }
     let onClickSubmit = () => {
-        appState.transactionQueue.submitTransactions ( password );
+        queue.submitTransactions ( password );
         clearPassword ();
     };
     
     let onClickClear = () => {
-        appState.transactionQueue.clearPendingTransactions ();
-        appState.transactionQueue.clearStagedTransactions ();
+        queue.clearPendingTransactions ();
+        queue.clearStagedTransactions ();
         clearPassword ();
     };
 

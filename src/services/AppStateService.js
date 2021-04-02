@@ -1,13 +1,14 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
+import { AppDB }                        from './AppDB';
+import { NetworkListService }           from './NetworkListService';
+import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SharedStorage, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import React                            from 'react';
 
 const STORE_FLAGS               = '.vol_flags';
-const STORE_NETWORK_IDS         = '.vol_network_ids';
 const STORE_PASSWORD_HASH       = '.vol_password_hash';
 const STORE_SESSION             = '.vol_session';
 
@@ -23,30 +24,13 @@ export const NODE_STATUS = {
     OFFLINE:    'OFFLINE',
 };
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( 'APP STATE:', ...args ); }
+
 //================================================================//
 // AppStateService
 //================================================================//
 export class AppStateService {
-
-    //----------------------------------------------------------------//
-    @action
-    affirmNetwork ( networkID, identity, nodeURL ) {
-
-        if ( !this.networkIDs.includes ( networkID )) {
-            this.networkIDs.push ( networkID );
-        }
-
-        const network = {
-            nodeURL:            nodeURL || '',
-            identity:           identity,
-            accounts:           {},
-            pendingAccounts:    {},
-        };        
-
-        this.loadNetwork ( networkID, network );
-        this.networks [ networkID ].nodeURL = nodeURL;
-        this.flags.promptFirstNetwork = false;
-    }
 
     //----------------------------------------------------------------//
     assertPassword ( password ) {
@@ -96,13 +80,12 @@ export class AppStateService {
     constructor () {
 
         extendObservable ( this, {
-            networkID:              '',
-            accountID:              '',
             accountInfo:            false,
         });
 
         this.revocable          = new RevocableContext ();
-        const storageContext    = new StorageContext ();
+        this.appDB              = new AppDB ();
+        this.networkList        = new NetworkListService ( this );
 
         const flags = {
             promptFirstNetwork:         true,
@@ -113,24 +96,13 @@ export class AppStateService {
         this.networks   = {};
         this.consensus  = {};
 
+        const storageContext = new StorageContext ();
+
         storageContext.persist ( this, 'flags',             STORE_FLAGS,                flags );
-        // storageContext.persist ( this, 'networks',          STORE_NETWORKS,             {}); // account names index by network name
-        storageContext.persist ( this, 'networkIDs',        STORE_NETWORK_IDS,          []);
         storageContext.persist ( this, 'passwordHash',      STORE_PASSWORD_HASH,        '' );
         storageContext.persist ( this, 'session',           STORE_SESSION,              this.makeSession ( false ));
 
         this.storage = storageContext;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    deleteNetwork ( networkID ) {
-
-        if ( this.networkIDs.includes ( networkID )) {
-            this.networkIDs.splice ( this.networkIDs.indexOf ( networkID ), 1 );
-            this.storage.remove ( this.networks, `.vol_network_${ networkID }` );
-            this.storage.remove ( this.networks, `.vol_consensus_${ networkID }` );
-        }
     }
 
     //----------------------------------------------------------------//
@@ -144,14 +116,9 @@ export class AppStateService {
     //----------------------------------------------------------------//
     finalize () {
 
+        this.appDB.finalize ();
         this.storage.finalize ();
         this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
-    getNetwork ( networkID ) {
-        const networks = this.networks;
-        return _.has ( networks, networkID ) ? networks [ networkID ] : null;
     }
 
     //----------------------------------------------------------------//
@@ -164,23 +131,6 @@ export class AppStateService {
     @computed get
     isLoggedIn () {
         return ( this.session.isLoggedIn === true );
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    loadNetwork ( networkID, networkInit ) {
-
-        const consensus = {
-            height:             0,
-            digest:             false,
-            genesis:            false,
-            step:               0,
-            isCurrent:          false,
-            urls:               {},
-        };
-
-        this.storage.persist ( this.networks, networkID, `.vol_network_${ networkID }`, networkInit );
-        this.storage.persist ( this.consensus, networkID, `.vol_consensus_${ networkID }`, consensus );
     }
 
     //----------------------------------------------------------------//

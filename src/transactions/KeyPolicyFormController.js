@@ -14,13 +14,13 @@ import { observer }                         from 'mobx-react';
 export class KeyPolicyFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         const fieldsArray = [
             new Fields.StringFieldController	( 'policyName',     'Policy Name' ),
             new Fields.TextFieldController		( 'policy',         'Policy', 8 ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.KEY_POLICY, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.KEY_POLICY, fieldsArray );
     }
 }

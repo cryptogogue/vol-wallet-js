@@ -14,7 +14,7 @@ import { observer }                         from 'mobx-react';
 export class AffirmKeyFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( accountService ) {
         super ();
 
         const fieldsArray = [
@@ -22,6 +22,6 @@ export class AffirmKeyFormController extends TransactionFormController {
             new Fields.StringFieldController    ( 'key',            'Key' ),
             new Fields.StringFieldController    ( 'policyName',     'Policy' ),
         ];
-        this.initialize ( appState, TRANSACTION_TYPE.AFFIRM_KEY, fieldsArray );
+        this.initialize ( accountService, TRANSACTION_TYPE.AFFIRM_KEY, fieldsArray );
     }
 }

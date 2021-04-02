@@ -8,6 +8,7 @@ import { InventoryFilterDropdown }                          from './InventoryFil
 import { InventoryMenu }                                    from './InventoryMenu';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { AccountStateService }                              from './services/AccountStateService';
+import { AppStateService }                                  from './services/AppStateService';
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import { UpgradeAssetsFormController }                      from './transactions/UpgradeAssetsFormController';
@@ -34,15 +35,17 @@ export const InventoryScreen = observer (( props ) => {
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const accountIDFromEndpoint     = util.getMatch ( props, 'accountID' );
 
-    const appState                  = hooks.useFinalizable (() => new AccountStateService ( networkIDFromEndpoint, accountIDFromEndpoint ));
+    const appState                  = hooks.useFinalizable (() => new AppStateService ());
+    const accountService            = hooks.useFinalizable (() => new AccountStateService ( appState, networkIDFromEndpoint, accountIDFromEndpoint ));
+    const networkService            = accountService.networkService;
 
-    const progress                  = appState.inventoryProgress;
-    const inventory                 = appState.inventory;
-    const inventoryService          = appState.inventoryService;
-    const tags                      = appState.inventoryTags;
+    const progress                  = accountService.inventoryProgress;
+    const inventory                 = accountService.inventory;
+    const inventoryService          = accountService.inventoryService;
+    const tags                      = accountService.inventoryTags;
 
     const viewFilter = new InventoryFilter ( inventory, ( assetID ) => {
-        return tags.isAssetVisible ( assetID ) && !( appState.assetsUtilized.includes ( assetID ) || inventoryService.isNew ( assetID ));
+        return tags.isAssetVisible ( assetID ) && !( accountService.assetsUtilized.includes ( assetID ) || inventoryService.isNew ( assetID ));
     });
 
     const controller                = hooks.useFinalizable (() => new InventoryViewController ( viewFilter ));
@@ -52,8 +55,8 @@ export const InventoryScreen = observer (( props ) => {
         return viewFilter.filterFunc ( assetID ) && ( controller.hasSelection ? controller.isSelected ( assetID ) : true );
     });
 
-    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( appState, viewFilter ));
-    const upgradesFormController    = hooks.useFinalizable (() => new UpgradeAssetsFormController ( appState, upgradesFilter ));
+    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( accountService, viewFilter ));
+    const upgradesFormController    = hooks.useFinalizable (() => new UpgradeAssetsFormController ( accountService, upgradesFilter ));
 
     const onAssetSelect = ( asset, toggle ) => {
         controller.toggleAssetSelection ( asset );
@@ -74,7 +77,7 @@ export const InventoryScreen = observer (( props ) => {
     }
 
     const assetIDtoAnchor = ( assetID ) => {
-        const assetURL = appState.getServiceURL ( `/assets/${ assetID }` );
+        const assetURL = networkService.getServiceURL ( `/assets/${ assetID }` );
         return <a href = { assetURL } target = '_blank'>{ assetID }</a>
     }
 
@@ -89,11 +92,11 @@ export const InventoryScreen = observer (( props ) => {
             <div className = 'no-print'>
                 <SingleColumnContainerView>
                     <AccountNavigationBar
-                        appState    = { appState }
-                        tab         = { ACCOUNT_TABS.INVENTORY }
+                        accountService          = { accountService }
+                        tab                     = { ACCOUNT_TABS.INVENTORY }
                     />
                     <InventoryMenu
-                        appState                = { appState }
+                        accountService          = { accountService }
                         controller              = { controller }
                         printController         = { printController }
                         craftingFormController  = { craftingFormController }

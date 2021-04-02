@@ -29,31 +29,31 @@ const REQUEST_DELETE_WARNING_1 = `
 export class AccountRequestService {
 
     //----------------------------------------------------------------//
-    constructor ( appState ) {
+    constructor ( networkService ) {
         
         this.revocable = new RevocableContext ();
-        this.checkPendingRequests ( appState, 5000 );
+        this.checkPendingRequests ( networkService, 5000 );
     }
 
     //----------------------------------------------------------------//
-    checkPendingRequests ( appState, delay ) {
+    checkPendingRequests ( networkService, delay ) {
 
         const _fetch = async () => {
 
-            for ( let requestID in appState.pendingAccounts ) {
+            for ( let requestID in networkService.pendingAccounts ) {
 
-                const pendingAccount = appState.pendingAccounts [ requestID ];
+                const pendingAccount = networkService.pendingAccounts [ requestID ];
                 if ( pendingAccount.readyToImport ) continue;
 
                 try {
 
                     const keyID = pendingAccount.keyID;
-                    const data = await this.revocable.fetchJSON ( appState.getServiceURL ( `/keys/${ keyID }` ));
+                    const data = await this.revocable.fetchJSON ( networkService.getServiceURL ( `/keys/${ keyID }` ));
 
                     const keyInfo = data && data.keyInfo;
 
                     if ( keyInfo ) {
-                        appState.importAccountRequest (
+                        networkService.importAccountRequest (
                             requestID,
                             keyInfo.accountName,
                             keyInfo.keyName
@@ -65,7 +65,7 @@ export class AccountRequestService {
                 }
             }
 
-            this.revocable.timeout (() => { this.checkPendingRequests ( appState, delay )}, delay );
+            this.revocable.timeout (() => { this.checkPendingRequests ( networkService, delay )}, delay );
         }
         _fetch ();
     }
@@ -82,8 +82,8 @@ export class AccountRequestService {
 //================================================================//
 const PendingAccountView = observer (( props ) => {
 
-    const { appState, pending } = props;
-    const textAreaRef           = React.useRef ();
+    const { networkService, pending }   = props;
+    const textAreaRef                   = React.useRef ();
 
     const onCopy = () => {
         if ( textAreaRef.current ) {
@@ -93,7 +93,7 @@ const PendingAccountView = observer (( props ) => {
     }
 
     const onDelete = () => {
-        appState.deleteAccountRequest ( pending.requestID );
+        networkService.deleteAccountRequest ( pending.requestID );
     }
 
     return (
@@ -151,18 +151,18 @@ const PendingAccountView = observer (( props ) => {
 //================================================================//
 export const PendingAccountList = observer (( props ) => {
 
-    const { appState } = props;
+    const { networkService } = props;
 
-    const service = hooks.useFinalizable (() => new AccountRequestService ( appState ));
+    const service = hooks.useFinalizable (() => new AccountRequestService ( networkService ));
 
     let requests = [];
-    for ( let requestID in appState.pendingAccounts ) {
-        const pending = appState.pendingAccounts [ requestID ];
+    for ( let requestID in networkService.pendingAccounts ) {
+        const pending = networkService.pendingAccounts [ requestID ];
         requests.push (
             <PendingAccountView
-                key = { requestID }
-                appState = { appState }
-                pending = { pending }
+                key                 = { requestID }
+                networkService      = { networkService }
+                pending             = { pending }
             />
         );
     }
