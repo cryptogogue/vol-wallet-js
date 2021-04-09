@@ -10,70 +10,24 @@ import React, { useState }                  from 'react';
 import { Redirect }                         from 'react-router';
 import * as UI                              from 'semantic-ui-react';
 
-// TODO: consolidate with ImportAccountModal - it's essentiall the same interface
-
-const STATUS_WAITING_FOR_INPUT          = 0;
-const STATUS_VERIFYING_KEY              = 1;
-const STATUS_DONE                       = 2;
-
-//================================================================//
-// ImportMinerControlKeyController
-//================================================================//
-class ImportMinerControlKeyController {
-
-    @observable status          = STATUS_WAITING_FOR_INPUT;
-
-    //----------------------------------------------------------------//
-    constructor ( appState ) {
-
-        this.revocable  = new RevocableContext ();
-    }
-
-    //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    async import ( appState, key, phraseOrKey, password ) {
-
-        this.status = STATUS_VERIFYING_KEY;
-
-        runInAction (() => {
-
-            appState.affirmMinerControlKey (
-                password,
-                phraseOrKey,
-                key.getPrivateHex (),
-                key.getPublicHex ()
-            );
-
-            this.status = STATUS_DONE;
-        });
-    }
-}
-
 //================================================================//
 // ImportMinerControlKeyModalBody
 //================================================================//
 const ImportMinerControlKeyModalBody = observer (( props ) => {
 
-    const { appState, open, onClose } = props;
-
-    const controller = hooks.useFinalizable (() => new ImportMinerControlKeyController ( appState ));
+    const { accountService, open, onClose } = props;
 
     const [ key, setKey ]                   = useState ( false );
     const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
     const [ password, setPassword ]         = useState ( '' );
 
     const onSubmit = async () => {
-        console.log ( 'PHRASE OR KEY:', phraseOrKey );
-        controller.import ( appState, key, phraseOrKey, password );
-    }
-
-    if ( controller.status === STATUS_DONE ) {
+        accountService.affirmMinerControlKey (
+            password,
+            phraseOrKey,
+            key.getPrivateHex (),
+            key.getPublicHex ()
+        );
         onClose ();
     }
 
@@ -90,7 +44,7 @@ const ImportMinerControlKeyModalBody = observer (( props ) => {
             
             <UI.Modal.Content>
                 <KeyAndPasswordForm
-                    appState        = { appState }
+                    appState        = { accountService.appState }
                     setKey          = { setKey }
                     setPhraseOrKey  = { setPhraseOrKey }
                     setPassword     = { setPassword }
@@ -115,7 +69,7 @@ const ImportMinerControlKeyModalBody = observer (( props ) => {
 //================================================================//
 export const ImportMinerControlKeyModal = observer (( props ) => {
 
-    const { appState, open } = props;
+    const { accountService, open } = props;
     const [ counter, setCounter ] = useState ( 0 );
 
     const onClose = () => {
@@ -126,9 +80,9 @@ export const ImportMinerControlKeyModal = observer (( props ) => {
     return (
         <div key = { counter }>
             <ImportMinerControlKeyModalBody
-                appState    = { appState }
-                open        = { open }
-                onClose     = { onClose }
+                accountService      = { accountService }
+                open                = { open }
+                onClose             = { onClose }
             />
         </div>
     );

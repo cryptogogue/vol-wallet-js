@@ -24,7 +24,6 @@ export class NetworkStateService {
     @observable ignoreURLs      = {};
 
     @computed get accountIDs            () { return this.network.accountIDs; }
-    @computed get controlKey            () { return this.network.controlKey; }
     @computed get height                () { return this.consensus.height; }
     @computed get identity              () { return this.network.identity; }
     @computed get nodeURL               () { return this.network.nodeURL; }
@@ -53,23 +52,6 @@ export class NetworkStateService {
         if ( !this.accountIDs.includes ( accountID )) {
             this.accountIDs.push ( accountID );
         }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    affirmMinerControlKey ( password, phraseOrKey, privateKeyHex, publicKeyHex ) {
-
-        if ( password ) {
-            this.appState.assertPassword ( password );
-        }
-
-        let key = {};
-
-        key.phraseOrKeyAES      = password ? crypto.aesPlainToCipher ( phraseOrKey, password ) : phraseOrKey;
-        key.privateKeyHexAES    = password ? crypto.aesPlainToCipher ( privateKeyHex, password ) : privateKeyHex;
-        key.publicKeyHex        = publicKeyHex;
-
-        this.network.controlKey = key;
     }
 
     //----------------------------------------------------------------//
@@ -205,13 +187,6 @@ export class NetworkStateService {
     deleteAccountRequest ( requestID ) {
 
         delete this.pendingAccounts [ requestID ];
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    deleteMinerControlKey () {
-
-        delete this.controlKey;
     }
 
     //----------------------------------------------------------------//
@@ -551,7 +526,7 @@ export class NetworkStateService {
         }
         else if ( missingCount === minerCount ) {
 
-            console.log ( 'CONSENSUS: RESET', missingCount, minerCount, JSON.strongify ( this.minersByID, null, 4 ));
+            console.log ( 'CONSENSUS: RESET', missingCount, minerCount, JSON.stringify ( this.minersByID, null, 4 ));
 
             // every single node has backslid; start over.
             consensus.height        = 0;

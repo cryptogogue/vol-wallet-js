@@ -12,6 +12,7 @@ import { RegisterMinerFormController }                      from './RegisterMine
 import { RenameAccountFormController }                      from './RenameAccountFormController';
 import { ReserveAccountNameFormController }                 from './ReserveAccountNameFormController';
 import { SendVOLFormController }                            from './SendVOLFormController';
+import { UpdateMinerInfoFormController }                    from './UpdateMinerInfoFormController';
 import { assert, hooks, util }                              from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                                         from 'mobx-react';
@@ -19,7 +20,7 @@ import React, { useState }                                  from 'react';
 import * as UI                                              from 'semantic-ui-react';
 
 //----------------------------------------------------------------//
-export const gTransactionTypes = [
+export const ACCOUNT_TRANSACTIONS_MENU = [
     TRANSACTION_TYPE.SEND_VOL,
     TRANSACTION_TYPE.OPEN_ACCOUNT,
     // TRANSACTION_TYPE.ACCOUNT_POLICY,
@@ -32,6 +33,11 @@ export const gTransactionTypes = [
     TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,
     TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME,
+];
+
+//----------------------------------------------------------------//
+export const MINER_TRANSACTIONS_MENU = [
+    TRANSACTION_TYPE.UPDATE_MINER_INFO,
 ];
 
 //----------------------------------------------------------------//
@@ -50,6 +56,7 @@ function makeControllerForTransactionType ( accountService, transactionType ) {
         case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new RenameAccountFormController ( accountService );
         case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new ReserveAccountNameFormController ( accountService );
         case TRANSACTION_TYPE.SEND_VOL:                     return new SendVOLFormController ( accountService );
+        case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return new UpdateMinerInfoFormController ( accountService );
     }
     return new TransactionFormController ( accountService );
 }
@@ -61,6 +68,8 @@ export const TransactionDropdown = observer (( props ) => {
 
     const { accountService, controller, setController } = props;
 
+    const menu = props.menu || ACCOUNT_TRANSACTIONS_MENU;
+
     const onSelection = ( transactionType ) => {
         if ( !controller || ( controller.type !== transactionType )) {
             setController ( makeControllerForTransactionType ( accountService, transactionType ));
@@ -70,8 +79,8 @@ export const TransactionDropdown = observer (( props ) => {
     let options = [];
     const disabledOptions = [];
 
-    for ( let typeID in gTransactionTypes ) {
-        const transactionType = gTransactionTypes [ typeID ];
+    for ( let transactionType of menu ) {
+
         if ( controller && ( controller.type === transactionType )) continue;
 
         const disabled = !accountService.checkTransactionEntitlements ( transactionType );

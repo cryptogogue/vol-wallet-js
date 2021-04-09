@@ -25,12 +25,32 @@ export class AccountStateService {
 
     @computed get accountKeyNames           () { return ( this.account && Object.keys ( this.account.keys )) || []; }
     @computed get balance                   () { return this.accountInfo.balance - this.transactionQueue.cost; }
+    @computed get controlKey                () { return this.account.controlKey; }
     @computed get inventoryNonce            () { return this.inventoryService.nonce; }
+    @computed get isMiner                   () { return Boolean ( this.minerInfo ); }
     @computed get keys                      () { return this.account.keys; }
+    @computed get minerInfo                 () { return this.account.minerInfo || false; }
     @computed get network                   () { return this.networkService; }
     @computed get networkID                 () { return this.networkService.networkID; }
     @computed get nonce                     () { return this.accountInfo.nonce || 0; }
     @computed get serverInventoryNonce      () { return this.inventoryService.serverNonce; }
+
+    //----------------------------------------------------------------//
+    @action
+    affirmMinerControlKey ( password, phraseOrKey, privateKeyHex, publicKeyHex ) {
+
+        if ( password ) {
+            this.appState.assertPassword ( password );
+        }
+
+        let key = {};
+
+        key.phraseOrKeyAES      = password ? crypto.aesPlainToCipher ( phraseOrKey, password ) : phraseOrKey;
+        key.privateKeyHexAES    = password ? crypto.aesPlainToCipher ( privateKeyHex, password ) : privateKeyHex;
+        key.publicKeyHex        = publicKeyHex;
+
+        this.account.controlKey = key;
+    }
 
     //----------------------------------------------------------------//
     @computed get
@@ -94,6 +114,13 @@ export class AccountStateService {
         this.revocable.revokeAll ();
         this.storage.remove ( this, 'account' );
         this.appState.appDB.deleteAccountAsync ( this.networkID, this.accountID );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    deleteMinerControlKey () {
+
+        delete this.account.controlKey;
     }
 
     //----------------------------------------------------------------//
@@ -269,6 +296,7 @@ export class AccountStateService {
                 this.setAccountInfo ( accountInfo );
                 this.updateAccount (
                     accountInfo,
+                    data.miner,
                     data.entitlements,
                     data.feeSchedule,
                     data.minGratuity
@@ -288,23 +316,24 @@ export class AccountStateService {
 
     //----------------------------------------------------------------//
     @action
-    updateAccount ( accountUpdate, entitlements, feeSchedule, minGratuity ) {
+    updateAccount ( accountInfo, minerInfo, entitlements, feeSchedule, minGratuity ) {
 
         let account = this.account;
         if ( !account ) return;
 
-        account.policy          = accountUpdate.policy;
-        account.bequest         = accountUpdate.bequest;
+        account.minerInfo       = minerInfo;
+        account.policy          = accountInfo.policy;
+        account.bequest         = accountInfo.bequest;
         account.entitlements    = entitlements.account;
         account.feeSchedule     = feeSchedule || {};
         account.minGratuity     = minGratuity || 0;
 
-        for ( let keyName in accountUpdate.keys ) {
+        for ( let keyName in accountInfo.keys ) {
 
             let key = account.keys [ keyName ];
             if ( !key ) continue;
 
-            let keyUpdate = accountUpdate.keys [ keyName ];
+            let keyUpdate = accountInfo.keys [ keyName ];
             let publicKeyHex = keyUpdate.key.publicKey;
 
             // TODO: handle all the business around expiring keys

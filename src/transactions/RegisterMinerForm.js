@@ -32,11 +32,6 @@ export const RegisterMinerForm = observer (({ controller }) => {
         controller.fetchNodeInfo ( testURL );
     }
 
-    let onSubmit = () => {
-        //appState.affirmNetwork ( name, controller.info.identity, testURL )
-        //onClose ();
-    }
-
     const isBusy 			= controller.state === MINER_INFO_STATE.BUSY;
     const nodeURLError 		= controller.state === MINER_INFO_STATE.ERROR && 'Error fetching node info.';
     const testEnabled 		= Boolean ( testURL );

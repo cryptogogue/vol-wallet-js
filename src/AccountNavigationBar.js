@@ -13,6 +13,7 @@ export const ACCOUNT_TABS = {
     ACCOUNT:        'ACCOUNT',
     INVENTORY:      'INVENTORY',
     KEYS:           'KEYS',
+    MINER:          'MINER',
 };
 
 //----------------------------------------------------------------//
@@ -22,6 +23,7 @@ function getAccountTabTitle ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return 'Account';
         case ACCOUNT_TABS.INVENTORY:    return 'Inventory';
         case ACCOUNT_TABS.KEYS:         return 'Keys';
+        case ACCOUNT_TABS.MINER:        return 'Miner';
     }
     return '';
 };
@@ -33,6 +35,7 @@ function getAccountTabURL ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return '';
         case ACCOUNT_TABS.INVENTORY:    return '/inventory';
         case ACCOUNT_TABS.KEYS:         return '/keys';
+        case ACCOUNT_TABS.MINER:        return '/miner';
     }
     return '/';
 };
@@ -52,6 +55,7 @@ export const AccountNavigationBar = observer (( props ) => {
     const accountsURL           = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
+    const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
 
     return (
         <React.Fragment>
@@ -69,6 +73,10 @@ export const AccountNavigationBar = observer (( props ) => {
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )} as = { Link } to = { accountsURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )} as = { Link } to = { keysURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )} as = { Link } to = { inventoryURL }/>
+
+                        <If condition = { accountService.isMiner }>
+                            <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>
+                        </If>
                     </Dropdown.Menu>
                 </Dropdown>
 

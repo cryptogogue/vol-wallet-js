@@ -55,6 +55,7 @@ const TransactionModalBody = observer (( props ) => {
                         accountService          = { accountService }
                         controller              = { controller }
                         setController           = { setControllerFromDropdown }
+                        menu                    = { props.menu }
                     />
                 </If>
                 
@@ -110,6 +111,7 @@ export const TransactionModal = observer (( props ) => {
                 open                    = { props.open }
                 onClose                 = { onClose }
                 controller              = { props.controller || false }
+                menu                    = { props.menu }
             />
         </div>
     );

@@ -17,6 +17,7 @@ import { SendAssetsForm }                       from './SendAssetsForm';
 import { SendVOLForm }                          from './SendVOLForm';
 import { TRANSACTION_TYPE }                     from './Transaction';
 import { UpgradeAssetsForm }                    from './UpgradeAssetsForm';
+import { UpdateMinerInfoForm }                  from './UpdateMinerInfoForm';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                             from 'mobx-react';
@@ -84,6 +85,7 @@ export const TransactionFormBody = observer (({ controller }) => {
         case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm controller = { controller }/> );
         case TRANSACTION_TYPE.UPGRADE_ASSETS:               return ( <UpgradeAssetsForm controller = { controller }/> );
+        case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return ( <UpdateMinerInfoForm controller = { controller }/> );
     }
     return (
         <div/>

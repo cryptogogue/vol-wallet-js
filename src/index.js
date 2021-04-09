@@ -51,7 +51,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/debug"          component = { AccountDebugScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
-                <Route exact path = "/net/:networkID/admin"                             component = { MinerControlScreen }/>
+                <Route exact path = "/net/:networkID/account/:accountID/miner"          component = { MinerControlScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
                 <Route exact path = "/util/key"                 component = { KeyUtilScreen }/>

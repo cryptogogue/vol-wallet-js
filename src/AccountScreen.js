@@ -34,13 +34,15 @@ const AccountDetailsView = observer (( props ) => {
     
     debugLog ( 'HAS INFO', accountService.hasAccountInfo );
 
+    const iconName = accountService.isMiner ? 'gem outline' : 'trophy';
+
     return (
         <div style = {{ textAlign: 'center' }}>
 
             <UI.Header as = "h2" icon>
                 <Choose>
                     <When condition = { hasInfo }>
-                        <UI.Icon name = 'trophy' circular />
+                        <UI.Icon name = { iconName } circular />
                     </When>
                     <Otherwise>
                         <UI.Icon name = 'circle notched' loading circular/>

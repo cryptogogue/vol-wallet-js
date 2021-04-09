@@ -1,10 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { ControlCommandModal }                              from './control-commands/ControlCommandModal';
 import { ImportMinerControlKeyModal }                       from './ImportMinerControlKeyModal';
-import { NetworkNavigationBar, NETWORK_TABS }               from './NetworkNavigationBar';
 import { NetworkStateService }                              from './services/NetworkStateService';
 import { AppStateService }                                  from './services/AppStateService';
+import { MINER_TRANSACTIONS_MENU }                          from './transactions/TransactionDropdown';
+import { TransactionModal }                                 from './transactions/TransactionModal';
 import { WarnAndDeleteModal }                               from './WarnAndDeleteModal';
 import { ScannerReportModal, SchemaScannerXLSX }            from 'cardmotron';
 import _                                                    from 'lodash';
@@ -26,9 +28,10 @@ const REQUEST_DELETE_WARNING_0 = `
 //================================================================//
 export const MinerControlActionsSegment = observer (( props ) => {
 
-    const { appState } = props;
+    const { accountService } = props;
 
     const [ controlCommandModalOpen, setControlCommandModalOpen ] = useState ( false );
+    const [ transactionModalOpen, setTransactionModalOpen ] = useState ( false );
 
     return (
         <React.Fragment>
@@ -36,18 +39,36 @@ export const MinerControlActionsSegment = observer (( props ) => {
             <UI.Segment>
                 <UI.Button
                     fluid
-                    color = 'red'
-                    onClick = {() => { setControlCommandModalOpen ( true )}}
+                    color       = 'teal'
+                    attached    = 'top'
+                    onClick     = {() => { setTransactionModalOpen ( true )}}
+                >
+                    <UI.Icon name = 'envelope'/>
+                    New Transaction
+                </UI.Button>
+
+                <UI.Button
+                    fluid
+                    color       = 'teal'
+                    attached    = 'bottom'
+                    onClick     = {() => { setControlCommandModalOpen ( true )}}
                 >
                     <UI.Icon name = 'envelope'/>
                     New Miner Control Command
                 </UI.Button>
             </UI.Segment>
 
+            <TransactionModal
+                accountService  = { accountService }
+                open            = { transactionModalOpen }
+                onClose         = {() => { setTransactionModalOpen ( false )}}
+                menu            = { MINER_TRANSACTIONS_MENU }
+            />
+
             <ControlCommandModal
-                appState = { appState }
-                open = { controlCommandModalOpen }
-                onClose = {() => { setControlCommandModalOpen ( false )}}
+                appState        = { accountService.appState }
+                open            = { controlCommandModalOpen }
+                onClose         = {() => { setControlCommandModalOpen ( false )}}
             />
 
         </React.Fragment>
@@ -62,24 +83,27 @@ export const MinerControlScreen = observer (( props ) => {
     const [ importKeyModalOpen, setImportKeyModalOpen ] = useState ( false );
 
     const networkID         = util.getMatch ( props, 'networkID' );
-    const appState          = hooks.useFinalizable (() => new AppStateService ());
-    const networkServie     = appState.assertNetworkService ( networkID );
+    const accountID         = util.getMatch ( props, 'accountID' );
 
-    const controlKey = appState.network.controlKey;
+    const appState          = hooks.useFinalizable (() => new AppStateService ());
+    const accountService    = appState.assertAccountService ( networkID, accountID );
+
+    const controlKey        = accountService.controlKey;
+
+    console.log ( 'MINER CONTROL SCREEN' );
 
     return (
         <SingleColumnContainerView>
 
             <ImportMinerControlKeyModal
-                appState = { appState }
-                open = { importKeyModalOpen }
-                onClose = {() => { setImportKeyModalOpen ( false )}}
+                accountService  = { accountService }
+                open            = { importKeyModalOpen }
+                onClose         = {() => { setImportKeyModalOpen ( false )}}
             />
 
-            <NetworkNavigationBar
-                appState    = { appState }
-                tab         = { NETWORK_TABS.ADMIN }
-                networkID   = { networkIDFromEndpoint }
+            <AccountNavigationBar
+                accountService      = { accountService }
+                tab                 = { ACCOUNT_TABS.MINER }
             />
 
             <Choose>
@@ -99,7 +123,7 @@ export const MinerControlScreen = observer (( props ) => {
                                 </UI.Menu.Item>
                             }
                             warning0 = { REQUEST_DELETE_WARNING_0 }
-                            onDelete = {() => { appState.deleteMinerControlKey ()}}
+                            onDelete = {() => { accountService.deleteMinerControlKey ()}}
                         />
 
                     </UI.Menu>
@@ -108,7 +132,7 @@ export const MinerControlScreen = observer (( props ) => {
                         { controlKey.publicKeyHex }
                     </UI.Segment>
 
-                    <MinerControlActionsSegment appState = { appState }/>
+                    <MinerControlActionsSegment accountService = { accountService }/>
 
                 </When>
 
