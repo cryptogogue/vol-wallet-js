@@ -23,7 +23,8 @@ export class NetworkStateService {
     @observable minersByID      = {};
     @observable ignoreURLs      = {};
 
-    @computed get accountIDs            () { return this.network.accountIDs; }
+    @computed get accountIndices        () { return this.network.accountIndices; }
+    @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
     @computed get height                () { return this.consensus.height; }
     @computed get identity              () { return this.network.identity; }
     @computed get nodeURL               () { return this.network.nodeURL; }
@@ -31,13 +32,15 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    affirmAccountAndKey ( password, accountID, keyName, phraseOrKey, privateKeyHex, publicKeyHex ) {
+    affirmAccountAndKey ( password, accountIndex, accountID, keyName, phraseOrKey, privateKeyHex, publicKeyHex ) {
+
+        debugLog ( 'AFFIRM ACCOUNT', accountIndex, accountID, keyName );
 
         if ( password ) {
             this.appState.assertPassword ( password );
         }
 
-        let account = this.accounts [ accountID ] || new AccountStateService ( this, accountID );
+        let account = this.accounts [ accountID ] || new AccountStateService ( this, accountIndex, accountID );
 
         let key = account.keys [ keyName ] || {};
 
@@ -47,10 +50,11 @@ export class NetworkStateService {
 
         account.keys [ keyName ] = key;
 
-        this.accounts [ accountID ] = account;
+        this.accounts [ accountID ]                 = account;
+        this.accountIDsByIndex [ accountIndex ]     = accountID;
 
-        if ( !this.accountIDs.includes ( accountID )) {
-            this.accountIDs.push ( accountID );
+        if ( !this.accountIndices.includes ( accountIndex )) {
+            this.accountIndices.push ( accountIndex );
         }
     }
 
@@ -147,7 +151,8 @@ export class NetworkStateService {
         const network = {
             nodeURL:            nodeURL || '',
             identity:           identity,
-            accountIDs:         [],
+            accountIndices:     [],
+            accountIDsByIndex:  {},
             pendingAccounts:    {},
         };
 
@@ -160,16 +165,20 @@ export class NetworkStateService {
             urls:               {},
         };
 
-        this.storage.persist ( this, 'network',     `.vol.network.${ networkID }`,      network );
-        this.storage.persist ( this, 'consensus',   `.vol.network.${ networkID }.consensus`,    consensus );
+        this.storage.persist ( this, 'network',     `.vol.NETWORK.${ networkID }`,              network );
+        this.storage.persist ( this, 'consensus',   `.vol.NETWORK.${ networkID }.CONSENSUS`,    consensus );
         
         runInAction (() => {
             this.networkID = networkID;
         });
 
-        for ( let accountID of this.accountIDs ) {
+        for ( let accountIndex of this.accountIndices ) {
+
+            const accountID = this.accountIDsByIndex [ accountIndex ];
+            if ( accountID === undefined ) continue;
+
             debugLog ( 'loading account', accountID );
-            const account = new AccountStateService ( this, accountID );
+            const account = new AccountStateService ( this, accountIndex, accountID );
             this.accounts [ accountID ] = account;
         }
 
@@ -183,8 +192,11 @@ export class NetworkStateService {
         debugLog ( 'DELETING ACCOUNT:', accountID );
 
         const account = this.accounts [ accountID ];
-        
-        this.accountIDs.splice ( this.accountIDs.indexOf ( accountID ), 1 );
+        if ( !account ) return;
+
+        this.accountIndices.splice ( this.accountIndices.indexOf ( account.index ), 1 );
+
+        delete this.accountIDsByIndex [ account.index ];
         delete this.accounts [ accountID ];
 
         account.deleteAccount ();
@@ -206,6 +218,10 @@ export class NetworkStateService {
             debugLog ( 'deleting network', this.networkID );
             
             this.revocable.revokeAll ();
+
+            for ( let accountID in this.accounts ) {
+                this.deleteAccount ( accountID );
+            }
 
             this.storage.remove ( this, 'network' );
             this.storage.remove ( this, 'consensus' );
@@ -240,9 +256,8 @@ export class NetworkStateService {
     findAccountIdByPublicKey ( publicKey ) {
 
         if ( this.hasNetwork ) {
-            const accounts = this.accounts;
-            for ( let accountID in accounts ) {
-                const account = accounts [ accountID ];
+            for ( let accountID in this.accounts ) {
+                const account = this.accounts [ accountID ];
                 for ( let keyName in account.keys ) {
                     const key = account.keys [ keyName ];
                     if ( key.publicKey === publicKey ) return accountID;
@@ -264,17 +279,6 @@ export class NetworkStateService {
         }
 
         return url.format ( serviceURL );
-    }
-
-    //----------------------------------------------------------------//
-    getAccount ( accountID ) {
-
-        if ( this.hasNetwork ) {
-            accountID = accountID || this.accountID;
-            const accounts = this.accounts;
-            return _.has ( accounts, accountID ) ? accounts [ accountID ] : false;
-        }
-        return false;
     }
 
     //----------------------------------------------------------------//
@@ -318,7 +322,7 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    importAccountRequest ( requestID, accountID, keyName ) {
+    importAccountRequest ( requestID, accountIndex, accountID, keyName ) {
 
         if ( !_.has ( this.pendingAccounts, requestID )) return;
 
@@ -326,6 +330,7 @@ export class NetworkStateService {
 
         this.affirmAccountAndKey (
             false,
+            accountIndex,
             accountID,
             keyName,
             request.phraseOrKeyAES,
@@ -346,9 +351,14 @@ export class NetworkStateService {
     @action
     renameAccount ( oldName, newName ) {
 
+        if ( oldName === newName ) return;
         if ( !_.has ( this.accounts, oldName )) return;        
         
-        this.accounts [ newName ] = _.cloneDeep ( this.accounts [ oldName ]); // or mobx will bitch at us
+        const account = this.accounts [ oldName ];
+        if ( !account ) return;
+
+        this.accountIDsByIndex [ account.index ] = newName;
+        this.accounts [ newName ] = account;
         delete this.accounts [ oldName ];
     }
 

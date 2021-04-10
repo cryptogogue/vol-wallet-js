@@ -20,8 +20,9 @@ const debugLog = function ( ...args ) { console.log ( '@ACCOUNT STATE:', ...args
 //================================================================//
 export class AccountStateService {
 
-    @observable accountID           = false;
-    @observable accountInfo         = false;
+    @observable index           = false;
+    @observable accountID       = false;
+    @observable accountInfo     = false;
 
     @computed get accountKeyNames           () { return ( this.account && Object.keys ( this.account.keys )) || []; }
     @computed get balance                   () { return this.accountInfo.balance - this.transactionQueue.cost; }
@@ -74,7 +75,7 @@ export class AccountStateService {
     }
 
     //----------------------------------------------------------------//
-    constructor ( networkService, accountID ) {
+    constructor ( networkService, accountIndex, accountID ) {
 
         debugLog ( 'NETWORK SERVICE:', networkService );
 
@@ -87,7 +88,8 @@ export class AccountStateService {
         this.storage            = new StorageContext ();
 
         runInAction (() => {
-            this.accountID = accountID;
+            this.index          = accountIndex;
+            this.accountID      = accountID;
         });
 
         const accountInit = {
@@ -97,7 +99,7 @@ export class AccountStateService {
             transactionError: false,
         };
 
-        this.storage.persist ( this, 'account',     `.vol.network.${ networkService.networkID }.account.${ accountID }`,       accountInit );
+        this.storage.persist ( this, 'account',     `.vol.NETWORK.${ networkService.networkID }.ACCOUNT.${ accountIndex }`,       accountInit );
 
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new InventoryController ( this.inventoryProgress );
@@ -216,11 +218,8 @@ export class AccountStateService {
     @action
     renameAccount ( oldName, newName ) {
 
-        super.renameAccount ( oldName, newName );
-
-        if ( this.accountID === oldName ) {
-            this.accountID = newName;
-        }
+        this.networkService.renameAccount ( oldName, newName );
+        this.accountID = newName;
     }
 
     //----------------------------------------------------------------//

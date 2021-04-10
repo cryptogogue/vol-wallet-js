@@ -57,13 +57,19 @@ export const AccountNavigationBar = observer (( props ) => {
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
     const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
 
+    const accountTab            = getAccountTabURL ( tab );
+
+    if ( accountService.accountID !== accountID ) {
+        return (<Redirect to = { `/net/${ accountService.networkService.networkID }/account/${ accountService.accountID }${ accountTab }` }/>);
+    }
+
     return (
         <React.Fragment>
             <NavigationBar
                 networkService      = { accountService.networkService }
                 networkID           = { networkID }
                 accountID           = { accountID }
-                accountTab          = { getAccountTabURL ( tab )}
+                accountTab          = { accountTab }
             />
 
             <Menu borderless attached = 'bottom'>

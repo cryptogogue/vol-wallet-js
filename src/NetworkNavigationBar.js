@@ -23,7 +23,7 @@ function getAccountTabTitle ( tab ) {
 };
 
 //----------------------------------------------------------------//
-function getAccountTabURL ( tab ) {
+function getNetworkTabURL ( tab ) {
 
     switch ( tab ) {
         case NETWORK_TABS.NETWORK:              return '';
@@ -39,8 +39,14 @@ export const NetworkNavigationBar = observer (( props ) => {
 
     const { networkService, navTitle, networkID, tab } = props;
 
-    const chainURL              = `/net/${ networkID }${ getAccountTabURL ( NETWORK_TABS.CHAIN )}`;
-    const networkURL            = `/net/${ networkID }${ getAccountTabURL ( NETWORK_TABS.NETWORK )}`;
+    const chainURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
+    const networkURL            = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
+
+    const networkTab            = getNetworkTabURL ( tab );
+
+    if ( networkService.networkID !== networkID ) {
+        return (<Redirect to = { `/net/${ networkService.networkID }${ networkTab }` }/>);
+    }
 
     return (
         <React.Fragment>
@@ -48,7 +54,7 @@ export const NetworkNavigationBar = observer (( props ) => {
             <NavigationBar
                 networkService  = { networkService }
                 networkID       = { networkID }
-                networkTab      = { getAccountTabURL ( tab )}
+                networkTab      = { networkTab }
                 accountID       = { '' }
             />
 

@@ -10,6 +10,9 @@ import React, { useState }                  from 'react';
 import { Redirect }                         from 'react-router';
 import * as UI                              from 'semantic-ui-react';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@PENDING ACCOUNT:', ...args ); }
+
 const REQUEST_DELETE_WARNING_0 = `
     Deleting an account request will also delete the locally
     stored private key used to generate the request. If you have
@@ -55,6 +58,7 @@ export class AccountRequestService {
                     if ( keyInfo ) {
                         networkService.importAccountRequest (
                             requestID,
+                            keyInfo.accountIndex,
                             keyInfo.accountName,
                             keyInfo.keyName
                         );

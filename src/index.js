@@ -16,6 +16,7 @@ configure ({
 import { AccountScreen }                from './AccountScreen';
 import { AccountDebugScreen }           from './AccountDebugScreen';
 import { DashboardScreen }              from './DashboardScreen';
+import { DebugHTTPScreen }              from './debug/DebugHTTPScreen';
 import { DebugNetMonScreen }            from './debug/DebugNetMonScreen';
 import { DebugNetStatScreen }           from './debug/DebugNetStatScreen';
 import { InventoryScreen }              from './InventoryScreen';
@@ -65,6 +66,7 @@ const App = () => {
                 <Route exact path = "/debug/cardmotron"         component = { cardmotron.EditorScreen }/>
                 <Route exact path = "/debug/cryptokey"          component = { fgc.debug.CryptoKeyScreen }/>
                 <Route exact path = "/debug/dropzone"           component = { fgc.debug.DropzoneScreen }/>
+                <Route exact path = "/debug/fetch"              component = { DebugHTTPScreen }/>
                 <Route exact path = "/debug/filepicker"         component = { fgc.debug.FilePickerScreen }/>
                 <Route exact path = "/debug/handlebars"         component = { fgc.debug.HandlebarsScreen }/>
                 <Route exact path = "/debug/infinitescroll"     component = { fgc.debug.InfiniteScrollScreen }/>

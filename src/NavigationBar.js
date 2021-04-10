@@ -5,7 +5,10 @@ import React, { useState }                  from 'react';
 import { Redirect }                         from 'react-router';
 import { Link, useParams }                  from 'react-router-dom';
 import { Dropdown, Icon, Label, Menu }      from 'semantic-ui-react';
-  
+
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@NAV:', ...args ); }
+
 //================================================================//
 // NavigationBar
 //================================================================//
@@ -25,20 +28,10 @@ export const NavigationBar = observer (( props ) => {
     if ( !appState.hasUser )      return (<Redirect to = { '/' }/>);
     if ( !appState.isLoggedIn )   return (<Redirect to = { '/' }/>);
 
-    // if (( appState.networkID !== networkID ) || ( appState.accountID !== accountID )) {
-
-    //     if ( networkID && accountID ) {
-    //         return (<Redirect to = { `/net/${ appState.networkID }/account/${ appState.accountID }${ accountTab }` }/>);
-    //     }
-    //     if ( networkID ) return (<Redirect to = { `/net/${ appState.networkID }` }/>);
-    //     return (<Redirect to = { '/' }/>); 
-    // }
-
     const networkDropdown = [];
     const accountDropdown = [];
 
     for ( let networkID of appState.networkIDs ) {
-
         networkDropdown.push (
             <Dropdown.Item
                 key         = { networkID }
@@ -50,9 +43,12 @@ export const NavigationBar = observer (( props ) => {
         );
     }
 
-    if ( networkService && networkService.network ) {
-        const accounts = networkService.network.accounts;
+    if ( networkService ) {
+        debugLog ( 'HAS NETWORK SERVICE' );
+
+        const accounts = networkService.accounts;
         for ( let accountID in accounts ) {
+            debugLog ( 'DROPDOWN', accountID )
             accountDropdown.push (
                 <Dropdown.Item
                     key         = { accountID }

@@ -161,6 +161,7 @@ export class TransactionQueueService {
                         try {
                             const response = await this.revocable.fetchJSON ( url );
                             debugLog ( 'response:', response );
+                            response.url = url;
                             return response;
                         }
                         catch ( error ) {
@@ -202,8 +203,8 @@ export class TransactionQueueService {
                                 break;
 
                             case 'UNKNOWN':
-                                // re-send he transaction if not recognized.
-                                await this.putTransactionAsync ( memo );
+                                // re-send the transaction if not recognized.
+                                await this.putTransactionAsync ( result.url, memo );
                                 break;
 
                             default:
@@ -268,20 +269,25 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    async putTransactionAsync ( memo ) {
+    async putTransactionAsync ( url, memo ) {
 
         debugLog ( 'putTransactionsAsync', memo );
 
-        const accountName   = memo.body.maker.accountName;
-        const serviceURL    = this.networkService.getServiceURL ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
+        let result = false;
 
-        const result = await this.revocable.fetchJSON ( serviceURL, {
-            method :    'PUT',
-            headers :   { 'content-type': 'application/json' },
-            body :      JSON.stringify ( memo.envelope, null, 4 ),
-        });
+        try {
+            result = await this.revocable.fetchJSON ( url, {
+                method :    'PUT',
+                headers :   { 'content-type': 'application/json' },
+                body :      JSON.stringify ( memo.envelope, null, 4 ),
+            });
+        }
+        catch ( error ) {
+            debugLog ( 'error or no response' );
+            debugLog ( error );
+        }
 
-        return ( result.status === 'OK' );
+        return ( result && ( result.status === 'OK' ));
     }
 
     //----------------------------------------------------------------//
@@ -296,7 +302,7 @@ export class TransactionQueueService {
 
         const put = async ( url ) => {
 
-            debugLog ( 'processTransaction checkTransactionStatus', url );
+            debugLog ( 'processTransaction PUT transaction', url );
             try {
                 const response = await this.revocable.fetchJSON ( url, {
                     method :    'PUT',
@@ -307,7 +313,8 @@ export class TransactionQueueService {
                 return response;
             }
             catch ( error ) {
-                debugLog ( 'erorr or no response' );
+                debugLog ( 'error or no response' );
+                debugLog ( error );
             }
             return false;
         }

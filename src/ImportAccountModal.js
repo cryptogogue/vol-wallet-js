@@ -12,6 +12,9 @@ import * as UI                              from 'semantic-ui-react';
 
 // https://www.npmjs.com/package/js-crypto-utils
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@IMPORT ACCOUNT:', ...args ); }
+
 const STATUS_WAITING_FOR_INPUT          = 0;
 const STATUS_VERIFYING_KEY              = 1;
 const STATUS_DONE                       = 2;
@@ -42,6 +45,8 @@ class ImportAccountController {
     @action
     async import ( key, phraseOrKey, password ) {
 
+        debugLog ( 'IMPORT' )
+
         const publicKey = key.getPublicHex ();
         console.log ( 'PUBLIC_KEY', publicKey );
 
@@ -49,6 +54,9 @@ class ImportAccountController {
         let accountID = this.networkService.findAccountIdByPublicKey ( publicKey );
 
         if ( accountID ) {
+
+            debugLog ( 'ALREADY EXISTS:', accountID )
+
             this.accountID = accountID;
             this.status = STATUS_DONE;
             this.onDone ();
@@ -61,16 +69,20 @@ class ImportAccountController {
         this.status = STATUS_VERIFYING_KEY;
 
         let keyName = false;
+        let accountIndex = false;
 
         try {
 
             const data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/keys/${ keyID }`, {}, true ));
 
+            debugLog ( 'LOOKUP BY KEY:', data )
+
             const keyInfo = data && data.keyInfo;
 
             if ( keyInfo ) {
-                accountID = keyInfo.accountName;
-                keyName = keyInfo.keyName;
+                accountID       = keyInfo.accountName;
+                accountIndex    = keyInfo.accountIndex;
+                keyName         = keyInfo.keyName;
             }
         }
         catch ( error ) {
@@ -85,6 +97,7 @@ class ImportAccountController {
                 const privateKey = key.getPrivateHex ();
                 this.networkService.affirmAccountAndKey (
                     password,
+                    accountIndex,
                     accountID,
                     keyName,
                     phraseOrKey,
