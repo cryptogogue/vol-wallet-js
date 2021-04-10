@@ -213,7 +213,7 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Updating Inventory' );
 
-        const data          = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory` ));
+        const data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory` ));
 
         debugLog ( 'STATUS FROM SERVER:', data );
 

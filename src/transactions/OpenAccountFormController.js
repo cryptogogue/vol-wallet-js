@@ -49,7 +49,7 @@ export class OpenAccountFormController extends TransactionFormController {
 
                 if ( !request ) return false;
                 if ( !request.key ) return false;
-                if ( request.networkID !== this.appState.network.identity ) return false;
+                if ( request.networkID !== this.networkService.identity ) return false;
 
                 console.log ( 'DECODED REQUEST:', request );
 

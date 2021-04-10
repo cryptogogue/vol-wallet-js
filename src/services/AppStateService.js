@@ -26,7 +26,7 @@ export const NODE_STATUS = {
 };
 
 //const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( 'APP STATE:', ...args ); }
+const debugLog = function ( ...args ) { console.log ( '@APP STATE:', ...args ); }
 
 //================================================================//
 // AppStateService

@@ -111,9 +111,9 @@ export class AccountStateService {
     //----------------------------------------------------------------//
     deleteAccount () {
 
-        this.revocable.revokeAll ();
         this.storage.remove ( this, 'account' );
         this.appState.appDB.deleteAccountAsync ( this.networkID, this.accountID );
+        this.finalize ();
     }
 
     //----------------------------------------------------------------//
@@ -281,10 +281,17 @@ export class AccountStateService {
             const accountID = this.accountID;            
             let data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ accountID }` ));
 
+            debugLog ( 'account response:', data );
+
             if ( !data.account ) {
+
+                debugLog ( 'looking up account by key' );
+
                 const key = Object.values ( this.account.keys )[ 0 ];
                 const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
                 data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/keys/${ keyID }/account` ));
+
+                debugLog ( 'account response by key:', data );
             }
 
             const accountInfo = data.account;

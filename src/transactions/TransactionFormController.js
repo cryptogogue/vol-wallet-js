@@ -72,6 +72,8 @@ export class TransactionFormController {
         this.standalone             = Boolean ( accountService.isStandaloneTransactionContext ); // yes, this is a hack. but not worth refactoring over.
 
         this.accountService         = accountService;
+        this.networkService         = accountService.networkService;
+        this.appState               = accountService.appState;
         this.type                   = type;
 
         fieldsArray = fieldsArray || [];

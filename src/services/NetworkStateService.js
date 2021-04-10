@@ -56,15 +56,7 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    assertAccountService ( accountID ) {
-
-        if ( !this.hasAccount ( accountID )) throw new Error ( `Account not found: ${ accountID }` );
-        return this.accounts [ accountID ];
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    confirmMiner ( minerID, url ) {
+    affirmMiner ( minerID, url ) {
 
         const miner = this.minersByID [ minerID ] || {};
 
@@ -73,7 +65,7 @@ export class NetworkStateService {
             return;
         }
 
-        console.log ( 'CONSENSUS: CONFIRM MINER', minerID, url );
+        debugLog ( 'AFFIRMING MINER', minerID, url );
 
         miner.minerID   = minerID;
         miner.height    = -1;
@@ -82,6 +74,14 @@ export class NetworkStateService {
         miner.url       = url;
 
         this.minersByID [ minerID ] = miner;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    assertAccountService ( accountID ) {
+
+        if ( !this.hasAccount ( accountID )) throw new Error ( `Account not found: ${ accountID }` );
+        return this.accounts [ accountID ];
     }
 
     //----------------------------------------------------------------//
@@ -100,21 +100,29 @@ export class NetworkStateService {
 
         const confirmMiner = async ( nodeURL ) => {
 
-            console.log ( 'CONSENSUS: CONFIRM:', nodeURL );
+            debugLog ( 'CHECKING:', nodeURL );
 
             try {
-                // "peek" at the headers of the current and next block; also get a random sample of up to 16 miners.
+
                 const confirmURL        = url.parse ( nodeURL );
                 confirmURL.pathname     = `/`;
 
-                const result = await this.revocable.fetchJSON ( url.format ( confirmURL ));
+                let result = await this.revocable.fetchJSON ( url.format ( confirmURL ));
 
-                if ( result.minerID ) {
-                    this.confirmMiner ( result.minerID, nodeURL );
+                if ( result.minerID && result.isMiner ) {
+                    debugLog ( 'FOUND A MINER:', nodeURL );
+                    this.affirmMiner ( result.minerID, nodeURL );
+                }
+
+                confirmURL.pathname     = `/miners`;
+                result = await this.revocable.fetchJSON ( url.format ( confirmURL ));
+
+                if ( result.miners ) {
+                    this.extendNetwork ( result.miners );
                 }
             }
             catch ( error ) {
-                console.log ( error );
+                debugLog ( error );
             }
         }
 
@@ -203,6 +211,8 @@ export class NetworkStateService {
             this.storage.remove ( this, 'consensus' );
             this.appState.appDB.deleteNetworkAsync ( this.networkID );
             this.networkID = false;
+
+            this.finalize ();
         }
     }
 
@@ -346,17 +356,22 @@ export class NetworkStateService {
     @action
     async scanNetworkAsync () {
 
-        console.log ( 'CONSENSUS: SCAN NETWORK' );
-        console.log ( 'CONSENSUS: IGNORE', JSON.stringify ( this.ignoreURLs ));
+        debugLog ( 'SCAN NETWORK' );
+        debugLog ( 'IGNORE', JSON.stringify ( this.ignoreURLs ));
 
         const consensus = this.consensus;
         const nextHeight = consensus.height + consensus.step;
 
         await this.confirmMinersAsync ();
 
+        if ( _.size ( this.minersByID ) === 0 ) {
+            debugLog ( 'No miners found.' );
+            return 5000;
+        }
+
         const peek = async ( miner ) => {
 
-            console.log ( 'CONSENSUS: PEEK:', miner.url, consensus.height, nextHeight );
+            debugLog ( 'PEEK:', miner.url, consensus.height, nextHeight );
 
             runInAction (() => {
                 miner.isBusy = true;
@@ -373,14 +388,14 @@ export class NetworkStateService {
 
                 const result = await this.revocable.fetchJSON ( url.format ( peekURL ));
                 
-                console.log ( 'CONSENSUS: PEEK RESULT:', miner.url, result );
+                debugLog ( 'PEEK RESULT:', miner.url, result );
 
                 result.miners.push ( miner.url );
                 this.extendNetwork ( result.miners );
                 this.updateMinerStatus ( result.minerID, height, miner.url, result.prev, result.peek );       
             }
             catch ( error ) {
-                console.log ( error );
+                debugLog ( error );
             }
         }
 
@@ -395,12 +410,13 @@ export class NetworkStateService {
                 promises.push ( promise );
             }
         }
+
         await this.revocable.all ( promises );
 
         this.updateConsensus ();
 
         const timeout = consensus.isCurrent ? 15000 : 1;
-        console.log ( 'CONSENSUS: Next update in...', timeout );
+        debugLog ( 'Next update in...', timeout );
         return timeout;
     }
 
@@ -410,7 +426,7 @@ export class NetworkStateService {
 
         this.appState.assertPassword ( password );
 
-        this.flags.promptFirstAccount = false;
+        this.appState.flags.promptFirstAccount = false;
 
         const phraseOrKeyAES = crypto.aesPlainToCipher ( phraseOrKey, password );
         if ( phraseOrKey !== crypto.aesCipherToPlain ( phraseOrKeyAES, password )) throw new Error ( 'AES error' );
@@ -452,7 +468,7 @@ export class NetworkStateService {
     @action
     updateConsensus () {
 
-        console.log ( 'CONSENSUS: UPDATE' );
+        debugLog ( 'UPDATE' );
 
         const consensus = this.consensus;
         const nextHeight = consensus.height + consensus.step;
@@ -466,8 +482,10 @@ export class NetworkStateService {
 
         for ( let minerID in this.minersByID ) {
 
+            assert ( minerID );
+
             const miner = this.minersByID [ minerID ];
-            console.log ( 'CONSENSUS: MINER', miner.height, minerID, miner.prev, miner.peek );
+            debugLog ( 'MINER', miner.height, minerID, miner.prev, miner.peek );
 
             // completely ignore mines not at current height
             if ( miner.height !== consensus.height ) continue;
@@ -477,7 +495,7 @@ export class NetworkStateService {
 
             // exclude nodes missing 'prev'
             if ( miner.prev === false ) {
-                console.log ( 'CONSENSUS: MISSING', minerID, miner.height );
+                debugLog ( 'MISSING', minerID, miner.height );
                 missingCount++;
                 continue;
             }
@@ -502,7 +520,7 @@ export class NetworkStateService {
 
             if ( matchCount === currentCount ) {
 
-                console.log ( 'CONSENSUS: SPEED UP' );
+                debugLog ( 'SPEED UP' );
 
                 if ( consensus.step > 2 ) {
                     consensus.isCurrent = false;
@@ -515,7 +533,7 @@ export class NetworkStateService {
             }
             else {
 
-                console.log ( 'CONSENSUS: SLOW DOWN' );
+                debugLog ( 'SLOW DOWN' );
 
                 // the check failed and is only one step ahead, thus the current height must be current.
                 if ( consensus.step === 1 ) {
@@ -526,7 +544,7 @@ export class NetworkStateService {
         }
         else if ( missingCount === minerCount ) {
 
-            console.log ( 'CONSENSUS: RESET', missingCount, minerCount, JSON.stringify ( this.minersByID, null, 4 ));
+            debugLog ( 'RESET', missingCount, minerCount, JSON.stringify ( this.minersByID, null, 4 ));
 
             // every single node has backslid; start over.
             consensus.height        = 0;
@@ -535,7 +553,7 @@ export class NetworkStateService {
             consensus.isCurrent     = false;
         }
 
-        console.log ( 'CONSENSUS: STEP', {
+        debugLog ( 'STEP', {
             currentCount:   currentCount,
             matchCount:     matchCount,
             height:         consensus.height,
@@ -543,7 +561,7 @@ export class NetworkStateService {
             digest:         consensus.digest,
         });
 
-        console.log ( 'CONSENSUS: MINERS', JSON.stringify ( this.minersByID, null, 4 ));
+        debugLog ( 'MINERS', JSON.stringify ( this.minersByID, null, 4 ));
     }
 
     //----------------------------------------------------------------//
@@ -553,7 +571,7 @@ export class NetworkStateService {
         const consensus     = this.consensus;
         const miner         = this.minersByID [ minerID ];
 
-        console.log ( 'CONSENSUS: UPDATE MINER', minerID, height, consensus.height, url, prev, peek );
+        debugLog ( 'UPDATE MINER', minerID, height, consensus.height, url, prev, peek );
 
         miner.minerID       = minerID;
         miner.height        = height;

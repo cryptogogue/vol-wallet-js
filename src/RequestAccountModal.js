@@ -15,14 +15,14 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 const RequestAccountModalBody = observer (( props ) => {
 
-    const { appState, open, onClose } = props;
+    const { networkService, open, onClose } = props;
 
     const [ key, setKey ]                   = useState ( false );
     const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
     const [ password, setPassword ]         = useState ( '' );
 
     const createAccountRequest = () => {
-        appState.setAccountRequest (
+        networkService.setAccountRequest (
             password,
             phraseOrKey,
             key.getKeyID (),
@@ -45,7 +45,7 @@ const RequestAccountModalBody = observer (( props ) => {
             
             <UI.Modal.Content>
                 <KeyAndPasswordForm
-                    appState        = { appState }
+                    appState        = { networkService.appState }
                     setKey          = { setKey }
                     setPhraseOrKey  = { setPhraseOrKey }
                     setPassword     = { setPassword }
@@ -71,7 +71,7 @@ const RequestAccountModalBody = observer (( props ) => {
 //================================================================//
 export const RequestAccountModal = observer (( props ) => {
 
-    const { appState, open } = props;
+    const { networkService, open } = props;
     const [ counter, setCounter ] = useState ( 0 );
 
     const onClose = () => {
@@ -82,9 +82,9 @@ export const RequestAccountModal = observer (( props ) => {
     return (
         <div key = { counter }>
             <RequestAccountModalBody
-                appState    = { appState }
-                open        = { open }
-                onClose     = { onClose }
+                networkService  = { networkService }
+                open            = { open }
+                onClose         = { onClose }
             />
         </div>
     );
