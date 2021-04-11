@@ -52,6 +52,7 @@ export const NetworkList = observer (( props ) => {
         const networkService = appState.networksByID [ networkID ];
 
         const nodeURL       = networkService.nodeURL;
+        const genesis       = networkService.genesis.substring ( 32 );
         const schema        = info && info.schemaVersion;
         const schemaString  = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
 
@@ -66,6 +67,7 @@ export const NetworkList = observer (( props ) => {
                 <UI.Message.Content>
                     <a href = { nodeURL } target = '_blank'>{ nodeURL }</a>
                     <If condition = { info }>
+                        <p style = {{ padding: 0, margin: 0 }}>{ `${ genesis }` }</p>
                         <p style = {{ padding: 0, margin: 0 }}>{ info.build }</p>
                         <p style = {{ padding: 0, margin: 0 }}>{ schemaString }</p>
                     </If>

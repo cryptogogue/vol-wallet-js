@@ -33,6 +33,7 @@ export class OpenAccountFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
+    @action
     decodeRequest () {
 
         console.log ( 'DECODE REQUEST', this.fields.request.value );
@@ -47,9 +48,9 @@ export class OpenAccountFormController extends TransactionFormController {
                 const requestJSON = Buffer.from ( encoded, 'base64' ).toString ( 'utf8' );
                 const request = JSON.parse ( requestJSON );
 
-                if ( !request ) return false;
-                if ( !request.key ) return false;
-                if ( request.networkID !== this.networkService.identity ) return false;
+                if ( !request ) return 'Problem decoding request.';
+                if ( !request.key ) return 'Missing key.';
+                if ( request.genesis !== this.networkService.genesis ) return 'Genesis block mismatch; this request is for another network.';
 
                 console.log ( 'DECODED REQUEST:', request );
 
@@ -61,7 +62,7 @@ export class OpenAccountFormController extends TransactionFormController {
                 console.log ( error );
             }
         }
-        return false;
+        return 'Problem decoding request.';
     }
 
     //----------------------------------------------------------------//
@@ -85,8 +86,8 @@ export class OpenAccountFormController extends TransactionFormController {
 
         if ( encoded.length > 0 ) {
             const request = this.decodeRequest ();
-            if ( !request ) {
-                this.fields.request.error = 'Problem decoding request.';
+            if ( typeof ( request ) === 'string' ) {
+                this.fields.request.error = request;
             }
         }
     }

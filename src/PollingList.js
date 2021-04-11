@@ -51,7 +51,7 @@ export const PollingList = observer (( props ) => {
                     </When>
 
                     <When condition = { polling.status === POLLING_STATUS.ONLINE }>
-                        <UI.Icon name = { onlineIcon }/>
+                        <UI.Icon name = {( typeof ( onlineIcon ) === 'function' ) ? onlineIcon ( name, polling.info ) : onlineIcon }/>
                     </When>
 
                     <When condition = { polling.status === POLLING_STATUS.OFFLINE }>

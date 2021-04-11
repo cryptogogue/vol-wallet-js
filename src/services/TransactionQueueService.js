@@ -154,6 +154,7 @@ export class TransactionQueueService {
 
                     // get every active URL.
                     const urls = this.networkService.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
+                    console.log ( 'service URLs:', urls );
 
                     const checkTransactionStatus = async ( url ) => {
 

@@ -12,8 +12,11 @@ import * as UI                                  from 'semantic-ui-react';
 //================================================================//
 export const OpenAccountForm = observer (({ controller }) => {
 
+    const accountName = `.${ controller.accountService.accountID }.${ controller.fields.suffix.value }`;
+
     return (
         <React.Fragment>
+            <UI.Header as = 'h3'>{ accountName }</UI.Header>
             <Fields.TextField field = { controller.fields.request }/>
             <Fields.VOLField field = { controller.fields.grant }/>
         </React.Fragment>

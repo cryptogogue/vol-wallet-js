@@ -24,6 +24,7 @@ function getAccountTabTitle ( tab ) {
         case ACCOUNT_TABS.INVENTORY:    return 'Inventory';
         case ACCOUNT_TABS.KEYS:         return 'Keys';
         case ACCOUNT_TABS.MINER:        return 'Miner';
+        case ACCOUNT_TABS.HISTORY:      return 'History';
     }
     return '';
 };
@@ -36,6 +37,7 @@ function getAccountTabURL ( tab ) {
         case ACCOUNT_TABS.INVENTORY:    return '/inventory';
         case ACCOUNT_TABS.KEYS:         return '/keys';
         case ACCOUNT_TABS.MINER:        return '/miner';
+        case ACCOUNT_TABS.HISTORY:      return '/history';
     }
     return '/';
 };
@@ -56,6 +58,7 @@ export const AccountNavigationBar = observer (( props ) => {
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
     const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
+    const historyURL            = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.HISTORY )}`;
 
     const accountTab            = getAccountTabURL ( tab );
 
@@ -83,6 +86,8 @@ export const AccountNavigationBar = observer (( props ) => {
                         <If condition = { accountService.isMiner }>
                             <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>
                         </If>
+
+                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.HISTORY )} as = { Link } to = { historyURL }/>
                     </Dropdown.Menu>
                 </Dropdown>
 

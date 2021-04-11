@@ -25,6 +25,7 @@ export class NetworkStateService {
 
     @computed get accountIndices        () { return this.network.accountIndices; }
     @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
+    @computed get genesis               () { return this.consensus.genesis || ''; }
     @computed get height                () { return this.consensus.height; }
     @computed get identity              () { return this.network.identity; }
     @computed get nodeURL               () { return this.network.nodeURL; }
@@ -301,7 +302,9 @@ export class NetworkStateService {
 
         for ( let minerID in this.minersByID ) {
             const miner = this.minersByID [ minerID ];
-            urls.push ( this.formatServiceURL ( miner.url, path, query, mostCurrent ));
+            if ( miner.online ) {
+                urls.push ( this.formatServiceURL ( miner.url, path, query, mostCurrent ));
+            }
         }
         return urls;
     }
@@ -343,6 +346,10 @@ export class NetworkStateService {
     //----------------------------------------------------------------//
     async networkInfoServiceLoop () {
 
+        let count = this.serviceLoopCount || 0;
+        debugLog ( 'SERVICE LOOP RUN:', count );
+        this.serviceLoopCount = count + 1;
+
         let timeout = await this.scanNetworkAsync ();
         this.revocable.timeout (() => { this.networkInfoServiceLoop ()}, timeout );
     }
@@ -367,7 +374,7 @@ export class NetworkStateService {
     async scanNetworkAsync () {
 
         debugLog ( 'SCAN NETWORK' );
-        debugLog ( 'IGNORE', JSON.stringify ( this.ignoreURLs ));
+        debugLog ( 'SCANNED', JSON.stringify ( this.ignoreURLs ));
 
         const consensus = this.consensus;
         const nextHeight = consensus.height + consensus.step;
@@ -402,10 +409,11 @@ export class NetworkStateService {
 
                 result.miners.push ( miner.url );
                 this.extendNetwork ( result.miners );
-                this.updateMinerStatus ( result.minerID, height, miner.url, result.prev, result.peek );       
+                this.updateMinerStatus ( result.minerID, height, miner.url, result.prev, result.peek );
             }
             catch ( error ) {
                 debugLog ( error );
+                this.updateMinerOffline ( miner.minerID );
             }
         }
 
@@ -450,11 +458,11 @@ export class NetworkStateService {
         } while ( _.has ( this.pendingAccounts, requestID ));
 
         const request = {
-            networkID:              this.identity,
+            genesis:            this.genesis,
             key: {
-                type:               'EC_HEX',
-                groupName:          'secp256k1',
-                publicKey:          publicKeyHex,
+                type:           'EC_HEX',
+                groupName:      'secp256k1',
+                publicKey:      publicKeyHex,
             },
         }
 
@@ -497,8 +505,8 @@ export class NetworkStateService {
             const miner = this.minersByID [ minerID ];
             debugLog ( 'MINER', miner.height, minerID, miner.prev, miner.peek );
 
-            // completely ignore mines not at current height
-            if ( miner.height !== consensus.height ) continue;
+            // completely ignore offline miners and miners not at current height
+            if ( !miner.online || ( miner.height !== consensus.height )) continue;
 
             // running count of miners we care about
             minerCount++;
@@ -576,6 +584,18 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
+    updateMinerOffline ( minerID ) {
+
+        const miner         = this.minersByID [ minerID ];
+
+        debugLog ( 'UPDATE MINER OFFLINE', minerID, );
+
+        miner.isBusy        = false;
+        miner.online        = false;
+    }
+
+    //----------------------------------------------------------------//
+    @action
     updateMinerStatus ( minerID, height, url, prev, peek ) {
 
         const consensus     = this.consensus;
@@ -589,6 +609,7 @@ export class NetworkStateService {
         miner.peek          = peek ? peek.digest : false;
         miner.url           = url;
         miner.isBusy        = false;
+        miner.online        = true;
 
         if (( consensus.height === 0 ) && !consensus.genesis ) {
             consensus.genesis = prev.digest;

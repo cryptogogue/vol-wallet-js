@@ -64,12 +64,16 @@ export const AccountList = observer (( props ) => {
         );
     }
 
+    const onlineIcon = ( accountID, info ) => {
+        return info.miner ? 'gem outline' : 'trophy';
+    }
+
     return (
         <PollingList
             items                   = { _.keys ( networkService.accounts )}
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
-            onlineIcon              = 'trophy'
+            onlineIcon              = { onlineIcon }
             onDelete                = { onDelete }
             makeItemMessageBody     = { makeItemMessageBody }
             warning0                = { ACCOUNT_DELETE_WARNING_0 }

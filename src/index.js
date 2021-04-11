@@ -26,6 +26,7 @@ import { MinerControlScreen }           from './MinerControlScreen';
 import { MinerInfoUtilScreen }          from './MinerInfoUtilScreen';
 import { NetworkScreen }                from './NetworkScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
+import { TransactionHistoryScreen }     from './TransactionHistoryScreen';
 import { TransactionUtilScreen }        from './TransactionUtilScreen';
 import registerServiceWorker            from './util/registerServiceWorker';
 import React                            from 'react';
@@ -53,6 +54,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/miner"          component = { MinerControlScreen }/>
+                <Route exact path = "/net/:networkID/account/:accountID/history"        component = { TransactionHistoryScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
                 <Route exact path = "/util/key"                 component = { KeyUtilScreen }/>
