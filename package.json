@@ -210,7 +210,8 @@
                     "alias": {
                         "consts": "./src/consts/consts",
                         "fgc": "./src/packages/fgc-common-js-src/export",
-                        "cardmotron": "./src/packages/vol-cardmotron-js-src/export"
+                        "cardmotron": "./src/packages/vol-cardmotron-js-src/export",
+                        "vol": "./src/packages/vol-common-js-src/export"
                     }
                 }
             ],

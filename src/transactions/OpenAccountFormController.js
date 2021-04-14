@@ -7,6 +7,7 @@ import { assert, randomBytes, util }        from 'fgc';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
+import { vol }                              from 'vol';
 
 //================================================================//
 // OpenAccountFormController
@@ -38,31 +39,14 @@ export class OpenAccountFormController extends TransactionFormController {
 
         console.log ( 'DECODE REQUEST', this.fields.request.value );
 
-        let encoded = this.fields.request.value;
-        if ( encoded && encoded.length ) {
-            try {
+        const request = vol.decodeAccountRequest ( this.fields.request.value );
 
-                encoded = encoded.replace ( /(\r\n|\n|\r )/gm, '' );
-                console.log ( 'ENCODED:', encoded );
+        if ( request ) return 'Problem decoding request.';
+        if ( !request ) return 'Problem decoding request.';
+        if ( !request.key ) return 'Missing key.';
+        if ( request.genesis !== this.networkService.genesis ) return 'Genesis block mismatch; this request is for another network.';
 
-                const requestJSON = Buffer.from ( encoded, 'base64' ).toString ( 'utf8' );
-                const request = JSON.parse ( requestJSON );
-
-                if ( !request ) return 'Problem decoding request.';
-                if ( !request.key ) return 'Missing key.';
-                if ( request.genesis !== this.networkService.genesis ) return 'Genesis block mismatch; this request is for another network.';
-
-                console.log ( 'DECODED REQUEST:', request );
-
-                // TODO: check key format and validity!
-
-                return request;
-            }
-            catch ( error ) {
-                console.log ( error );
-            }
-        }
-        return 'Problem decoding request.';
+        return request;
     }
 
     //----------------------------------------------------------------//

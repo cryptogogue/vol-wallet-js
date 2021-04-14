@@ -98,7 +98,7 @@ export const TransactionUtilScreen = observer (( props ) => {
     const onShowJSON = () => {
 
         const recordBy = new Date ();
-        recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // TOSO: this is gross, get from a field
+        recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // TODO: this is gross, get from a field
 
         const body = controller.makeTransactionBody ();
 

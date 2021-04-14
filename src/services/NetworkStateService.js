@@ -9,6 +9,7 @@ import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
 import React                            from 'react';
 import url                              from 'url';
+import { vol }                          from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@NETWORK SERVICE:', ...args ); }
@@ -457,17 +458,7 @@ export class NetworkStateService {
             requestID = `vol_${ randomBytes ( 6 ).toString ( 'hex' )}`;
         } while ( _.has ( this.pendingAccounts, requestID ));
 
-        const request = {
-            genesis:            this.genesis,
-            key: {
-                type:           'EC_HEX',
-                groupName:      'secp256k1',
-                publicKey:      publicKeyHex,
-            },
-        }
-
-        const requestJSON   = JSON.stringify ( request );
-        const encoded       = Buffer.from ( requestJSON, 'utf8' ).toString ( 'base64' );
+        const encoded = vol.encodeAccountRequest ( this.genesis, publicKeyHex );
 
         const pendingAccount = {
             requestID:              requestID,
