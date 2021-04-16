@@ -18,11 +18,11 @@ export class OpenAccountFormController extends TransactionFormController {
     constructor ( accountService ) {
         super ();
 
-        // TODO: replace with something deterministic        
+        // TODO: replace with something deterministic
         const suffixPart = () => {
             return randomBytes ( 2 ).toString ( 'hex' ).substring ( 0, 3 );
         }
-        const suffix = `${ suffixPart ()}.${ suffixPart ()}.${ suffixPart()}`.toUpperCase ();
+        const suffix = `${ suffixPart ()}.${ suffixPart ()}.${ suffixPart ()}`.toUpperCase ();
         console.log ( 'SUFFIX:', suffix );
 
         const fieldsArray = [
