@@ -388,7 +388,6 @@ export class TransactionQueueService {
 
                 envelope.signature = {
                     hashAlgorithm:  'SHA256',
-                    digest:         key.hash ( envelope.body ),
                     signature:      key.sign ( envelope.body ),
                 };
 
