@@ -37,7 +37,7 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @action
-    affirmNetwork ( networkID, identity, nodeURL ) {
+    affirmNetwork ( networkID, identity, genesis, nodeURL ) {
 
         debugLog ( 'affirm network:', networkID );
 
@@ -46,6 +46,7 @@ export class AppStateService {
         if ( identity && nodeURL ) {
             networkService.network.nodeURL      = nodeURL;
             networkService.network.identity     = identity;
+            networkService.network.genesis      = genesis;
         }
 
         this.networksByID [ networkID ] = networkService;

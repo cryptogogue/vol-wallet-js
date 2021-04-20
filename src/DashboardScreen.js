@@ -52,7 +52,7 @@ export const NetworkList = observer (( props ) => {
         const networkService = appState.networksByID [ networkID ];
 
         const nodeURL       = networkService.nodeURL;
-        const genesis       = networkService.genesis.substring ( 32 );
+        const genesis       = `${ networkService.genesis.substring ( 0, 32 )}...`;
         const schema        = info && info.schemaVersion;
         const schemaString  = info ? `Schema ${ schema.major }.${ schema.minor }.${ schema.revision } - "${ schema.release }"` : '';
 
@@ -76,11 +76,17 @@ export const NetworkList = observer (( props ) => {
         );
     }
 
+    const onlineIcon = ( networkID, info ) => {
+        const networkService = appState.networksByID [ networkID ];
+        return networkService.network.genesis === info.genesis ? 'check circle' : 'warning sign';
+    }
+
     return (
         <PollingList
             items                   = { appState.networkIDs }
             asyncGetInfo            = { asyncGetInfo }
             checkIdentifier         = { checkIdentifier }
+            onlineIcon              = { onlineIcon }
             onDelete                = { onDelete }
             makeItemMessageBody     = { makeItemMessageBody }
             warning0                = { NETWORK_DELETE_WARNING_0 }
