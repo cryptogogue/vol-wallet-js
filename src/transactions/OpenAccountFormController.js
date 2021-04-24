@@ -9,6 +9,9 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import { observer }                         from 'mobx-react';
 import { vol }                              from 'vol';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( 'OPEN ACCOUNT CONTROLLER:', ...args ); }
+
 //================================================================//
 // OpenAccountFormController
 //================================================================//
@@ -37,11 +40,10 @@ export class OpenAccountFormController extends TransactionFormController {
     @action
     decodeRequest () {
 
-        console.log ( 'DECODE REQUEST', this.fields.request.value );
+        debugLog ( 'DECODE REQUEST', this.fields.request.value );
 
         const request = vol.decodeAccountRequest ( this.fields.request.value );
 
-        if ( request ) return 'Problem decoding request.';
         if ( !request ) return 'Problem decoding request.';
         if ( !request.key ) return 'Missing key.';
         if ( request.genesis !== this.networkService.genesis ) return 'Genesis block mismatch; this request is for another network.';
@@ -53,6 +55,8 @@ export class OpenAccountFormController extends TransactionFormController {
     virtual_composeBody ( fieldValues ) {
 
         const request = this.decodeRequest ();
+
+        debugLog ( 'COMPOSING BODY WITH REQUEST:', request );
 
         let body = {
             suffix:     this.fields.suffix.value,
@@ -70,7 +74,10 @@ export class OpenAccountFormController extends TransactionFormController {
 
         if ( encoded.length > 0 ) {
             const request = this.decodeRequest ();
-            if ( typeof ( request ) === 'string' ) {
+
+            debugLog ( 'VALIDATING REQUEST:', request );
+
+            if ( request === false ) {
                 this.fields.request.error = request;
             }
         }
