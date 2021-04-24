@@ -5,6 +5,7 @@ import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
 import { TransactionQueueService }      from './TransactionQueueService';
+import * as bitcoin                     from 'bitcoinjs-lib';
 import { InventoryController }          from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
