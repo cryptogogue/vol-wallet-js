@@ -28,9 +28,9 @@ const AccountDetailsView = observer (( props ) => {
 
     if ( !account ) return;
 
-    const consensus     = networkService.consensus;
-    const accountURL    = networkService.getServiceURL ( `/accounts/${ accountService.accountID }` );
-    const hasInfo       = accountService.hasAccountInfo && consensus.isCurrent;
+    const consensusService      = networkService.consensusService;
+    const accountURL            = networkService.getPrimaryURL ( `/accounts/${ accountService.accountID }`, undefined, true );
+    const hasInfo               = accountService.hasAccountInfo && networkService.isCurrent;
     
     debugLog ( 'HAS INFO', accountService.hasAccountInfo );
 
@@ -66,11 +66,15 @@ const AccountDetailsView = observer (( props ) => {
             </div>
 
             <UI.Header.Subheader>
-                { `Height: ${ consensus.height }` }
+                { `Miners: ${ consensusService.currentMiners.length } / ${ consensusService.onlineMiners.length }` }
+            </UI.Header.Subheader>
+
+            <UI.Header.Subheader>
+                { `Height: ${ networkService.height }` }
             </UI.Header.Subheader>
 
             <UI.Header.Subheader style = {{ fontSize: 9 }}>
-                { `${ consensus.digest }` }
+                { `${ networkService.digest }` }
             </UI.Header.Subheader>
         </div>
     );

@@ -79,6 +79,7 @@ export class AccountStateService {
     constructor ( networkService, accountIndex, accountID ) {
 
         debugLog ( 'NETWORK SERVICE:', networkService );
+        debugLog ( 'NETWORK HEIGHT:', networkService.height );
 
         assert ( networkService );
         assert ( networkService.appState, 'Missing networkService.appState' );

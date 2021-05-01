@@ -35,7 +35,7 @@ export const NetworkList = observer (( props ) => {
 
     const asyncGetInfo = async ( revocable, networkID ) => {
         const networkService = appState.networksByID [ networkID ];
-        const info = await revocable.fetchJSON ( networkService.nodeURL );
+        const info = await revocable.fetchJSON ( networkService.getServiceURL ());
         return info && info.type === 'VOL_MINING_NODE' ? info : false;
     }
 

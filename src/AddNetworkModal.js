@@ -1,11 +1,13 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { ConsensusService }         from './services/ConsensusService';
 import { NetworkStateService }      from './services/NetworkStateService';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import React, { useState }          from 'react';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';
+import url                          from 'url';
 import validator                    from 'validator';
 
 const NETWORK_NAME_REGEX     = /^[a-z0-9]+[a-z0-9-]*$/;
@@ -18,74 +20,19 @@ const NODE_INFO_STATE = {
 };
 
 //================================================================//
-// NodeInfoService
-//================================================================//
-export class NodeInfoService {
-
-    //----------------------------------------------------------------//
-    constructor () {
-        
-        this.revocable      = new RevocableContext ();
-
-        extendObservable ( this, {
-            info:           false,
-            state:          NODE_INFO_STATE.IDLE,
-        });
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    fetchNodeInfo ( url ) {
-
-        this.info = false;
-        this.state = NODE_INFO_STATE.BUSY;
-
-        const doUpdate = async () => {
-            try {
-                const info = await this.revocable.fetchJSON ( url );
-                runInAction (() => {
-                    this.info = info;
-                    this.state = NODE_INFO_STATE.DONE;
-                });
-            }
-            catch ( error ) {
-                console.log ( error );
-                runInAction (() => {
-                    this.state = NODE_INFO_STATE.ERROR;
-                });
-            }
-        }
-        doUpdate ();
-    }
-
-    //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    reset () {
-
-        this.info = false;
-        this.state = NODE_INFO_STATE.IDLE;
-    }
-}
-
-//================================================================//
 // AddNetworkModalBody
 //================================================================//
 export const AddNetworkModalBody = observer (( props ) => {
 
     const { appState, open, onClose } = props;
+    const [ state, setState ]                   = useState ( NODE_INFO_STATE.IDLE );
     const [ name, setName ]                     = useState ( '' );
     const [ nameError, setNameError ]           = useState ( '' );
     const [ nodeURL, setNodeURL ]               = useState ( '' );
     const [ testURL, setTestURL ]               = useState ( '' );
     const [ suggestName, setSuggestName ]       = useState ( false );
 
-    const controller        = hooks.useFinalizable (() => new NodeInfoService ());
+    const consensusService  = hooks.useFinalizable (() => new ConsensusService ());
 
     let onChangeName = ( value ) => {
 
@@ -103,43 +50,58 @@ export const AddNetworkModalBody = observer (( props ) => {
         setNameError ( err );
     }
 
-    let onChangeNodeURL = ( url ) => {
+    let onChangeNodeURL = ( inputURL ) => {
 
-        controller.reset ();
-        setNodeURL ( url );
+        consensusService.reset ();
+        setState ( NODE_INFO_STATE.IDLE );
+        setNodeURL ( inputURL );
 
-        if ( validator.isURL ( url, { protocols: [ 'http', 'https' ], require_protocol: true, require_tld: false })) {
-            url = url.replace ( /\/+$/, '' );
-            setTestURL ( url );
+        if ( validator.isURL ( inputURL, { protocols: [ 'http', 'https' ], require_protocol: true, require_tld: false })) {
+            inputURL = url.format ( url.parse ( inputURL ));
+            setTestURL ( inputURL );
         }
     }
 
-    let onCheckNodeURL = () => {
-        controller.fetchNodeInfo ( testURL );
+    let onCheckNodeURL = async () => {
+
+        setState ( NODE_INFO_STATE.BUSY );
+        const error = await consensusService.initializeWithNodeURLAsync ( testURL );
+
+        if ( error ) {
+            setState ( NODE_INFO_STATE.ERROR );
+        }
+        else {
+            setState ( NODE_INFO_STATE.DONE );
+            consensusService.serviceLoop ();
+        }
+
+        setState ( error ? NODE_INFO_STATE.ERROR : NODE_INFO_STATE.DONE );
+
         if ( !name ) {
             setSuggestName ( true );
         }
     }
 
     let onSubmit = () => {
-        appState.affirmNetwork ( name, controller.info.identity, controller.info.genesis, testURL );
+        appState.affirmNetwork ( name, consensusService );
         runInAction (() => {
             appState.flags.promptFirstNetwork = false;
         });
         onClose ();
     }
 
-    const isBusy = controller.state === NODE_INFO_STATE.BUSY;
-    const nodeURLError = controller.state === NODE_INFO_STATE.ERROR && 'Error fetching node info.';
-    const nodeType = controller.state === NODE_INFO_STATE.DONE && controller.info && controller.info.type;
+    const isBusy        = state === NODE_INFO_STATE.BUSY;
+    const nodeURLError  = state === NODE_INFO_STATE.ERROR && 'Error fetching node info.';
+    const isNode        = state === NODE_INFO_STATE.DONE && consensusService.genesis !== false;
 
-    if ( !name && suggestName && ( nodeType === 'VOL_MINING_NODE' )) {
-        const defaultName = controller.info.identity.toLowerCase ().replace ( /[^a-z0-9]+/g, '-' );
+    if ( !name && suggestName && isNode ) {
+        const defaultName = consensusService.identity.toLowerCase ().replace ( /[^a-z0-9]+/g, '-' );
         onChangeName ( defaultName );
     }
 
-    const submitEnabled = name && !nameError && ( nodeType === 'VOL_MINING_NODE' );
-    const testEnabled = Boolean ( testURL );
+    const submitEnabled     = isNode && name && !nameError;
+    const testEnabled       = Boolean ( testURL );
+    const genesis           = consensusService.genesis;
 
     return (
         <UI.Modal
@@ -178,13 +140,18 @@ export const AddNetworkModalBody = observer (( props ) => {
                 </UI.Form>
 
                 <Choose>
-                    <When condition = { nodeType === 'VOL_MINING_NODE' }>
-                        <UI.Message
-                            positive
-                            icon = 'sitemap'
-                            header = { controller.info.identity }
-                            content = 'Mining network is online.'
-                        />
+                    <When condition = { isNode }>
+
+                        <UI.Message icon positive>
+                            <UI.Icon name = 'sitemap'/>
+                            <UI.Message.Content>
+                                <UI.Message.Header>{ consensusService.identity }</UI.Message.Header>
+                                <p style = {{ padding: 0, margin: 0 }}>{ genesis }</p>
+                                <p style = {{ padding: 0, margin: 0 }}>Mining network is online.</p>
+                                <p style = {{ padding: 0, margin: 0 }}>Miners: { consensusService.onlineMiners.length }</p>
+                                <p style = {{ padding: 0, margin: 0 }}>Height: { consensusService.height }</p>
+                            </UI.Message.Content>
+                        </UI.Message>
 
                         <UI.Form>
                             <p>Enter a local nickname for this mining network:</p>
@@ -203,11 +170,11 @@ export const AddNetworkModalBody = observer (( props ) => {
                         </UI.Form>
                     </When>
 
-                    <When condition = { controller.state === NODE_INFO_STATE.DONE }>
+                    <When condition = { state === NODE_INFO_STATE.DONE }>
                         <UI.Message
                             negative
                             icon = 'question circle'
-                            header = { UNKNOWN }
+                            header = 'UNKNOWN'
                             content = 'Not a mining node.'
                         />
                     </When>

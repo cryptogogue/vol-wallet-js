@@ -37,16 +37,18 @@ export class AppStateService {
 
     //----------------------------------------------------------------//
     @action
-    affirmNetwork ( networkID, identity, genesis, nodeURL ) {
+    affirmNetwork ( networkID, consensusService ) {
 
         debugLog ( 'affirm network:', networkID );
 
-        const networkService = this.networksByID [ networkID ] || new NetworkStateService ( this, networkID );
+        let networkService = this.networksByID [ networkID ];
 
-        if ( identity && nodeURL ) {
-            networkService.network.nodeURL      = nodeURL;
-            networkService.network.identity     = identity;
-            networkService.network.genesis      = genesis;
+        if ( consensusService || !networkService ) {
+
+            if ( networkService ) {
+                networkService.finalize ();
+            }
+            networkService = new NetworkStateService ( this, networkID, consensusService );
         }
 
         this.networksByID [ networkID ] = networkService;

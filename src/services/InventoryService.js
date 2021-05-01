@@ -5,7 +5,6 @@ import { assert, ProgressController, RevocableContext, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
 import Dexie                        from 'dexie';
 import _                            from 'lodash';
-import url                          from 'url';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); }
@@ -255,9 +254,9 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Fetching Inventory' );
 
-        const count     = nextNonce - currentNonce;
-        const url       = this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }`, { count: count });
-        const data      = await this.revocable.fetchJSON ( url );
+        const count         = nextNonce - currentNonce;
+        const serviceURL    = this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }`, { count: count });
+        const data          = await this.revocable.fetchJSON ( serviceURL );
 
         if ( data.nextNonce <= currentNonce ) return false;
 

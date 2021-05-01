@@ -2,8 +2,9 @@
 
 import { AccountStateService }          from './AccountStateService';
 import { AppStateService }              from './AppStateService';
+import { ConsensusService }             from './ConsensusService';
 import { InventoryController }          from 'cardmotron';
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
+import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, storage, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
@@ -26,9 +27,12 @@ export class NetworkStateService {
 
     @computed get accountIndices        () { return this.network.accountIndices; }
     @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
-    @computed get genesis               () { return this.network.genesis || ''; }
-    @computed get height                () { return this.consensus.height; }
-    @computed get identity              () { return this.network.identity; }
+    @computed get digest                () { return this.consensusService.digest || ''; }
+    @computed get genesis               () { return this.consensusService.genesis || ''; }
+    @computed get height                () { return this.consensusService.height; }
+    @computed get identity              () { return this.consensusService.identity; }
+    @computed get isCurrent             () { return this.consensusService.isCurrent; }
+    @computed get isOnline              () { return this.consensusService.isOnline; }
     @computed get nodeURL               () { return this.network.nodeURL; }
     @computed get pendingAccounts       () { return this.network.pendingAccounts; }    
 
@@ -62,28 +66,6 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    affirmMiner ( minerID, url ) {
-
-        const miner = this.minersByID [ minerID ] || {};
-
-        if ( miner.url ) {
-            miner.url = url;
-            return;
-        }
-
-        debugLog ( 'AFFIRMING MINER', minerID, url );
-
-        miner.minerID   = minerID;
-        miner.height    = -1;
-        miner.prev      = false;
-        miner.peek      = false;
-        miner.url       = url;
-
-        this.minersByID [ minerID ] = miner;
-    }
-
-    //----------------------------------------------------------------//
-    @action
     assertAccountService ( accountID ) {
 
         if ( !this.hasAccount ( accountID )) throw new Error ( `Account not found: ${ accountID }` );
@@ -91,66 +73,7 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    @action
-    async confirmMinersAsync () {
-
-        const consensus = this.consensus;
-
-        const pendingURLs = {};
-
-        // fetch all the chains
-        pendingURLs [ this.nodeURL ] = true;
-        for ( let nodeURL in consensus.urls ) {
-            pendingURLs [ nodeURL ] = true;
-        }
-
-        const confirmMiner = async ( nodeURL, isPrimary ) => {
-
-            debugLog ( 'CHECKING:', nodeURL );
-
-            try {
-
-                const confirmURL        = url.parse ( nodeURL );
-                confirmURL.pathname     = `/`;
-
-                let result = await this.revocable.fetchJSON ( url.format ( confirmURL ));
-
-                if ( result.minerID && result.isMiner ) {
-                    debugLog ( 'FOUND A MINER:', nodeURL );
-                    if ( result.genesis === this.network.genesis ) {
-                        this.affirmMiner ( result.minerID, nodeURL );
-                    }
-                }
-
-                if ( isPrimary ) {
-                    runInAction (() => {
-                        this.network.genesisMismatch = ( result.genesis !== this.network.genesis );
-                    })
-                }
-
-                confirmURL.pathname     = `/miners`;
-                result = await this.revocable.fetchJSON ( url.format ( confirmURL ));
-
-                if ( result.miners ) {
-                    this.extendNetwork ( result.miners );
-                }
-            }
-            catch ( error ) {
-                debugLog ( error );
-            }
-        }
-
-        const promises = [];
-        for ( let nodeURL in pendingURLs ) {
-            if ( this.ignoreURLs [ nodeURL ]) continue;
-            this.ignoreURLs [ nodeURL ] = true;
-            promises.push ( confirmMiner ( nodeURL, nodeURL = this.nodeURL ));
-        }
-        await this.revocable.all ( promises );
-    }
-
-    //----------------------------------------------------------------//
-    constructor ( appState, networkID, nodeURL, identity ) {
+    constructor ( appState, networkID, consensusService ) {
 
         assert ( appState );
 
@@ -158,30 +81,50 @@ export class NetworkStateService {
         this.revocable      = new RevocableContext ();
         this.storage        = new StorageContext ();
 
-        const network = {
-            nodeURL:            nodeURL || '',
-            identity:           identity,
-            accountIndices:     [],
-            accountIDsByIndex:  {},
-            pendingAccounts:    {},
-            genesis:            false,
-            genesisMismatch:    false,
-        };
-
-        const consensus = {
-            height:             0,
-            digest:             false,
-            step:               0,
-            isCurrent:          false,
-            urls:               {},
-        };
-
-        this.storage.persist ( this, 'network',     `.vol.NETWORK.${ networkID }`,              network );
-        this.storage.persist ( this, 'consensus',   `.vol.NETWORK.${ networkID }.CONSENSUS`,    consensus );
-        
         runInAction (() => {
             this.networkID = networkID;
         });
+
+        const storageKey = `.vol.NETWORK.${ networkID }`;
+
+        if ( consensusService ) {
+
+            assert ( consensusService.isOnline );
+
+            const network = {
+
+                accountIndices:     [],
+                accountIDsByIndex:  {},
+                pendingAccounts:    {},
+
+                nodeURL:            consensusService.onlineURLs [ 0 ],
+                minerURLs:          consensusService.onlineURLs,
+                identity:           consensusService.identity,
+                genesis:            consensusService.genesis,
+                height:             consensusService.height,
+                digest:             consensusService.digest,
+            };
+
+            storage.removeItem ( storageKey );
+            this.storage.persist ( this, 'network',     storageKey,     network );
+        }
+        else {
+
+            this.storage.persist ( this, 'network',     storageKey );
+
+            assert ( this.network && this.network.identity && this.network.genesis );
+
+            consensusService = new ConsensusService ();
+            consensusService.initialize (
+                this.network.identity,
+                this.network.genesis,
+                this.network.height,
+                this.network.digest,
+                this.network.minerURLs.concat ([ this.network.nodeURL ])
+            );
+        }
+
+        this.consensusService = consensusService;
 
         for ( let accountIndex of this.accountIndices ) {
 
@@ -193,7 +136,7 @@ export class NetworkStateService {
             this.accounts [ accountID ] = account;
         }
 
-        this.networkInfoServiceLoop ();
+        this.serviceLoop ();
     }
 
     //----------------------------------------------------------------//
@@ -235,20 +178,10 @@ export class NetworkStateService {
             }
 
             this.storage.remove ( this, 'network' );
-            this.storage.remove ( this, 'consensus' );
             this.appState.appDB.deleteNetworkAsync ( this.networkID );
             this.networkID = false;
 
             this.finalize ();
-        }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    extendNetwork ( minerURLs ) {
-
-        for ( let url of minerURLs ) {
-            this.consensus.urls [ url ] = true;
         }
     }
 
@@ -259,6 +192,7 @@ export class NetworkStateService {
             this.accounts [ accountID ].finalize ();
         }
 
+        this.consensusService.finalize ();
         this.revocable.finalize ();
         this.storage.finalize ();
     }
@@ -281,42 +215,39 @@ export class NetworkStateService {
     //----------------------------------------------------------------//
     formatServiceURL ( base, path, query, mostCurrent ) {
 
-        const serviceURL        = url.parse ( base );
-        serviceURL.pathname     = path;
-        serviceURL.query        = _.cloneDeep ( query || {} );
-
-        if ( mostCurrent !== true ) {
-            serviceURL.query.at = this.consensus.height;
-        }
-
-        return url.format ( serviceURL );
+        return this.consensusService.formatServiceURL ( base, path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
-    @action
     getAccount ( accountID ) {
 
         return _.has ( this.accounts, accountID ) ? this.accounts [ accountID ] : false;
     }
 
     //----------------------------------------------------------------//
+    getPrimaryURL ( path, query, mostCurrent ) {
+        return this.consensusService.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
+    }
+
+    //----------------------------------------------------------------//
     getServiceURL ( path, query, mostCurrent ) {
 
-        return this.formatServiceURL ( this.nodeURL, path, query, mostCurrent );
+        debugLog ( 'getServiceURL' );
+
+        const onlineURLs = this.consensusService.onlineURLs;
+
+        if (( onlineURLs.length === 0 ) || onlineURLs.includes ( this.network.nodeURL )) {
+            debugLog ( 'getServiceURL: miners offline OR primary node online', onlineURLs.length );
+            return this.getPrimaryURL ( path, query, mostCurrent );
+        }
+        debugLog ( 'getServiceURL: picking at random' );
+        return this.consensusService.getServiceURL ( path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
     getServiceURLs ( path, query, mostCurrent ) {
 
-        const urls = [];
-
-        for ( let minerID in this.minersByID ) {
-            const miner = this.minersByID [ minerID ];
-            if ( miner.online ) {
-                urls.push ( this.formatServiceURL ( miner.url, path, query, mostCurrent ));
-            }
-        }
-        return urls;
+        return this.consensusService.getServiceURLs ( path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
@@ -354,18 +285,6 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    async networkInfoServiceLoop () {
-
-        let count = this.serviceLoopCount || 0;
-        debugLog ( 'SERVICE LOOP RUN:', count );
-        this.serviceLoopCount = count + 1;
-
-        let timeout = await this.scanNetworkAsync ();
-        debugLog ( 'Next update in...', timeout );
-        this.revocable.timeout (() => { this.networkInfoServiceLoop ()}, timeout );
-    }
-
-    //----------------------------------------------------------------//
     @action
     renameAccount ( oldName, newName ) {
 
@@ -381,77 +300,30 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    @action
-    async scanNetworkAsync () {
+    async serviceLoop () {
 
-        debugLog ( 'SCAN NETWORK' );
-        debugLog ( 'SCANNED', JSON.stringify ( this.ignoreURLs ));
+        let count = this.serviceLoopCount || 0;
+        debugLog ( 'SERVICE LOOP RUN:', count );
+        this.serviceLoopCount = count + 1;
 
-        const consensus = this.consensus;
-        const nextHeight = consensus.height + consensus.step;
+        await this.consensusService.discoverMinersAsync ();
+        await this.consensusService.updateMinersAsync ();
 
-        await this.confirmMinersAsync ();
+        let timeout = 5000;
+        if ( this.consensusService.onlineMiners.length ) {
 
-        if ( _.size ( this.minersByID ) === 0 ) {
-            debugLog ( 'No miners found.' );
-            return 5000;
-        }
-
-        const peek = async ( miner ) => {
-
-            debugLog ( 'PEEK:', miner.url, consensus.height, nextHeight );
+            await this.consensusService.updateConsensusAsync ();
 
             runInAction (() => {
-                miner.isBusy = true;
-            })
+                this.network.height         = this.height;
+                this.network.digest         = this.digest;
+                this.network.minerURLs      = this.consensusService.onlineURLs;
+            });
 
-            try {
-
-                // "peek" at the headers of the current and next block; also get a random sample of up to 16 miners.
-                const peekURL       = url.parse ( miner.url );
-                peekURL.pathname    = `/consensus/peek`;
-                peekURL.query       = { peek: nextHeight, prev: consensus.height, sampleMiners : 16 };
-
-                const height        = consensus.height;
-
-                const result = await this.revocable.fetchJSON ( url.format ( peekURL ));
-                
-                debugLog ( 'PEEK RESULT:', miner.url, result );
-
-                if ( result.genesis === this.network.genesis ) {
-                    result.miners.push ( miner.url );
-                    this.extendNetwork ( result.miners );
-                    this.updateMinerStatus ( result.minerID, height, miner.url, result.prev, result.peek );
-                }
-                else {
-                    this.updateMinerOffline ( miner.minerID );
-                }
-            }
-            catch ( error ) {
-                debugLog ( error );
-                this.updateMinerOffline ( miner.minerID );
-            }
+            timeout = this.consensusService.isCurrent ? 15000 : 1;
         }
-
-        const promises = [];
-        for ( let minerID in this.minersByID ) {
-            const miner = this.minersByID [ minerID ];
-            if ( miner.isBusy ) continue;
-
-            const promise = peek ( miner );
-
-            if (( miner.height <= 0 ) || ( miner.prev )) {
-                promises.push ( promise );
-            }
-        }
-
-        await this.revocable.all ( promises );
-
-        const onlineCount = this.updateConsensus ();
-        if ( !onlineCount ) return 5000;
-
-        const timeout = consensus.isCurrent ? 15000 : 1;
-        return timeout;
+        debugLog ( 'Next update in...', timeout );
+        this.revocable.timeout (() => { this.serviceLoop ()}, timeout );
     }
 
     //----------------------------------------------------------------//
@@ -486,148 +358,5 @@ export class NetworkStateService {
         }
 
         this.pendingAccounts [ requestID ] = pendingAccount;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    updateConsensus () {
-
-        debugLog ( 'UPDATE' );
-
-        const consensus = this.consensus;
-        const nextHeight = consensus.height + consensus.step;
-
-        let minerCount      = 0;
-        let onlineCount     = 0;
-        let currentCount    = 0;
-        let matchCount      = 0;
-        let missingCount    = 0;
-
-        let nextDigest      = false;
-
-        for ( let minerID in this.minersByID ) {
-
-            assert ( minerID );
-
-            const miner = this.minersByID [ minerID ];
-            debugLog ( 'MINER', miner.height, minerID, miner.prev, miner.peek );
-
-            // completely ignore offline miners and miners not at current height
-            if ( !miner.online ) continue;
-
-            onlineCount++;
-
-            if ( miner.height !== consensus.height ) continue;
-
-            // running count of miners we care about
-            minerCount++;
-
-            // exclude nodes missing 'prev'
-            if ( miner.prev === false ) {
-                debugLog ( 'MISSING', minerID, miner.height );
-                missingCount++;
-                continue;
-            }
-
-            currentCount++;
-
-            // 'header' may be missing if 'nextHeight' hasn't yet been mined.
-            if ( miner.peek ) {
-
-                nextDigest = nextDigest || miner.peek;
-
-                if ( miner.peek === nextDigest ) {
-                    matchCount++;
-                }
-            }
-        }
-
-        debugLog ( 'CURRENT COUNT:', currentCount, 'MATCH COUNT:', matchCount );
-
-        // no miners for current step
-        if ( minerCount === 0 ) return onlineCount;
-
-        if ( currentCount > 0 ) {
-
-            if ( matchCount === currentCount ) {
-
-                debugLog ( 'SPEED UP' );
-
-                if ( consensus.step > 2 ) {
-                    consensus.isCurrent = false;
-                }
-
-                consensus.height        = nextHeight;
-                consensus.digest        = nextDigest;
-
-                consensus.step = consensus.step ? consensus.step * 2 : 1;
-            }
-            else {
-
-                debugLog ( 'SLOW DOWN' );
-
-                // the check failed and is only one step ahead, thus the current height must be current.
-                if ( consensus.step === 1 ) {
-                    consensus.isCurrent = true;
-                }
-                consensus.step = consensus.step > 1 ? consensus.step / 2 : 1;
-            }
-        }
-        else if ( missingCount === minerCount ) {
-
-            debugLog ( 'RESET', missingCount, minerCount, JSON.stringify ( this.minersByID, null, 4 ));
-
-            // every single node has backslid; start over.
-            consensus.height        = 0;
-            consensus.digest        = this.network.genesis;
-            consensus.step          = 0;
-            consensus.isCurrent     = false;
-        }
-
-        debugLog ( 'STEP', {
-            currentCount:   currentCount,
-            matchCount:     matchCount,
-            height:         consensus.height,
-            step:           consensus.step,
-            digest:         consensus.digest,
-        });
-
-        debugLog ( 'MINERS', JSON.stringify ( this.minersByID, null, 4 ));
-
-        return onlineCount;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    updateMinerOffline ( minerID ) {
-
-        const miner         = this.minersByID [ minerID ];
-
-        debugLog ( 'UPDATE MINER OFFLINE', minerID, );
-
-        miner.isBusy        = false;
-        miner.online        = false;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    updateMinerStatus ( minerID, height, url, prev, peek ) {
-
-        const consensus     = this.consensus;
-        const miner         = this.minersByID [ minerID ];
-
-        debugLog ( 'UPDATE MINER', minerID, height, consensus.height, url, prev, peek );
-
-        miner.minerID       = minerID;
-        miner.height        = height;
-        miner.prev          = prev ? prev.digest : false;
-        miner.peek          = peek ? peek.digest : false;
-        miner.url           = url;
-        miner.isBusy        = false;
-        miner.online        = true;
-
-        if ( consensus.height === 0 ) {
-            consensus.digest = this.network.genesis;
-        }
     }
 }

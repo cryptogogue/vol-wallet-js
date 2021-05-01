@@ -12,7 +12,7 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import React                            from 'react';
 
 //const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@TRANSACTIONS:', ...args ); }
+const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
 
 //================================================================//
 // TransactionQueueService
