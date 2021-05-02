@@ -20,11 +20,14 @@ export const TransactionQueueLabel = observer (( props ) => {
         setOpen ( false );
     }
 
+    const warning           = queue.hasLostTransactions;
     const error             = queue.hasTransactionError;
     const stagedCount       = queue.stagedTransactions.length;
     const pendingCount      = queue.pendingTransactions.length;
 
     // console.log ( 'QUEUE', queue, queue.appState, queue.hasTransactionError );
+
+    // color = { error ? 'red' : ( warning ? 'orange' : ( stagedCount > 0 ? 'green' : 'grey' ))}
 
     return (
         <React.Fragment>
@@ -36,11 +39,11 @@ export const TransactionQueueLabel = observer (( props ) => {
             />
 
             <UI.Label
-                color = { error ? 'red' : ( stagedCount > 0 ? 'green' : 'grey' )}
+                color = { error && 'red' || warning && 'orange' || ( stagedCount > 0 ) && 'green' || 'grey' }
                 onClick = {() => { setOpen ( true )}}
             >
-                <UI.Icon name = { error ? 'exclamation triangle' : 'cloud upload' }/>
-                { pendingCount ? `${ stagedCount }/${ pendingCount }` : `${ stagedCount }` }
+                <UI.Icon name = {( error || warning ) && 'exclamation triangle' || 'cloud upload' }/>
+                { error && 'error' || warning && 'warning' || pendingCount && `${ stagedCount }/${ pendingCount }` || `${ stagedCount }` }
             </UI.Label>
 
         </React.Fragment>

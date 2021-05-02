@@ -14,6 +14,26 @@ import React                            from 'react';
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
 
+export const TX_STATUS = {
+
+    // undent
+    STAGED:             'STAGED',           // gray
+
+    // sent but not accepted
+    PENDING:            'PENDING',          // puple
+    
+    // sent and accepted
+    ACCEPTED:           'ACCEPTED',         // green
+};
+
+export const TX_SUB_STATUS = {
+    SENT:               'SENT',
+    MIXED:              'MIXED',            // yellow
+    REJECTED:           'REJECTED',         // red
+    STALLED:            'STALLED',          // gray
+    LOST:               'LOST',             // yellow
+};
+
 //================================================================//
 // TransactionQueueService
 //================================================================//
@@ -21,8 +41,13 @@ export class TransactionQueueService {
 
     @computed get account                   () { return this.accountService.account; }
     @computed get hasTransactionError       () { return Boolean ( this.account.transactionError ); }
-    @computed get pendingTransactions       () { return this.account.pendingTransactions; }
-    @computed get stagedTransactions        () { return this.account.stagedTransactions; }
+    @computed get transactions              () { return this.account.transactions; }
+
+    //----------------------------------------------------------------//
+    @computed get
+    acceptedTransactions () {
+        return this.transactions.filter (( elem ) => { return elem.status === TX_STATUS.ACCEPTED });
+    }
 
     //----------------------------------------------------------------//
     @computed get
@@ -31,18 +56,12 @@ export class TransactionQueueService {
         let assetsUtilized = [];
 
         // touch .length to force update if change (mobx)
-        const pendingTransactions = this.pendingTransactions;
-        if ( pendingTransactions.length ) {
-            for ( let i in pendingTransactions ) {
-                assetsUtilized = assetsUtilized.concat ( pendingTransactions [ i ].assets );
-            }
-        }
-
-        // touch .length to force update if change (mobx)
-        const stagedTransactions = this.stagedTransactions;
-        if ( stagedTransactions.length ) {
-            for ( let i in stagedTransactions ) {
-                assetsUtilized = assetsUtilized.concat ( stagedTransactions [ i ].assets );
+        const transactions = this.transactions;
+        if ( transactions.length ) {
+            for ( let transaction of transactions ) {
+                if ( transaction.status !== TX_STATUS.ACCEPTED ) {
+                    assetsUtilized = assetsUtilized.concat ( transaction.assets );
+                }
             }
         }
         return assetsUtilized;
@@ -52,7 +71,7 @@ export class TransactionQueueService {
     @computed get
     canClearTransactions () {
 
-        return (( this.stagedTransactions.length > 0 ) || ( this.pendingTransactions.length > 0 ));
+        return ( this.unacceptedTransactions.length > 0 );
     }
 
     //----------------------------------------------------------------//
@@ -73,7 +92,7 @@ export class TransactionQueueService {
 
         debugLog ( 'clearPendingTransactions' );
 
-        this.account.pendingTransactions = [];
+        this.account.transactions = this.account.transactions.filter (( elem ) => { return elem.status !== TX_STATUS.PENDING; });
         this.account.transactionError = false;
     }
 
@@ -83,13 +102,28 @@ export class TransactionQueueService {
 
         debugLog ( 'clearStagedTransactions' );
 
-        this.account.stagedTransactions = [];
+        this.account.transactions = this.account.transactions.filter (( elem ) => { return elem.status !== TX_STATUS.STAGED });
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    clearUnacceptedTransactions () {
+
+        debugLog ( 'clearUnacceptedTransactions' );
+
+        this.account.transactions = this.account.transactions.filter (( elem ) => { return elem.status === TX_STATUS.ACCEPTED });
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    clearTransactionError () {
+        this.account.transactionError = false;
     }
 
     //----------------------------------------------------------------//
     constructor ( accountService ) {
         
-        this.revocable = new RevocableContext ();
+        this.revocable          = new RevocableContext ();
         this.accountService     = accountService;
         this.networkService     = accountService.networkService;
         this.appState           = accountService.appState;
@@ -101,16 +135,9 @@ export class TransactionQueueService {
 
         let cost = 0;
 
-        const pendingTransactions = this.pendingTransactions;
-        for ( let i in pendingTransactions ) {
-            cost += pendingTransactions [ i ].cost;
+        for ( let transaction of this.unacceptedTransactions ) {
+            cost += transaction.cost;
         }
-
-        const stagedTransactions = this.stagedTransactions;
-        for ( let i in stagedTransactions ) {
-            cost += stagedTransactions [ i ].cost;
-        }
-
         return cost;
     }
 
@@ -118,14 +145,96 @@ export class TransactionQueueService {
     @action
     deleteTransactions () {
 
-        this.account.pendingTransactions = [];
-        this.account.stagedTransactions = [];
+        this.account.transactions = [];
     }
 
     //----------------------------------------------------------------//
     finalize () {
 
         this.revocable.finalize ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async findNonceAsync ( accountID ) {
+
+        debugLog ( 'findNonceAsync' );
+
+        const consensusService = this.networkService.consensusService;
+
+        const findNonceInner = async () => {
+
+            const nonces = [];
+
+            const checkNonce = async ( minerURL ) => {
+
+                debugLog ( 'checkNonce', minerURL );
+
+                try {
+                    const serviceURL = consensusService.formatServiceURL ( minerURL, `/accounts/${ accountID }`, undefined, undefined, true );
+
+                    debugLog ( 'serviceURL', serviceURL );
+
+                    const result = await this.revocable.fetchJSON ( serviceURL );
+
+                    if ( result && result.account ) {
+                        debugLog ( 'push nonce', result.account.nonce );
+                        nonces.push ( result.account.nonce );
+                    }
+                }
+                catch ( error ) {
+                    debugLog ( 'error or no response', error );
+                }
+            }
+
+            const promises = [];
+            const miners = consensusService.currentMiners;
+            debugLog ( JSON.stringify ( miners, null, 4 ));
+
+            for ( let miner of miners ) {
+                promises.push ( checkNonce ( miner.url ));
+            }
+            await this.revocable.all ( promises );
+
+            debugLog ( 'nonces', nonces );
+            debugLog ( 'promise count', promises.length );
+            debugLog ( 'every', nonces.every ( n => n === nonces [ 0 ]));
+
+            return ( nonces.length && ( nonces.length === promises.length ) && nonces.every ( n => n === nonces [ 0 ])) ? nonces [ 0 ] : false;
+        }
+
+        for ( let i = 0; i < 4; ++i ) {
+            const nonce = await findNonceInner ();
+            if ( nonce === this.accountService.nonce ) return nonce; 
+        }
+        return false;
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    hasLostTransactions () {
+        return this.lostTransactions.length > 0;
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    lostTransactions () {
+        return this.transactions.filter (( elem ) => { return (( elem.status === TX_STATUS.PENDING ) && ( elem.subStatus === TX_SUB_STATUS.LOST ))});
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    nextPendingTransaction () {
+        for ( let transaction of this.pendingTransactions ) {
+            if (( transaction.subStatus === TX_SUB_STATUS.SENT ) || ( transaction.subStatus === TX_SUB_STATUS.MIXED )) return transaction;
+        }
+        return false;
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    pendingTransactions () {
+        return this.transactions.filter (( elem ) => { return elem.status === TX_STATUS.PENDING });
     }
 
     //----------------------------------------------------------------//
@@ -138,113 +247,128 @@ export class TransactionQueueService {
 
         if ( !this.hasTransactionError ) {
 
-            let pendingTransactions = this.pendingTransactions;
-            let more = pendingTransactions.length > 0;
-            
-            while ( more && ( pendingTransactions.length > 0 )) {
+            const consensusService = this.networkService.consensusService;
+
+            let more = true;
+
+            while ( more && this.nextPendingTransaction ) {
 
                 more = false;
 
-                const memo          = pendingTransactions [ 0 ];
-                const accountName   = memo.body.maker.accountName;
+                const transaction   = this.nextPendingTransaction;
+                const accountName   = transaction.body.maker.accountName;
                 
-                debugLog ( 'processTransaction', accountName, _.cloneDeep ( memo ));
+                debugLog ( 'processTransaction', accountName, _.cloneDeep ( transaction ));
 
                 try {
 
-                    // get every active URL.
-                    const urls = this.networkService.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
-                    console.log ( 'service URLs:', urls );
+                    let responseCount = 0;
+                    let acceptedCount = 0;
+                    let rejectedCount = 0;
 
-                    const checkTransactionStatus = async ( url ) => {
+                    let rejected = [];
 
-                        debugLog ( 'processTransaction checkTransactionStatus', url );
+                    const checkTransactionStatus = async ( minerURL ) => {
+
+                        const serviceURL = consensusService.formatServiceURL ( minerURL, `/accounts/${ accountName }/transactions/${ transaction.uuid }` );
+
+                        if ( !transaction.miners.includes ( minerURL )) {
+                            debugLog ( 'submitting tx to:', minerURL );
+                            if ( await this.putTransactionAsync ( serviceURL, transaction )) {
+                                runInAction (() => {
+                                    transaction.miners.push ( minerURL );
+                                });
+                            }
+                            return;
+                        }
+
+                        debugLog ( 'processTransaction checkTransactionStatus', minerURL );
+
                         try {
-                            const response = await this.revocable.fetchJSON ( url );
+                            const response = await this.revocable.fetchJSON ( serviceURL );
                             debugLog ( 'response:', response );
-                            response.url = url;
-                            return response;
+                            
+                            responseCount++;
+
+                            switch ( response.status ) {
+
+                                case 'ACCEPTED':
+                                    acceptedCount++;
+                                    break;
+
+                                case 'REJECTED':
+                                case 'IGNORED':
+                                    rejectedCount++;
+                                    rejected.push ( response );
+                                    break;
+
+                                case 'UNKNOWN':
+                                    // re-send the transaction if not recognized.
+                                    await this.putTransactionAsync ( serviceURL, transaction );
+                                    break;
+
+                                default:
+                                    break;
+                            }
                         }
                         catch ( error ) {
                             debugLog ( 'error or no response' );
                         }
-                        return false;
                     }
 
                     // check status of transaction on them all.
                     const promises = [];
-                    for ( let url of urls ) {
-                        promises.push ( checkTransactionStatus ( url ));
+                    const miners = consensusService.currentMiners;
+                    for ( let miner of miners ) {
+                        promises.push ( checkTransactionStatus ( miner.url ));
                     }
+                    await this.revocable.all ( promises );
 
-                    // wait for them all to respond.
-                    const results = await this.revocable.all ( promises );
-
-                    let acceptedCount = 0;
-                    let rejected = [];
-
-                    // iterate through the results and tabulate.
-                    let responses = 0;
-                    for ( let result of results ) {
-
-                        if ( !result ) continue;
-                        responses++;
-
-                        debugLog ( 'processTransaction RESULT', result );
-
-                        switch ( result.status ) {
-
-                            case 'ACCEPTED':
-                                acceptedCount++;
-                                break;
-
-                            case 'REJECTED':
-                            case 'IGNORED':
-                                rejected.push ( result );
-                                break;
-
-                            case 'UNKNOWN':
-                                // re-send the transaction if not recognized.
-                                await this.putTransactionAsync ( result.url, memo );
-                                break;
-
-                            default:
-                                break;
-                        }
-                    }
-
-                    if ( responses ) {
+                    if ( responseCount ) {
 
                         // if *all* nodes have accepted the transaction, remove it from the queue and advance.
-                        if ( acceptedCount === responses ) {
+                        if ( acceptedCount === responseCount ) {
 
                             debugLog ( 'accepted' );
 
                             runInAction (() => {
+
                                 const assetsSent = _.clone ( account.assetsSent || {});
-                                for ( let assetID of memo.assets ) {
+                                for ( let assetID of transaction.assets ) {
                                     assetsSent [ assetID ] = assetID;
                                 }
-                                pendingTransactions.shift ();
-                                account.assetsSent = assetsSent;
+
+                                transaction.status      = TX_STATUS.ACCEPTED;
+                                transaction.subStatus   = TX_SUB_STATUS.SENT;
+                                transaction.miners      = false;
+                                account.assetsSent      = assetsSent;
                             });
                             
                             more = true;
                         }
 
                         // if *all* nodes have rejected the transaction, stop and report.
-                        if ( rejected.length === responses ) {
-                            runInAction (() => {
-                                account.transactionError = {
-                                    message:    rejected [ 0 ].message,
-                                    uuid:       rejected [ 0 ].uuid,
-                                }
-                            });
+                        if ( rejectedCount ) {
+
+                            if ( rejectedCount === responseCount ) {
+                                runInAction (() => {
+                                    account.transactionError = {
+                                        message:    rejected [ 0 ].message,
+                                        uuid:       rejected [ 0 ].uuid,
+                                    };
+                                    transaction.subStatus = TX_SUB_STATUS.REJECTED;
+                                });
+                            }
+                            else {
+                                runInAction (() => {
+                                    transaction.subStatus = TX_SUB_STATUS.MIXED;
+                                });
+                            }
                         }
                     }
                 }
                 catch ( error ) {
-                    console.log ( 'AN ERROR!', error );
+                    debugLog ( 'AN ERROR!', error );
                 }
             }
         }
@@ -256,31 +380,33 @@ export class TransactionQueueService {
 
         debugLog ( 'pushTransaction', transaction );
 
-        let memo = {
+        const memo = {
             type:               transaction.type,
             note:               transaction.note,
             cost:               transaction.getCost (),
             body:               transaction.body,
             assets:             transaction.assetsUtilized,
             uuid:               util.generateUUIDV4 (),
+            status:             TX_STATUS.STAGED,
+            miners:             [],
         }
 
-        this.stagedTransactions.push ( memo );
+        this.transactions.push ( memo );
         this.appState.flags.promptFirstTransaction = false;
     }
 
     //----------------------------------------------------------------//
-    async putTransactionAsync ( url, memo ) {
+    async putTransactionAsync ( serviceURL, transaction ) {
 
-        debugLog ( 'putTransactionsAsync', memo );
+        debugLog ( 'putTransactionsAsync', transaction );
 
         let result = false;
 
         try {
-            result = await this.revocable.fetchJSON ( url, {
+            result = await this.revocable.fetchJSON ( serviceURL, {
                 method :    'PUT',
                 headers :   { 'content-type': 'application/json' },
-                body :      JSON.stringify ( memo.envelope, null, 4 ),
+                body :      JSON.stringify ( transaction.envelope, null, 4 ),
             });
         }
         catch ( error ) {
@@ -292,129 +418,75 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    async putTransactionsAsync ( memo ) {
-
-        debugLog ( 'putTransactionsAsync', memo );
-
-        const accountName   = memo.body.maker.accountName;
-        const urls          = this.networkService.getServiceURLs ( `/accounts/${ accountName }/transactions/${ memo.uuid }` );
-        const headers       = { 'content-type': 'application/json' };
-        const body          = JSON.stringify ( memo.envelope, null, 4 );
-
-        const put = async ( url ) => {
-
-            debugLog ( 'processTransaction PUT transaction', url );
-            try {
-                const response = await this.revocable.fetchJSON ( url, {
-                    method :    'PUT',
-                    headers :   headers,
-                    body :      body,
-                });
-                debugLog ( 'response:', response );
-                return response;
-            }
-            catch ( error ) {
-                debugLog ( 'error or no response' );
-                debugLog ( error );
-            }
-            return false;
-        }
-
-        const promises = [];
-        for ( let url of urls ) {
-            promises.push ( put ( url ));
-        }
-
-        const results = await this.revocable.all ( promises );
-
-        let okCount = 0;
-        let responseCount = 0;
-        for ( let result of results ) {
-            if ( !result ) continue;
-            responseCount++;
-            okCount += ( result.status === 'OK' ) ? 1 : 0;
-        }
-
-        return ( okCount === responseCount );
+    @computed get
+    stagedTransactions () {
+        return this.transactions.filter (( elem ) => { return elem.status === TX_STATUS.STAGED });
     }
 
     //----------------------------------------------------------------//
     @action
-    async submitTransactions ( password ) {
+    async submitTransactionsAsync ( password, nonce ) {
 
         debugLog ( 'submitTransactions' );
 
+        const hasLostTransactions = this.hasLostTransactions;
+
+        this.tagLostTransactions ( nonce );
+
+        if ( !hasLostTransactions && this.hasLostTransactions ) return;
+
         this.appState.assertPassword ( password );
 
-        let account = this.account;
+        this.clearTransactionError ();
 
-        let stagedTransactions      = account.stagedTransactions;
-        let pendingTransactions     = account.pendingTransactions;
+        const recordBy = new Date ();
+        recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
 
-        try {
+        for ( let transaction of this.unacceptedTransactions ) {
 
-            const queue = [];
-            const currentNonce = this.accountService.nonce;
+            const hexKey            = this.account.keys [ transaction.body.maker.keyName ];
+            const privateKeyHex     = crypto.aesCipherToPlain ( hexKey.privateKeyHexAES, password );
+            const key               = await crypto.keyFromPrivateHex ( privateKeyHex );
 
-            for ( let i = 0; i < pendingTransactions.length; ++i ) {
-                queue.push ( _.cloneDeep ( pendingTransactions [ i ]));
-            }
-
-            for ( let i = 0; i < stagedTransactions.length; ++i ) {
-                queue.push ( _.cloneDeep ( stagedTransactions [ i ]));
-            }
-
-            const recordBy = new Date ();
-            recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
-
-            for ( let i = 0; i < queue.length; ++i ) {
-
-                let memo            = queue [ i ];
-                let nonce           = currentNonce + i;
-
-                let body            = memo.body;
-                body.uuid           = memo.uuid;
-                body.maxHeight      = 0; // don't use for now
-                body.recordBy       = recordBy.toISOString ();
-                body.maker.nonce    = nonce;
-
-                let envelope = {
-                    body: JSON.stringify ( body ),
-                };
-
-                const hexKey            = account.keys [ body.maker.keyName ];
-                const privateKeyHex     = crypto.aesCipherToPlain ( hexKey.privateKeyHexAES, password );
-                const key               = await crypto.keyFromPrivateHex ( privateKeyHex );
-
-                envelope.signature = {
-                    hashAlgorithm:  'SHA256',
-                    signature:      key.sign ( envelope.body ),
-                };
-
-                memo.envelope   = envelope;
-                memo.nonce      = nonce;
-            }
-
-            // submit these *before* clearing any cached transaction errors!
-            const submitted = [];
-            while ( queue.length ) {
-                const memo = queue.shift ();
-                if ( await this.putTransactionsAsync ( memo )) {
-                    submitted.push ( memo );
-                }
-                else {
-                    break;
-                }
-            }
-
-            runInAction (() => {
-                account.stagedTransactions     = queue;
-                account.pendingTransactions    = submitted;
-                account.transactionError       = false; // OK to clear the transaction error no.
-            });
+            this.submitTransactionsWithKeyAndNonce ( transaction, key, recordBy, nonce++ );
         }
-        catch ( error ) {
-             console.log ( 'AN ERROR!', error );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    submitTransactionsWithKeyAndNonce ( transaction, key, recordBy, nonce ) {
+
+        let body                = transaction.body;
+        body.uuid               = transaction.uuid;
+        body.maxHeight          = 0; // don't use for now
+        body.recordBy           = recordBy.toISOString ();
+        body.maker.nonce        = nonce;
+
+        let envelope = {
+            body: JSON.stringify ( body ),
+        };
+
+        envelope.signature = {
+            hashAlgorithm:  'SHA256',
+            signature:      key.sign ( envelope.body ),
+        };
+
+        transaction.envelope    = envelope;
+        transaction.nonce       = body.maker.nonce;
+        transaction.status      = TX_STATUS.PENDING;
+        transaction.subStatus   = TX_SUB_STATUS.SENT;
+        transaction.miners      = [];
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    tagLostTransactions ( nonce ) {
+
+        for ( let transaction of this.transactions ) {
+            if (( transaction.status === TX_STATUS.ACCEPTED ) && ( transaction.nonce >= nonce )) {
+                transaction.status      = TX_STATUS.PENDING;
+                transaction.subStatus   = TX_SUB_STATUS.LOST;
+            }
         }
     }
 
@@ -422,5 +494,11 @@ export class TransactionQueueService {
     @computed get
     transactionError () {
         return this.account.transactionError || false;
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    unacceptedTransactions () {
+        return this.transactions.filter (( elem ) => { return elem.status !== TX_STATUS.ACCEPTED });
     }
 }

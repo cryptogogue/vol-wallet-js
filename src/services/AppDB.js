@@ -17,7 +17,7 @@ export class AppDB {
     //----------------------------------------------------------------//
     constructor ( accountService, inventoryController, progressController ) {
 
-        this.db = new Dexie ( 'volwal' ); 
+        this.db = new Dexie ( 'volwal' );
         this.db.version ( 1 ).stores ({
             networks:   'networkID',
             schemas:    '[networkID+key], networkID',

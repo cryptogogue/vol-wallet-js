@@ -96,12 +96,15 @@ export class AccountStateService {
 
         const accountInit = {
             keys: {},
-            pendingTransactions: [],
-            stagedTransactions: [],
+            transactions: [],
             transactionError: false,
         };
 
         this.storage.persist ( this, 'account',     `.vol.NETWORK.${ networkService.networkID }.ACCOUNT.${ accountIndex }`,       accountInit );
+
+        if ( !this.account.transactions ) {
+            this.account.transactions = [];
+        }
 
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new InventoryController ( this.inventoryProgress );

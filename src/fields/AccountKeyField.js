@@ -45,6 +45,7 @@ export const AccountKeyField = observer (( props ) => {
             options         = { options }
             defaultValue    = { defaultKeyName }
             onChange        = { onChange }
+            disabled        = { props.disabled }
         />
     );
 });

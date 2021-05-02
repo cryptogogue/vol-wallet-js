@@ -26,13 +26,14 @@ export const PasswordInputField = observer (( props ) => {
     return (
         <UI.Form.Input
             fluid
-            icon = {( !passwordInput || passwordError ) ? 'lock' : 'unlock' }
-            iconPosition = 'left'
-            placeholder = 'Wallet Password'
-            type = 'password'
-            name = 'password'
-            value = { passwordInput }
-            onChange = {( event ) => { onPasswordInput ( event.target.value )}}
+            icon            = {( !passwordInput || passwordError ) ? 'lock' : 'unlock' }
+            iconPosition    = 'left'
+            placeholder     = 'Wallet Password'
+            type            = 'password'
+            name            = 'password'
+            value           = { passwordInput }
+            onChange        = {( event ) => { onPasswordInput ( event.target.value )}}
+            disabled        = { props.disabled }
         />
     );
 });

@@ -17,6 +17,9 @@ import * as UI                                  from 'semantic-ui-react';
 const TransactionModalBody = observer (( props ) => {
 
     const { accountService, open, onClose }                         = props;
+    const [ count, setCount ]                                       = useState ( 0 );
+    const [ busy, setBusy ]                                         = useState ( false );
+    const [ error, setError ]                                       = useState ( '' );
     const [ password, setPassword ]                                 = useState ( '' );
     const [ controllerFromDropdown, setControllerFromDropdown ]     = useState ( false );
     
@@ -30,11 +33,33 @@ const TransactionModalBody = observer (( props ) => {
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
     const submitLabel       = queue.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
 
-    const submit = () => {
+    let clearPassword = () => {
+        setPassword ( '' );
+        setCount ( count + 1 );
+    }
+
+    const stage = () => {
+        setError ( '' );
         queue.pushTransaction ( controller.transaction );
-        if ( submitEnabled ) {
-            queue.submitTransactions ( password );
+        onClose ();
+    }
+
+    const submit = async () => {
+
+        setBusy ( true );
+        setError ( '' );
+        clearPassword ();
+
+        const nonce = await queue.findNonceAsync ( accountService.accountID );
+        if ( nonce === false ) {
+            setError ( 'Could not synchronize nonce. Try again or stage transaction for later.' );
+            setBusy ( false );
+            return;
         }
+
+        queue.pushTransaction ( controller.transaction );
+        await queue.submitTransactionsAsync ( password, nonce );
+
         onClose ();
     }
 
@@ -52,40 +77,58 @@ const TransactionModalBody = observer (( props ) => {
 
                 <If condition = { showDropdown }>
                     <TransactionDropdown
-                        accountService          = { accountService }
-                        controller              = { controller }
-                        setController           = { setControllerFromDropdown }
-                        menu                    = { props.menu }
+                        accountService      = { accountService }
+                        controller          = { controller }
+                        setController       = { setControllerFromDropdown }
+                        menu                = { props.menu }
+                        disabled            = { busy }
                     />
                 </If>
                 
                 <If condition = { controller }>
-                    <TransactionForm controller = { controller }/>
+                    <TransactionForm controller = { controller } disabled = { busy }/>
+                </If>
+
+                <If condition = { error }>
+                    <UI.Message
+                        error
+                        icon                = 'exclamation triangle'
+                        header              = 'Error'
+                        content             = { error }
+                        onDismiss           = {() => { setError ( '' )}}
+                    />
                 </If>
 
                 <UI.Form>
                     <PasswordInputField
-                        appState = { appState }
-                        setPassword = { setPassword }
+                        key                 = { count }
+                        appState            = { appState }
+                        setPassword         = { setPassword }
+                        disabled            = { busy }
                     />
                 </UI.Form>
+
             </UI.Modal.Content>
 
             <UI.Modal.Actions>
+
                 <UI.Button
                     positive
-                    disabled = { submitEnabled || !stageEnabled }
-                    onClick = {() => { submit ()}}
+                    disabled            = { busy || submitEnabled || !stageEnabled }
+                    onClick             = {() => { stage ()}}
                 >
                     Stage Transaction
                 </UI.Button>
+
                 <UI.Button
                     positive
-                    disabled = { !submitEnabled }
-                    onClick = {() => { submit ()}}
+                    disabled            = { busy || !submitEnabled }
+                    onClick             = {() => { submit ()}}
+                    loading             = { busy }
                 >
                     { submitLabel }
                 </UI.Button>
+
             </UI.Modal.Actions>
         </UI.Modal>
     );

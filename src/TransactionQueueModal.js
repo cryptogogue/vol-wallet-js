@@ -16,25 +16,40 @@ export const TransactionQueueModal = observer (( props ) => {
     const appState      = accountService.appState;
     const queue         = accountService.transactionQueue;
 
-    const [ count, setCount ] = useState ( 0 );
-    const [ password, setPassword ] = useState ( '' );
+    const [ count, setCount ]           = useState ( 0 );
+    const [ busy, setBusy ]             = useState ( false );
+    const [ error, setError ]           = useState ( '' );
+    const [ password, setPassword ]     = useState ( '' );
 
     let clearPassword = () => {
         setPassword ( '' );
         setCount ( count + 1 );
     }
-    let onClickSubmit = () => {
-        queue.submitTransactions ( password );
+    
+    let onClickSubmit = async () => {        
+
+        setBusy ( true );
+        setError ( '' );
         clearPassword ();
+
+        queue.clearTransactionError ();
+
+        const nonce = await queue.findNonceAsync ( accountService.accountID );
+        setBusy ( false );
+
+        if ( nonce === false ) {
+            setError ( 'Could not synchronize nonce. Try again later.' );    
+            return;
+        }
+        await queue.submitTransactionsAsync ( password, nonce );
     };
     
     let onClickClear = () => {
-        queue.clearPendingTransactions ();
-        queue.clearStagedTransactions ();
+        queue.clearUnacceptedTransactions ();
         clearPassword ();
     };
 
-    const allTransactions = queue.pendingTransactions.concat ( queue.stagedTransactions );
+    const transactions = queue.transactions;
 
     const passwordIsValid = appState.checkPassword ( password );
     const clearEnabled = ( passwordIsValid && queue.canClearTransactions );
@@ -54,37 +69,51 @@ export const TransactionQueueModal = observer (( props ) => {
                 <If condition = { queue.hasTransactionError }>
                     <UI.Message
                         error
-                        icon = 'exclamation triangle'
-                        header = 'Transaction Error Occured'
-                        content = { queue.transactionError.message }
+                        icon            = 'exclamation triangle'
+                        header          = 'Transaction Error Occured'
+                        content         = { queue.transactionError.message }
+                        onDismiss       = {() => { queue.clearTransactionError ()}}
                     />
                 </If>
 
-                <TransactionQueueView transactions = { allTransactions } error = { queue.transactionError }/>
+                <TransactionQueueView key = { transactions.length } transactions = { transactions } error = { queue.transactionError }/>
+
+                <If condition = { error }>
+                    <UI.Message
+                        error
+                        icon            = 'exclamation triangle'
+                        header          = 'Error'
+                        content         = { error }
+                        onDismiss       = {() => { setError ( '' )}}
+                    />
+                </If>
 
                 <UI.Form>
                     <PasswordInputField
-                        key = { count }
-                        appState = { appState }
-                        setPassword = { setPassword }
+                        key             = { count }
+                        appState        = { appState }
+                        setPassword     = { setPassword }
+                        disabled        = { busy }
                     />
                 </UI.Form>
+
             </UI.Modal.Content>
 
             <UI.Modal.Actions>
 
                 <UI.Button
                     negative
-                    disabled = { !clearEnabled }
-                    onClick = { onClickClear }
+                    disabled            = { busy || !clearEnabled }
+                    onClick             = { onClickClear }
                 >
                     Clear
                 </UI.Button>
 
                 <UI.Button
                     positive
-                    disabled = { !submitEnabled }
-                    onClick = { onClickSubmit }
+                    disabled            = { busy || !submitEnabled }
+                    onClick             = { onClickSubmit }
+                    loading             = { busy }
                 >
                     Submit
                 </UI.Button>
