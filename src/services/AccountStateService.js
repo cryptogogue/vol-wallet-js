@@ -21,12 +21,12 @@ const debugLog = function ( ...args ) { console.log ( '@ACCOUNT STATE:', ...args
 //================================================================//
 export class AccountStateService {
 
-    @observable index           = false;
-    @observable accountID       = false;
-    @observable accountInfo     = false;
+    @observable accountID           = false;
+    @observable index               = false;
+    @observable hasAccountInfo      = false;
 
     @computed get accountKeyNames           () { return ( this.account && Object.keys ( this.account.keys )) || []; }
-    @computed get balance                   () { return this.accountInfo.balance - this.transactionQueue.cost; }
+    @computed get balance                   () { return this.account.balance - this.transactionQueue.cost; }
     @computed get controlKey                () { return this.account.controlKey; }
     @computed get inventoryNonce            () { return this.inventoryService.nonce; }
     @computed get isMiner                   () { return Boolean ( this.minerInfo ); }
@@ -34,7 +34,7 @@ export class AccountStateService {
     @computed get minerInfo                 () { return this.account.minerInfo || false; }
     @computed get network                   () { return this.networkService; }
     @computed get networkID                 () { return this.networkService.networkID; }
-    @computed get nonce                     () { return this.accountInfo.nonce || 0; }
+    @computed get nonce                     () { return this.account.nonce || 0; }
     @computed get serverInventoryNonce      () { return this.inventoryService.serverNonce; }
 
     //----------------------------------------------------------------//
@@ -209,12 +209,6 @@ export class AccountStateService {
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    hasAccountInfo () {
-        return ( this.accountInfo !== false );
-    }    
-
-    //----------------------------------------------------------------//
     @action
     renameAccount ( oldName, newName ) {
 
@@ -239,13 +233,12 @@ export class AccountStateService {
 
         let timeout = 5000;
 
-        await this.syncAccountInfo ();
+        await this.syncAccountInfoAsync ();
 
-        if ( this.transactionQueue.pendingTransactions.length > 0 ) {
-            debugLog ( 'PROCESS TRANSACTIONS' );
-            await this.transactionQueue.processTransactionsAsync ();
-        }
-        else {
+        debugLog ( 'PROCESS TRANSACTIONS' );
+        await this.transactionQueue.processTransactionsAsync ();
+
+        if ( this.transactionQueue.pendingTransactions.length === 0 ) {
             debugLog ( 'UPDATE INVENTORY' );
             const more = await this.inventoryService.serviceStep ();
             if ( more ) {
@@ -278,11 +271,9 @@ export class AccountStateService {
     }
 
     //----------------------------------------------------------------//
-    async syncAccountInfo () {
+    async syncAccountInfoAsync () {
 
-        debugLog ( 'syncAccountInfo', this.accountID );
-
-        if ( this.accountID.length === 0 ) return;
+        debugLog ( 'syncAccountInfoAsync', this.accountID );
 
         try {
 
@@ -302,46 +293,33 @@ export class AccountStateService {
                 debugLog ( 'account response by key:', data );
             }
 
-            const accountInfo = data.account;
-
-            if ( accountInfo ) {
-
-                debugLog ( 'accountInfo', accountInfo );
-
-                this.setAccountInfo ( accountInfo );
-                this.updateAccount (
-                    accountInfo,
-                    data.miner,
-                    data.entitlements,
-                    data.feeSchedule,
-                    data.minGratuity
-                );
-
-                if ( accountInfo.name !== accountID ) {
-                    this.renameAccount ( accountID, accountInfo.name );
-                }
+            if ( data.account ) {
+                this.updateAccount ( data );
             }
         }
         catch ( error ) {
             debugLog ( 'AN ERROR!' );
             debugLog ( error );
-            this.setAccountInfo ();
         }
     }
 
     //----------------------------------------------------------------//
     @action
-    updateAccount ( accountInfo, minerInfo, entitlements, feeSchedule, minGratuity ) {
+    updateAccount ( data ) {
 
-        let account = this.account;
-        if ( !account ) return;
+        const accountInfo       = data.account;
+        const entitlements      = data.entitlements;
+        const account           = this.account;
 
-        account.minerInfo       = minerInfo;
+        account.balance         = accountInfo.balance;
+        account.nonce           = accountInfo.nonce;
+
+        account.minerInfo       = data.miner;
         account.policy          = accountInfo.policy;
         account.bequest         = accountInfo.bequest;
         account.entitlements    = entitlements.account;
-        account.feeSchedule     = feeSchedule || {};
-        account.minGratuity     = minGratuity || 0;
+        account.feeSchedule     = data.feeSchedule || {}; // TODO: move to network
+        account.minGratuity     = data.minGratuity || 0; // TODO: move to network
 
         for ( let keyName in accountInfo.keys ) {
 
@@ -358,5 +336,11 @@ export class AccountStateService {
                 key.entitlements    = entitlements.keys [ keyName ];
             }
         }
+
+        if ( accountInfo.name !== this.accountID ) {
+            this.renameAccount ( this.accountID, accountInfo.name );
+        }
+
+        this.hasAccountInfo = true;
     }
 }

@@ -136,7 +136,7 @@ export class NetworkStateService {
             this.accounts [ accountID ] = account;
         }
 
-        this.serviceLoop ();
+        this.startServiceLoopAsync ();
     }
 
     //----------------------------------------------------------------//
@@ -300,7 +300,15 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    async serviceLoop () {
+    async startServiceLoopAsync () {
+
+        // await this.revocable.allFromMap ( this.accounts, account => account.startServiceLoopAsync ());
+
+        this.serviceLoopAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    async serviceLoopAsync () {
 
         let count = this.serviceLoopCount || 0;
         debugLog ( 'SERVICE LOOP RUN:', count );
@@ -323,7 +331,7 @@ export class NetworkStateService {
             timeout = this.consensusService.isCurrent ? 15000 : 1;
         }
         debugLog ( 'Next update in...', timeout );
-        this.revocable.timeout (() => { this.serviceLoop ()}, timeout );
+        this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
     }
 
     //----------------------------------------------------------------//

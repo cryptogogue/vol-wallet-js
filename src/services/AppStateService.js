@@ -121,12 +121,6 @@ export class AppStateService {
     //----------------------------------------------------------------//
     constructor () {
 
-        debugLog ( 'CONSTRUCT!' );
-
-        extendObservable ( this, {
-            accountInfo:            false,
-        });
-
         this.revocable          = new RevocableContext ();
         this.storage            = new StorageContext ();
         this.appDB              = new AppDB ();
@@ -148,7 +142,6 @@ export class AppStateService {
             debugLog ( 'loading network', networkID );
             this.affirmNetwork ( networkID );
         }
-        debugLog ( 'DONE!' );
     }
 
     //----------------------------------------------------------------//

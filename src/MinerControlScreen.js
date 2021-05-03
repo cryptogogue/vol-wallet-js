@@ -90,8 +90,6 @@ export const MinerControlScreen = observer (( props ) => {
 
     const controlKey        = accountService.controlKey;
 
-    console.log ( 'MINER CONTROL SCREEN' );
-
     return (
         <SingleColumnContainerView>
 

@@ -152,17 +152,27 @@ export const TransactionQueueView = observer (( props ) => {
     const getStatusView = ( transaction ) => {
 
         switch ( transaction.status ) {
+
             case TX_STATUS.STAGED:          return (<React.Fragment><UI.Icon name = 'clock' /> staged</React.Fragment>);
+            
             case TX_STATUS.PENDING: {
                 switch ( transaction.subStatus ) {
-                    case TX_SUB_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'paper plane'/> sent</React.Fragment>);
-                    case TX_SUB_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> sent</React.Fragment>);
+                    case TX_SUB_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'paper plane'/> sending</React.Fragment>);
+                    case TX_SUB_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> sending</React.Fragment>);
                     case TX_SUB_STATUS.REJECTED:    return (<React.Fragment><UI.Icon name = 'times circle'/> rejected</React.Fragment>);
                     case TX_SUB_STATUS.STALLED:     return (<React.Fragment><UI.Icon name = 'circle notched' loading/> stalled</React.Fragment>);
                     case TX_SUB_STATUS.LOST:        return (<React.Fragment><UI.Icon name = 'question'/> lost</React.Fragment>);
                 }
+                break;
             }
-            case TX_STATUS.ACCEPTED:        return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
+            
+            case TX_STATUS.ACCEPTED: {     
+                switch ( transaction.subStatus ) {
+                    case TX_SUB_STATUS.LOCAL:       return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
+                    case TX_SUB_STATUS.RESTORED:    return (<React.Fragment><UI.Icon name = 'cloud download' /> restored</React.Fragment>);
+                }
+                break;
+            }
         }
         return <React.Fragment/>;
     }
@@ -233,11 +243,27 @@ export const TransactionQueueView = observer (( props ) => {
                         }
                     />
                 </UI.Table.Cell>
-                <UI.Table.Cell collapsing>{ vol.format ( transaction.cost )}</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{( transaction.status === TX_STATUS.ACCEPTED ) ? '--' : vol.format ( transaction.cost )}</UI.Table.Cell>
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ typeof ( transaction.nonce ) === 'number' ? transaction.nonce : '--' }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{( transaction.status === TX_STATUS.PENDING ) ? transaction.miners.length : '--' }</UI.Table.Cell>
+            </UI.Table.Row>
+        );
+    }
+
+    for ( let i = pagingController.pageItemMax; i < ( pagingController.pageItemMin + PAGE_SIZE ); ++i ) {
+
+        transactionList.push (
+            <UI.Table.Row
+                key = { i }
+            >
+                <UI.Table.Cell collapsing>--</UI.Table.Cell>
+                <UI.Table.Cell collapsing>--</UI.Table.Cell>
+                <UI.Table.Cell>00000000-0000-0000-0000-000000000000</UI.Table.Cell>
+                <UI.Table.Cell collapsing>--</UI.Table.Cell>
+                <UI.Table.Cell collapsing>--</UI.Table.Cell>
+                <UI.Table.Cell collapsing>--</UI.Table.Cell>
             </UI.Table.Row>
         );
     }

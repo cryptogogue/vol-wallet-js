@@ -62,7 +62,7 @@ export const AccountDebugScreen = observer (( props ) => {
                             </UI.Header.Subheader>
 
                             <UI.Header.Subheader>
-                                { `Inventory Nonce (Node): ${ hasInfo ? appState.accountInfo.inventoryNonce : appState.inventoryNonce }` }
+                                { `Inventory Nonce (Node): ${ appState.inventoryNonce }` }
                             </UI.Header.Subheader>
                         </div>
                     </div>

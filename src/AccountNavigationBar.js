@@ -86,8 +86,6 @@ export const AccountNavigationBar = observer (( props ) => {
                         <If condition = { accountService.isMiner }>
                             <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>
                         </If>
-
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.HISTORY )} as = { Link } to = { historyURL }/>
                     </Dropdown.Menu>
                 </Dropdown>
 

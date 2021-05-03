@@ -31,19 +31,6 @@ class TransactionHistoryController {
     }
 
     //----------------------------------------------------------------//
-    async fetch ( nodeURL, options ) {
-        try {
-            const result = await this.revocable.fetchJSON ( nodeURL, options );
-            console.log ( 'RESULT:', result );
-            return ( result.method === ( options ? options.method : 'GET' ));
-        }
-        catch ( error ) {
-            console.log ( error );
-        }
-        return false;
-    }
-
-    //----------------------------------------------------------------//
     finalize () {
         this.revocable.finalize ();
     }
