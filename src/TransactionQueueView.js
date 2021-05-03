@@ -31,6 +31,9 @@ class PagingController {
     @observable pageCount       = 0;
     @observable pageMenuMin     = 0;
 
+    @computed get hasNextPage           () { return this.page < ( this.pageCount - 1 ); }
+    @computed get hasPrevPage           () { return this.page > 0; }
+
     //----------------------------------------------------------------//
     constructor ( totalItems ) {
         runInAction (() => {
@@ -45,33 +48,54 @@ class PagingController {
 
     //----------------------------------------------------------------//
     @action
-    nextPage () {
+    movePage ( advance ) {
 
-        if (( this.page + 1 ) >= this.pageCount ) return;
+        let next = this.page + advance;
 
-        this.page++;
+        next = next >= this.pageCount ? this.pageCount - 1 : next;
+        next = next < 0 ? 0 : next;
 
-        if ( this.page >= this.pageMenuMax ) {
-    
-            this.pageMenuMin += PAGE_MENU_SIZE;
+        if ( this.page === next ) return;
+        this.page = next;
 
-            const max = this.pageCount - PAGE_MENU_SIZE;
+        if ( advance > 0 ) {
 
-            if ( this.pageMenuMin > max ) {
-                this.pageMenuMin = max;
+            if ( this.page >= this.pageMenuMax - 1 ) {
+        
+                this.pageMenuMin = this.page;
+
+                const max = this.pageCount - PAGE_MENU_SIZE;
+
+                if ( this.pageMenuMin > max ) {
+                    this.pageMenuMin = max;
+                }
+            }
+        }
+        else {
+            if ( this.page < this.pageMenuMin ) {
+                this.pageMenuMin = this.page > PAGE_MENU_SIZE ? this.pageMenuMin - PAGE_MENU_SIZE : 0;
             }
         }
     }
 
     //----------------------------------------------------------------//
+    @action
+    nextPage () {
+
+        this.movePage ( 1 );
+    }
+
+    //----------------------------------------------------------------//
     @computed get
     pageItemMin () {
+
         return this.page * PAGE_SIZE;
     }
 
     //----------------------------------------------------------------//
     @computed get
     pageItemMax () {
+
         const max = this.pageItemMin + PAGE_SIZE;
         return ( max < this.totalItems ) ? max : this.totalItems;
     }
@@ -88,19 +112,14 @@ class PagingController {
     @action
     prevPage () {
 
-        if ( this.page <= 0 ) return;
-        this.page--;
-        
-        if ( this.page < this.pageMenuMin ) {
-            this.pageMenuMin = this.page > PAGE_MENU_SIZE ? this.pageMenuMin - PAGE_MENU_SIZE : 0;
-        }
+        this.movePage ( -1 );
     }
 
     //----------------------------------------------------------------//
     @action
     setPage ( page ) {
 
-        this.page = page;
+        this.movePage ( page - this.page );
     }
 }
 
@@ -128,11 +147,11 @@ const PagingMenu = observer (( props ) => {
 
     return (
         <UI.Menu floated = 'right' pagination>
-            <UI.Menu.Item as = 'a' icon onClick = {() => { controller.prevPage (); }}>
+            <UI.Menu.Item as = 'a' icon onClick = {() => { controller.prevPage (); }} disabled = { !controller.hasPrevPage }>
                 <UI.Icon name = 'chevron left' />
             </UI.Menu.Item>
             { pageItems }
-            <UI.Menu.Item as = 'a' icon onClick = {() => { controller.nextPage (); }}>
+            <UI.Menu.Item as = 'a' icon onClick = {() => { controller.nextPage (); }} disabled = { !controller.hasNextPage }>
                 <UI.Icon name = 'chevron right'/>
             </UI.Menu.Item>
         </UI.Menu>
