@@ -38,9 +38,14 @@ const TransactionModalBody = observer (( props ) => {
         setCount ( count + 1 );
     }
 
-    const stage = () => {
+    const stage = async () => {
+
+        setBusy ( true );
         setError ( '' );
-        queue.pushTransaction ( controller.transaction );
+
+        await queue.stageTransactionAsync ( controller.transaction );
+
+        setBusy ( false );
         onClose ();
     }
 
@@ -57,9 +62,10 @@ const TransactionModalBody = observer (( props ) => {
             return;
         }
 
-        queue.pushTransaction ( controller.transaction );
+        await queue.stageTransactionAsync ( controller.transaction );
         await queue.submitTransactionsAsync ( password, nonce );
 
+        setBusy ( false );
         onClose ();
     }
 

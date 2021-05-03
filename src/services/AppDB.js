@@ -17,21 +17,26 @@ export class AppDB {
     //----------------------------------------------------------------//
     constructor ( accountService, inventoryController, progressController ) {
 
+        // TODO: yes, this is gross for a lot of reasons, but it's expedient for now.
+        // TODO: break this out into a better DB structure.
+        // TODO: distribute ownership of this to the appropriate services.
+
         this.db = new Dexie ( 'volwal' );
         this.db.version ( 1 ).stores ({
-            networks:   'networkID',
-            schemas:    '[networkID+key], networkID',
-            accounts:   '[networkID+accountID], networkID',
-            assets:     '[networkID+accountID], networkID',
+            networks:       'networkID',
+            schemas:        '[networkID+key], networkID',
+            accounts:       '[networkID+accountIndex], networkID',
+            assets:         '[networkID+accountIndex], networkID',
+            transactions:   '[networkID+accountIndex]',
         });
         this.db.open ();
     }
 
     //----------------------------------------------------------------//
-    async deleteAccountAsync ( networkID, accountID ) {
+    async deleteAccountAsync ( networkID, accountIndex ) {
 
-        await this.db.accounts.where ({ networkID: networkID, accountID: accountID }).delete ();
-        await this.db.assets.where ({ networkID: networkID, accountID: accountID }).delete ();
+        await this.db.accounts.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
+        await this.db.assets.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
     }
 
     //----------------------------------------------------------------//

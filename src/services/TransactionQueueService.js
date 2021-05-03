@@ -34,14 +34,23 @@ export const TX_SUB_STATUS = {
     LOST:               'LOST',             // yellow
 };
 
+export const TX_QUEUE_STATUS = {
+    UNLOADED:           'UNLOADED',
+    LOADING:            'LOADING',
+    LOADED:             'LOADED',
+};
+
 //================================================================//
 // TransactionQueueService
 //================================================================//
 export class TransactionQueueService {
 
+    @observable status          = TX_QUEUE_STATUS.UNLOADED;
+    @observable transactions    = [];
+
     @computed get account                   () { return this.accountService.account; }
     @computed get hasTransactionError       () { return Boolean ( this.account.transactionError ); }
-    @computed get transactions              () { return this.account.transactions; }
+    @computed get isLoaded                  () { return this.status === TX_QUEUE_STATUS.LOADED; }
 
     //----------------------------------------------------------------//
     @computed get
@@ -88,30 +97,13 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    clearPendingTransactions () {
+    async clearUnacceptedTransactionsAsync () {
 
-        debugLog ( 'clearPendingTransactions' );
-
-        this.account.transactions = this.account.transactions.filter (( elem ) => { return elem.status !== TX_STATUS.PENDING; });
-        this.account.transactionError = false;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    clearStagedTransactions () {
-
-        debugLog ( 'clearStagedTransactions' );
-
-        this.account.transactions = this.account.transactions.filter (( elem ) => { return elem.status !== TX_STATUS.STAGED });
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    clearUnacceptedTransactions () {
-
-        debugLog ( 'clearUnacceptedTransactions' );
-
-        this.account.transactions = this.account.transactions.filter (( elem ) => { return elem.status === TX_STATUS.ACCEPTED });
+        await this.loadAsync ();
+        runInAction (() => {
+            this.transactions = this.transactions.filter (( elem ) => { return elem.status === TX_STATUS.ACCEPTED });
+        });
+        await this.saveAsync ();
     }
 
     //----------------------------------------------------------------//
@@ -127,6 +119,9 @@ export class TransactionQueueService {
         this.accountService     = accountService;
         this.networkService     = accountService.networkService;
         this.appState           = accountService.appState;
+
+        this.appDB              = this.appState.appDB;
+        this.db                 = this.appDB.db;
     }
 
     //----------------------------------------------------------------//
@@ -139,13 +134,6 @@ export class TransactionQueueService {
             cost += transaction.cost;
         }
         return cost;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    deleteTransactions () {
-
-        this.account.transactions = [];
     }
 
     //----------------------------------------------------------------//
@@ -217,6 +205,24 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
+    @action
+    async loadAsync () {
+
+        if ( this.status !== TX_QUEUE_STATUS.UNLOADED ) return;
+
+        debugLog ( 'LOADING TRANSACTIONS' );
+
+        const record = await this.db.transactions.get ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index });
+
+        debugLog ( 'LOADING TRANSACTIONS', record );
+
+        runInAction (() => {
+            this.transactions = record && record.transactions ? record.transactions : [];
+            this.status = TX_QUEUE_STATUS.LOADED;
+        });
+    }
+
+    //----------------------------------------------------------------//
     @computed get
     lostTransactions () {
         return this.transactions.filter (( elem ) => { return (( elem.status === TX_STATUS.PENDING ) && ( elem.subStatus === TX_SUB_STATUS.LOST ))});
@@ -242,6 +248,8 @@ export class TransactionQueueService {
     async processTransactionsAsync () {
 
         debugLog ( 'processTransactionsAsync' );
+
+        await this.loadAsync ();
 
         const account = this.account;
 
@@ -366,33 +374,14 @@ export class TransactionQueueService {
                             }
                         }
                     }
+
+                    await this.saveAsync ();
                 }
                 catch ( error ) {
                     debugLog ( 'AN ERROR!', error );
                 }
             }
         }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    pushTransaction ( transaction ) {
-
-        debugLog ( 'pushTransaction', transaction );
-
-        const memo = {
-            type:               transaction.type,
-            note:               transaction.note,
-            cost:               transaction.getCost (),
-            body:               transaction.body,
-            assets:             transaction.assetsUtilized,
-            uuid:               util.generateUUIDV4 (),
-            status:             TX_STATUS.STAGED,
-            miners:             [],
-        }
-
-        this.transactions.push ( memo );
-        this.appState.flags.promptFirstTransaction = false;
     }
 
     //----------------------------------------------------------------//
@@ -418,9 +407,43 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
+    async saveAsync () {
+
+        assert ( this.status === TX_QUEUE_STATUS.LOADED );
+        await this.db.transactions.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: _.cloneDeep ( this.transactions )});
+    }
+
+    //----------------------------------------------------------------//
     @computed get
     stagedTransactions () {
         return this.transactions.filter (( elem ) => { return elem.status === TX_STATUS.STAGED });
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async stageTransactionAsync ( transaction ) {
+
+        debugLog ( 'stageTransactionAsync', transaction );
+
+        await ( this.loadAsync ());
+
+        const memo = {
+            type:               transaction.type,
+            note:               transaction.note,
+            cost:               transaction.getCost (),
+            body:               transaction.body,
+            assets:             transaction.assetsUtilized,
+            uuid:               util.generateUUIDV4 (),
+            status:             TX_STATUS.STAGED,
+            miners:             [],
+        }
+
+        runInAction (() => {
+            this.transactions.push ( memo );
+            this.appState.flags.promptFirstTransaction = false;
+        });
+
+        await this.saveAsync ();
     }
 
     //----------------------------------------------------------------//
@@ -429,10 +452,10 @@ export class TransactionQueueService {
 
         debugLog ( 'submitTransactions' );
 
+        await this.loadAsync ();
+
         const hasLostTransactions = this.hasLostTransactions;
-
-        this.tagLostTransactions ( nonce );
-
+        await this.tagLostTransactionsAsync ( nonce );
         if ( !hasLostTransactions && this.hasLostTransactions ) return;
 
         this.appState.assertPassword ( password );
@@ -450,6 +473,8 @@ export class TransactionQueueService {
 
             this.submitTransactionsWithKeyAndNonce ( transaction, key, recordBy, nonce++ );
         }
+
+        await this.saveAsync ();
     }
 
     //----------------------------------------------------------------//
@@ -480,13 +505,24 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    tagLostTransactions ( nonce ) {
+    async tagLostTransactionsAsync ( nonce ) {
 
-        for ( let transaction of this.transactions ) {
-            if (( transaction.status === TX_STATUS.ACCEPTED ) && ( transaction.nonce >= nonce )) {
-                transaction.status      = TX_STATUS.PENDING;
-                transaction.subStatus   = TX_SUB_STATUS.LOST;
+        await this.loadAsync ();
+
+        let needsSave = false;
+
+        runInAction (() => {
+            for ( let transaction of this.transactions ) {
+                if (( transaction.status === TX_STATUS.ACCEPTED ) && ( transaction.nonce >= nonce )) {
+                    transaction.status      = TX_STATUS.PENDING;
+                    transaction.subStatus   = TX_SUB_STATUS.LOST;
+                    needsSave               = true;
+                }
             }
+        });
+
+        if ( needsSave ) {
+            await this.saveAsync ();
         }
     }
 

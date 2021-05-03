@@ -44,9 +44,11 @@ export const TransactionQueueModal = observer (( props ) => {
         await queue.submitTransactionsAsync ( password, nonce );
     };
     
-    let onClickClear = () => {
-        queue.clearUnacceptedTransactions ();
+    let onClickClear = async () => {
+        setBusy ( true );
         clearPassword ();
+        await queue.clearUnacceptedTransactionsAsync ();
+        setBusy ( false );
     };
 
     const transactions = queue.transactions;

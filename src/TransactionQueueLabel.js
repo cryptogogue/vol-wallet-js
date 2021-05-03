@@ -32,19 +32,32 @@ export const TransactionQueueLabel = observer (( props ) => {
     return (
         <React.Fragment>
 
-            <TransactionQueueModal
-                accountService  = { accountService }
-                open            = { open }
-                onClose         = { onClose }
-            />
+            <Choose>
 
-            <UI.Label
-                color = { error && 'red' || warning && 'orange' || ( stagedCount > 0 ) && 'green' || 'grey' }
-                onClick = {() => { setOpen ( true )}}
-            >
-                <UI.Icon name = {( error || warning ) && 'exclamation triangle' || 'cloud upload' }/>
-                { error && 'error' || warning && 'warning' || pendingCount && `${ stagedCount }/${ pendingCount }` || `${ stagedCount }` }
-            </UI.Label>
+                <When condition = { queue.isLoaded }>
+                    <TransactionQueueModal
+                        accountService  = { accountService }
+                        open            = { open }
+                        onClose         = { onClose }
+                    />
+
+                    <UI.Label
+                        color = { error && 'red' || warning && 'orange' || ( stagedCount > 0 ) && 'green' || 'grey' }
+                        onClick = {() => { setOpen ( true )}}
+                    >
+                        <UI.Icon name = {( error || warning ) && 'exclamation triangle' || 'cloud upload' }/>
+                        { error && 'error' || warning && 'warning' || pendingCount && `${ stagedCount }/${ pendingCount }` || `${ stagedCount }` }
+                    </UI.Label>
+                </When>
+
+                <Otherwise>
+                    <UI.Label color = 'grey'>
+                        <UI.Icon name = 'circle notched' loading />
+                        --
+                    </UI.Label>
+                </Otherwise>
+
+            </Choose>
 
         </React.Fragment>
     );

@@ -96,15 +96,10 @@ export class AccountStateService {
 
         const accountInit = {
             keys: {},
-            transactions: [],
-            transactionError: false,
+            transactionError: false, // TODO: move me to transaction queue service
         };
 
         this.storage.persist ( this, 'account',     `.vol.NETWORK.${ networkService.networkID }.ACCOUNT.${ accountIndex }`,       accountInit );
-
-        if ( !this.account.transactions ) {
-            this.account.transactions = [];
-        }
 
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new InventoryController ( this.inventoryProgress );
@@ -112,14 +107,14 @@ export class AccountStateService {
         this.inventoryTags          = new InventoryTagsController ();
         this.transactionQueue       = new TransactionQueueService ( this );
 
-        this.serviceLoop ();
+        this.startServiceLoopAsync ();
     }
 
     //----------------------------------------------------------------//
     deleteAccount () {
 
         this.storage.remove ( this, 'account' );
-        this.appState.appDB.deleteAccountAsync ( this.networkID, this.accountID );
+        this.appState.appDB.deleteAccountAsync ( this.networkID, this.index );
         this.finalize ();
     }
 
@@ -229,7 +224,16 @@ export class AccountStateService {
 
     //----------------------------------------------------------------//
     @action
-    async serviceLoop () {
+    async startServiceLoopAsync () {
+
+        debugLog ( 'START SERVICE LOOP' );
+        await this.transactionQueue.loadAsync ();
+        this.serviceLoopAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async serviceLoopAsync () {
 
         debugLog ( 'SERVICE LOOP' );
 
@@ -249,7 +253,7 @@ export class AccountStateService {
                 timeout = 1;
             }
         }
-        this.revocable.timeout (() => { this.serviceLoop ()}, timeout );
+        this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
     }
 
     //----------------------------------------------------------------//

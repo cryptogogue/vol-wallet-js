@@ -19,6 +19,7 @@ export class InventoryService {
     @observable isLoaded        = false;
 
     @computed get accountID     () { return this.accountService.accountID; }
+    @computed get accountIndex  () { return this.accountService.index; }
     @computed get networkID     () { return this.accountService.networkService.networkID; }
     @computed get nonce         () { return this.version.nonce; }
     @computed get serverNonce   () { return this.version.serverNonce; }
@@ -40,7 +41,7 @@ export class InventoryService {
         runInAction (() => {
             this.version = {
                 networkID:      this.networkID,
-                accountID:      this.accountID,
+                accountIndex:   this.accountIndex,
                 nonce:          0,
                 serverNonce:    0,
                 timestamp:      false,
@@ -94,7 +95,7 @@ export class InventoryService {
         
         if ( record ) {
             debugLog ( 'HAS CACHED ASSETS' );
-            assets = JSON.parse ( record.assets );
+            assets = record.assets;
         }
 
         runInAction (() => {
@@ -121,7 +122,7 @@ export class InventoryService {
 
                 debugLog ( 'HAS SCHEMA RECORD' );
 
-                await this.makeSchema ( JSON.parse ( schemaRecord.json ));
+                await this.makeSchema ( schemaRecord.schema );
                 if ( this.schema ) {
 
                     debugLog ( 'HAS CACHED SCHEMA' );
@@ -141,10 +142,10 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
-    async makeSchema ( json ) {
+    async makeSchema ( schemaObj ) {
 
-        const schema = new Schema ( json );
-        await schema.fetchFontsAsync ( json.fonts || {});
+        const schema = new Schema ( schemaObj );
+        await schema.fetchFontsAsync ( schemaObj.fonts || {});
         runInAction (() => {
             this.schema = schema;
         });
@@ -180,8 +181,10 @@ export class InventoryService {
         if ( Object.keys ( this.assets ).length > 0 ) {
             this.assets = {};
             this.inventory.setAssets ({});
-            await this.db.assets.where ({ networkID: this.networkID, accountID: this.accountID }).delete ();
+            await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete ();
         }
+
+        debugLog ( 'PUTTING VERSION:', JSON.stringify ( this.version, null, 4 ));
 
         await this.db.accounts.put ( _.cloneDeep ( this.version ));
     }
@@ -282,7 +285,7 @@ export class InventoryService {
             this.accountService.account.assetsSent = assetsSent;
         });
 
-        await this.db.assets.put ({ networkID: this.networkID, accountID: this.accountID, assets: JSON.stringify ( this.assets )});
+        await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assets: _.cloneDeep ( this.assets )});
 
         this.inventory.setAssets ( this.assets );
 
@@ -323,7 +326,7 @@ export class InventoryService {
         const schemaInfo = ( await this.revocable.fetchJSON ( this.networkService.getServiceURL ( '/schema' )));
 
         schemaKey = this.formatSchemaKey ( schemaInfo.schemaHash, schemaInfo.schema.version );
-        await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, json: JSON.stringify ( schemaInfo.schema )});
+        await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, schema: schemaInfo.schema });
         await this.db.networks.put ({ networkID: this.networkID, schemaKey: schemaKey });
 
         await this.makeSchema ( schemaInfo.schema );
