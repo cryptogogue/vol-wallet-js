@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TX_STATUS, TX_SUB_STATUS } from './services/TransactionQueueService';
+import { TX_STATUS, TX_SUB_STATUS } from './transactions/Transaction';
 import { Transaction }      from './transactions/Transaction';
 import * as vol             from './util/vol';
 import _                    from 'lodash';
@@ -262,7 +262,7 @@ export const TransactionQueueView = observer (( props ) => {
                         }
                     />
                 </UI.Table.Cell>
-                <UI.Table.Cell collapsing>{( transaction.status === TX_STATUS.ACCEPTED ) ? '--' : vol.format ( transaction.cost )}</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{ vol.format ( transaction.cost )}</UI.Table.Cell>
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ typeof ( transaction.nonce ) === 'number' ? transaction.nonce : '--' }</UI.Table.Cell>

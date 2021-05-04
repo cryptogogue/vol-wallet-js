@@ -1,8 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { action, computed, extendObservable, observable, observe } from 'mobx';
+import { assert, util } from 'fgc';
+import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
-//----------------------------------------------------------------//
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
+
 export const TRANSACTION_TYPE = {
     ACCOUNT_POLICY:             'ACCOUNT_POLICY',
     AFFIRM_KEY:                 'AFFIRM_KEY',
@@ -25,21 +28,73 @@ export const TRANSACTION_TYPE = {
     UPDATE_MINER_INFO:          'UPDATE_MINER_INFO',
 };
 
+export const TX_STATUS = {
+
+    // undent
+    STAGED:             'STAGED',           // gray
+
+    // sent but not accepted
+    PENDING:            'PENDING',          // puple
+    
+    // sent and accepted
+    ACCEPTED:           'ACCEPTED',         // green
+};
+
+export const TX_SUB_STATUS = {
+
+    // ACCEPTED
+    LOCAL:              'LOCAL',
+    RESTORED:           'RESTORED',
+
+    // PENDING
+    SENT:               'SENT',
+    MIXED:              'MIXED',            // yellow
+    REJECTED:           'REJECTED',         // red
+    STALLED:            'STALLED',          // gray
+    LOST:               'LOST',             // yellow
+};
+
 //================================================================//
 // Transaction
 //================================================================//
 export class Transaction {
 
-    //----------------------------------------------------------------//
-    constructor ( type, body ) {
-        
-        this.type = type;
-        body.type = type;
+    @observable status        = TX_STATUS.STAGED;
+    @observable subStatus     = TX_SUB_STATUS.LOCAL;
+    @observable assets        = [];
+    @observable miners        = [];
+    @observable envelope      = false;
 
+    @computed get accountID         () { return this.maker.accountName; }
+    @computed get cost              () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
+    @computed get maker             () { return this.body.maker; }
+    @computed get nonce             () { return this.maker.nonce; }
+    @computed get type              () { return this.body.type; }
+    @computed get uuid              () { return this.body.uuid || ''; }
+    @computed get vol               () { return this.virtual_getSendVOL ? this.virtual_getSendVOL () : 0; }
+    @computed get weight            () { return this.virtual_getWeight ? this.virtual_getWeight () : 1; }
+
+    //----------------------------------------------------------------//
+    @action
+    affirmMiner ( minerURL ) {
+
+        if ( !this.miners.includes ( minerURL )) {
+            this.miners.push ( minerURL );
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    clearMiners () {
+
+        this.miners = [];
+    }
+
+    //----------------------------------------------------------------//
+    constructor ( body ) {
+        
         extendObservable ( this, {
-            body:               body,
-            assetsUtilized:     [],
-            note:               '',
+            body:       body,
         });
     }
 
@@ -70,28 +125,36 @@ export class Transaction {
     }
 
     //----------------------------------------------------------------//
-    getCost () {
-        
-        return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.getSendVOL ();
-    }
+    static fromBody ( body ) {
 
-    //----------------------------------------------------------------//
-    getSendVOL () {
-
-        return this.virtual_getSendVOL ? this.virtual_getSendVOL () : 0;
-    }
-
-    //----------------------------------------------------------------//
-    getWeight () {
-
-        return this.virtual_getWeight ? this.virtual_getWeight () : 1;
+        switch ( body.type ) {
+            case TRANSACTION_TYPE.OPEN_ACCOUNT: return new Transaction_OpenAccount ( body );
+            case TRANSACTION_TYPE.RUN_SCRIPT:   return new Transaction_RunScript ( body );
+            case TRANSACTION_TYPE.SEND_VOL:     return new Transaction_SendVOL ( body );
+            default:                            return new Transaction ( body );
+        }
     }
 
     //----------------------------------------------------------------//
     @action
-    setAssetsUtilized ( assetsUtilized ) {
+    static load ( transaction ) {
 
-        this.assetsUtilized = assetsUtilized.splice ( 0 );
+        const loadedTransaction = Transaction.fromBody ( transaction.body );
+
+        loadedTransaction.status        = transaction.status;
+        loadedTransaction.subStatus     = transaction.subStatus;
+        loadedTransaction.assets        = transaction.assets;
+        loadedTransaction.miners        = transaction.miners;
+        loadedTransaction.envelope      = transaction.envelope;
+    
+        return loadedTransaction;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setAssetsUtilized ( assets ) {
+
+        this.assets = assets.splice ( 0 );
     }
 
     //----------------------------------------------------------------//
@@ -103,20 +166,60 @@ export class Transaction {
 
     //----------------------------------------------------------------//
     @action
+    setEnvelope ( envelope ) {
+
+        this.envelope = envelope || false;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setFees ( feeSchedule ) {
+
+        if ( feeSchedule ) {
+
+            const feeProfile = feeSchedule.transactionProfiles [ this.type ] || feeSchedule.defaultProfile || false;
+            if ( feeProfile ) {
+
+                const maker = this.body.maker;
+
+                const calculate = ( amount, percent ) => {
+                    if (( percent.factor === 0 ) || ( percent.integer === 0 )) return 0;
+                    const shareF = Math.floor ((( amount * percent.factor ) * percent.integer ) / percent.factor ); // I shot the shareF?
+                    return Math.floor ( shareF / percent.factor ) + ((( shareF % percent.factor ) == 0 ) ? 0 : 1 );
+                }
+                maker.profitShare      = calculate ( maker.gratuity, feeProfile.profitShare );
+                maker.transferTax      = calculate ( this.vol, feeProfile.transferTax );
+            }
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
     setNote ( note ) {
 
         this.note = note || '';
     }
 
     //----------------------------------------------------------------//
-    static transactionWithBody ( type, body ) {
+    @action
+    setStatus ( status, subStatus ) {
 
-        switch ( type ) {
-            case TRANSACTION_TYPE.OPEN_ACCOUNT: return new Transaction_OpenAccount ( type, body );
-            case TRANSACTION_TYPE.RUN_SCRIPT:   return new Transaction_RunScript ( type, body );
-            case TRANSACTION_TYPE.SEND_VOL:     return new Transaction_SendVOL ( type, body );
-            default:                            return new Transaction ( type, body );
-        }
+        this.status         = status;
+        this.subStatus      = subStatus;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setUUID ( uuid ) {
+
+        this.body.uuid = uuid || util.generateUUIDV4 ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setWeight ( weight ) {
+
+        this.body.weight    = weight;
     }
 };
 

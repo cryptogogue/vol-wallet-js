@@ -7,6 +7,9 @@ import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@TX FORM:', ...args ); }
+
 const SPECIAL_FIELDS = [
     'gratuity',
     'makerKeyName',
@@ -20,16 +23,12 @@ const SPECIAL_FIELDS = [
 export class TransactionFormController {
 
     @observable     standalone              = false;
-    @observable     cost                    = 0;
-    @observable     weight                  = 0;
-    @observable     suggestedGratuity       = 0;
 
-    //----------------------------------------------------------------//
-    @computed get
-    balance () {
-
-        return this.accountService.balance - this.cost;
-    }
+    @computed get balance                   () { return this.accountService.balance - this.cost; }
+    @computed get cost                      () { return this.transaction ? this.transaction.cost : 0; }
+    @computed get friendlyName              () { return Transaction.friendlyNameForType ( this.type ); }
+    @computed get suggestedGratuity         () { return this.accountService.getMinimumGratuity () * this.weight; }
+    @computed get weight                    () { return this.transaction ? this.transaction.weight : 0; }
 
     //----------------------------------------------------------------//
     constructor () {
@@ -54,13 +53,6 @@ export class TransactionFormController {
             }
         }
         return result;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    friendlyName () {
-
-        return Transaction.friendlyNameForType ( this.type );
     }
 
     //----------------------------------------------------------------//
@@ -126,31 +118,21 @@ export class TransactionFormController {
     //----------------------------------------------------------------//
     makeTransaction () {
 
-        const transaction = Transaction.transactionWithBody ( this.type, this.makeTransactionBody ());
+        debugLog ( 'makeTransaction' );
+
+        const transaction = Transaction.fromBody ( this.makeTransactionBody ());
+        transaction.setFees ( this.accountService.getFeeSchedule ());
         this.virtual_decorateTransaction ( transaction );
 
-        const feeSchedule = this.accountService.getFeeSchedule ();
-        if ( feeSchedule ) {
-            const feeProfile = feeSchedule.transactionProfiles [ this.type ] || feeSchedule.defaultProfile || false;
-            if ( feeProfile ) {
-
-                const maker = transaction.body.maker;
-
-                const calculate = ( amount, percent ) => {
-                    const shareF = Math.floor ((( amount * percent.scale ) * percent.percent ) / percent.scale ); // I shot the shareF?
-                    return Math.floor ( shareF / percent.scale ) + ((( shareF % percent.scale ) == 0 ) ? 0 : 1 );
-                }
-                maker.profitShare      = calculate ( maker.gratuity, feeProfile.profitShare );
-                maker.transferTax      = calculate ( transaction.getSendVOL (), feeProfile.transferTax );
-            }
-        }
         return transaction;
     }
 
     //----------------------------------------------------------------//
     makeTransactionBody () {
 
-        const body = this.virtual_composeBody ();
+        const body  = this.virtual_composeBody ();
+        body.type   = this.type;
+
         body.maker = {
             gratuity:           this.fields.gratuity.value,
             profitShare:        this.standalone ? this.fields.profitShare.value : 0,
@@ -167,9 +149,6 @@ export class TransactionFormController {
     validate () {
 
         this.transaction            = this.makeTransaction ();
-        this.cost                   = this.transaction.getCost ();
-        this.weight                 = this.transaction.getWeight ();
-        this.suggestedGratuity      = this.accountService.getMinimumGratuity () * this.weight;
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();

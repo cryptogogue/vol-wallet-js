@@ -318,7 +318,7 @@ export class AccountStateService {
         account.policy          = accountInfo.policy;
         account.bequest         = accountInfo.bequest;
         account.entitlements    = entitlements.account;
-        account.feeSchedule     = data.feeSchedule || {}; // TODO: move to network
+        account.feeSchedule     = data.feeSchedule || false; // TODO: move to network
         account.minGratuity     = data.minGratuity || 0; // TODO: move to network
 
         for ( let keyName in accountInfo.keys ) {

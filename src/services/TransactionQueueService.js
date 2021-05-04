@@ -4,41 +4,16 @@ import * as entitlements                from '../util/entitlements';
 import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
+import { Transaction, TX_STATUS, TX_SUB_STATUS } from '../transactions/Transaction';
 import { InventoryController }          from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
+import { action, computed, extendObservable, observable, observe, runInAction, toJS } from 'mobx';
 import React                            from 'react';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
-
-export const TX_STATUS = {
-
-    // undent
-    STAGED:             'STAGED',           // gray
-
-    // sent but not accepted
-    PENDING:            'PENDING',          // puple
-    
-    // sent and accepted
-    ACCEPTED:           'ACCEPTED',         // green
-};
-
-export const TX_SUB_STATUS = {
-
-    // ACCEPTED
-    LOCAL:              'LOCAL',
-    RESTORED:           'RESTORED',
-
-    // PENDING
-    SENT:               'SENT',
-    MIXED:              'MIXED',            // yellow
-    REJECTED:           'REJECTED',         // red
-    STALLED:            'STALLED',          // gray
-    LOST:               'LOST',             // yellow
-};
 
 export const TX_QUEUE_STATUS = {
     UNLOADED:           'UNLOADED',
@@ -127,8 +102,7 @@ export class TransactionQueueService {
         const transactionsByNonce = {};
         const stagedOrPending = [];
 
-        let transactions = _.cloneDeep ( this.transactions );
-        for ( let transaction of transactions ) {
+        for ( let transaction of this.transactions ) {
             if ( transaction.status === TX_STATUS.ACCEPTED ) {
                 transactionsByNonce [ transaction.nonce ] = transaction;
             }
@@ -145,18 +119,13 @@ export class TransactionQueueService {
             const nonce = body.maker.nonce;
             if ( transactionsByNonce [ nonce ]) continue;
 
-            transactionsByNonce [ nonce ] = {
-                nonce:              nonce,
-                type:               body.type,
-                note:               '',
-                cost:               0,
-                body:               body,
-                assets:             false,
-                uuid:               body.uuid,
-                status:             TX_STATUS.ACCEPTED,
-                subStatus:          TX_SUB_STATUS.RESTORED,
-                miners:             [],
-            }
+            const transaction = Transaction.fromBody ( body );
+            transaction.setEnvelope ( envelope );
+            transaction.setStatus ( TX_STATUS.ACCEPTED, TX_SUB_STATUS.RESTORED );
+
+            transactionsByNonce [ nonce ] = transaction;
+
+             debugLog ( 'TRANSACTION RESTORED:', transaction );
         }
 
         // transactionsByNonce is now the master list of transactions, not counting staged or pending
@@ -164,7 +133,7 @@ export class TransactionQueueService {
 
         const firstPendingNonce = ( stagedOrPending.length && stagedOrPending [ 0 ].status === TX_STATUS_PENDING ) ? stagedOrPending [ 0 ].nonce : false;
 
-        transactions = [];
+        const transactions = [];
         for ( let nonce in transactionsByNonce ) {
             const transaction = transactionsByNonce [ nonce ];
             if ( transaction.nonce === firstPendingNonce ) break;
@@ -281,6 +250,10 @@ export class TransactionQueueService {
 
         runInAction (() => {
             this.transactions = record && record.transactions ? record.transactions : [];
+
+            for ( let i in this.transactions ) {
+                this.transactions [ i ] = Transaction.load ( this.transactions [ i ]);
+            }
             this.status = TX_QUEUE_STATUS.LOADED;
         });
     }
@@ -326,7 +299,7 @@ export class TransactionQueueService {
         const consensusService  = this.networkService.consensusService;
         const accountName       = transaction.body.maker.accountName;
         
-        debugLog ( 'processTransaction', accountName, _.cloneDeep ( transaction ));
+        debugLog ( 'processTransaction', accountName, toJS ( transaction ));
 
         let responseCount = 0;
         let acceptedCount = 0;
@@ -341,9 +314,7 @@ export class TransactionQueueService {
             if ( !transaction.miners.includes ( minerURL )) {
                 debugLog ( 'submitting tx to:', minerURL );
                 if ( await this.putTransactionAsync ( serviceURL, transaction )) {
-                    runInAction (() => {
-                        transaction.miners.push ( minerURL );
-                    });
+                    transaction.affirmMiner ( minerURL );
                 }
                 return;
             }
@@ -404,10 +375,10 @@ export class TransactionQueueService {
                         assetsSent [ assetID ] = assetID;
                     }
 
-                    transaction.status      = TX_STATUS.ACCEPTED;
-                    transaction.subStatus   = TX_SUB_STATUS.LOCAL;
-                    transaction.miners      = false;
-                    account.assetsSent      = assetsSent;
+                    transaction.setStatus ( TX_STATUS.ACCEPTED, TX_SUB_STATUS.LOCAL );
+                    transaction.clearMiners ();
+
+                    account.assetsSent = assetsSent;
                 });
             }
 
@@ -419,12 +390,12 @@ export class TransactionQueueService {
                             message:    rejected [ 0 ].message,
                             uuid:       rejected [ 0 ].uuid,
                         };
-                        transaction.subStatus = TX_SUB_STATUS.REJECTED;
+                        transaction.setStatus ( TX_STATUS.REJECTED );
                     });
                 }
                 else {
                     runInAction (() => {
-                        transaction.subStatus = TX_SUB_STATUS.MIXED;
+                        transaction.setStatus ( TX_STATUS.MIXED );
                     });
                 }
             }
@@ -488,7 +459,7 @@ export class TransactionQueueService {
     async saveAsync () {
 
         assert ( this.status === TX_QUEUE_STATUS.LOADED );
-        await this.db.transactions.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: _.cloneDeep ( this.transactions )});
+        await this.db.transactions.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: toJS ( this.transactions )});
     }
 
     //----------------------------------------------------------------//
@@ -505,19 +476,11 @@ export class TransactionQueueService {
 
         await ( this.loadAsync ());
 
-        const memo = {
-            type:               transaction.type,
-            note:               transaction.note,
-            cost:               transaction.getCost (),
-            body:               transaction.body,
-            assets:             transaction.assetsUtilized,
-            uuid:               util.generateUUIDV4 (),
-            status:             TX_STATUS.STAGED,
-            miners:             [],
-        }
+        transaction.setUUID ();
+        transaction.setStatus ( TX_STATUS.STAGED );
 
         runInAction (() => {
-            this.transactions.push ( memo );
+            this.transactions.push ( transaction );
             this.appState.flags.promptFirstTransaction = false;
         });
 
@@ -560,7 +523,6 @@ export class TransactionQueueService {
     submitTransactionsWithKeyAndNonce ( transaction, key, recordBy, nonce ) {
 
         let body                = transaction.body;
-        body.uuid               = transaction.uuid;
         body.maxHeight          = 0; // don't use for now
         body.recordBy           = recordBy.toISOString ();
         body.maker.nonce        = nonce;
@@ -575,7 +537,6 @@ export class TransactionQueueService {
         };
 
         transaction.envelope    = envelope;
-        transaction.nonce       = body.maker.nonce;
         transaction.status      = TX_STATUS.PENDING;
         transaction.subStatus   = TX_SUB_STATUS.SENT;
         transaction.miners      = [];
