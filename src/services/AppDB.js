@@ -37,6 +37,7 @@ export class AppDB {
 
         await this.db.accounts.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
         await this.db.assets.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
+        await this.db.transactions.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
     }
 
     //----------------------------------------------------------------//
