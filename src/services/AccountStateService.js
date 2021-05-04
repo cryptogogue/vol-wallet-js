@@ -235,7 +235,7 @@ export class AccountStateService {
 
         await this.syncAccountInfoAsync ();
 
-        debugLog ( 'PROCESS TRANSACTIONS' );
+        await this.transactionQueue.tagLostTransactionsAsync ( this.nonce );
         await this.transactionQueue.processTransactionsAsync ();
 
         if ( this.transactionQueue.pendingTransactions.length === 0 ) {

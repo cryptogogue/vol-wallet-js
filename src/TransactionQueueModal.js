@@ -47,15 +47,15 @@ export const TransactionQueueModal = observer (( props ) => {
     let onClickClear = async () => {
         setBusy ( true );
         clearPassword ();
-        await queue.clearUnacceptedTransactionsAsync ();
+        await queue.clearUnsentTransactionsAsync ();
         setBusy ( false );
     };
 
     const transactions = queue.transactions;
 
-    const passwordIsValid = appState.checkPassword ( password );
-    const clearEnabled = ( passwordIsValid && queue.canClearTransactions );
-    const submitEnabled = ( passwordIsValid && queue.canSubmitTransactions );
+    const passwordIsValid   = appState.checkPassword ( password );
+    const clearEnabled      = ( passwordIsValid && queue.hasUnsentTransactions );
+    const submitEnabled     = ( passwordIsValid && queue.hasUnsentTransactions );
 
     return (
         <UI.Modal

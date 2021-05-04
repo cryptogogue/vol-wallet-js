@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TX_STATUS, TX_SUB_STATUS } from './transactions/Transaction';
+import { TX_STATUS }        from './transactions/Transaction';
 import { Transaction }      from './transactions/Transaction';
 import * as vol             from './util/vol';
 import _                    from 'lodash';
@@ -12,7 +12,7 @@ import { observer }         from 'mobx-react';
 import * as UI              from 'semantic-ui-react';
 
 const ROW_STATUS = {
-    POSITIVE:           'SUBMITTED',
+    POSITIVE:           'POSITIVE',
     NEUTRAL:            'NEUTRAL',
     WARNING:            'WARNING',
     ERROR:              'ERROR',
@@ -172,26 +172,20 @@ export const TransactionQueueView = observer (( props ) => {
 
         switch ( transaction.status ) {
 
-            case TX_STATUS.STAGED:          return (<React.Fragment><UI.Icon name = 'clock' /> staged</React.Fragment>);
-            
-            case TX_STATUS.PENDING: {
-                switch ( transaction.subStatus ) {
-                    case TX_SUB_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'paper plane'/> sending</React.Fragment>);
-                    case TX_SUB_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> sending</React.Fragment>);
-                    case TX_SUB_STATUS.REJECTED:    return (<React.Fragment><UI.Icon name = 'times circle'/> rejected</React.Fragment>);
-                    case TX_SUB_STATUS.STALLED:     return (<React.Fragment><UI.Icon name = 'circle notched' loading/> stalled</React.Fragment>);
-                    case TX_SUB_STATUS.LOST:        return (<React.Fragment><UI.Icon name = 'question'/> lost</React.Fragment>);
-                }
-                break;
-            }
-            
-            case TX_STATUS.ACCEPTED: {     
-                switch ( transaction.subStatus ) {
-                    case TX_SUB_STATUS.LOCAL:       return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
-                    case TX_SUB_STATUS.RESTORED:    return (<React.Fragment><UI.Icon name = 'cloud download' /> restored</React.Fragment>);
-                }
-                break;
-            }
+            // STAGED
+            case TX_STATUS.STAGED:      return (<React.Fragment><UI.Icon name = 'clock' /> staged</React.Fragment>);
+
+            // PENDING
+            case TX_STATUS.PENDING:     return (<React.Fragment><UI.Icon name = 'clock'/> pending</React.Fragment>);
+            case TX_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'paper plane'/> sent</React.Fragment>);
+            case TX_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> sent</React.Fragment>);
+            case TX_STATUS.REJECTED:    return (<React.Fragment><UI.Icon name = 'times circle'/> rejected</React.Fragment>);
+            case TX_STATUS.BLOCKED:     return (<React.Fragment><UI.Icon name = 'circle notched' loading/> blocked</React.Fragment>);
+
+            // ACCEPTED
+            case TX_STATUS.ACCEPTED:    return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
+            case TX_STATUS.RESTORED:    return (<React.Fragment><UI.Icon name = 'cloud download' /> restored</React.Fragment>);
+            case TX_STATUS.LOST:        return (<React.Fragment><UI.Icon name = 'question'/> lost</React.Fragment>);
         }
         return <React.Fragment/>;
     }
@@ -199,20 +193,27 @@ export const TransactionQueueView = observer (( props ) => {
     const getRowStatus = ( transaction ) => {
 
         switch ( transaction.status ) {
-            case TX_STATUS.STAGED:          return ROW_STATUS.NEUTRAL;
-            case TX_STATUS.PENDING: {
-                switch ( transaction.subStatus ) {
-                    
-                    case TX_SUB_STATUS.SENT:        // fallthrough
-                    case TX_SUB_STATUS.STALLED:     return ROW_STATUS.NEUTRAL;
 
-                    case TX_SUB_STATUS.MIXED:       // fallthrough
-                    case TX_SUB_STATUS.LOST:        return ROW_STATUS.WARNING;
+            // POSITIVE
+            case TX_STATUS.ACCEPTED:
+            case TX_STATUS.RESTORED:
+                return ROW_STATUS.POSITIVE;
 
-                    case TX_SUB_STATUS.REJECTED:    return ROW_STATUS.ERROR;
-                }
-            }
-            case TX_STATUS.ACCEPTED:        return ROW_STATUS.POSITIVE;
+            // NEUTRAL
+            case TX_STATUS.STAGED:
+            case TX_STATUS.PENDING:
+            case TX_STATUS.SENT:
+                return ROW_STATUS.NEUTRAL;
+
+            // WARNING
+            case TX_STATUS.MIXED:
+            case TX_STATUS.BLOCKED:
+            case TX_STATUS.LOST:
+                return ROW_STATUS.WARNING;
+
+            // ERROR
+            case TX_STATUS.REJECTED:
+                return ROW_STATUS.ERROR;
         }
         return ROW_STATUS.NEUTRAL;
     }
@@ -265,8 +266,8 @@ export const TransactionQueueView = observer (( props ) => {
                 <UI.Table.Cell collapsing>{ vol.format ( transaction.cost )}</UI.Table.Cell>
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
-                <UI.Table.Cell collapsing>{ typeof ( transaction.nonce ) === 'number' ? transaction.nonce : '--' }</UI.Table.Cell>
-                <UI.Table.Cell collapsing>{( transaction.status === TX_STATUS.PENDING ) ? transaction.miners.length : '--' }</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{( !transaction.isUnsent ) ? transaction.nonce : '--' }</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{( transaction.isPending ) ? transaction.miners.length : '--' }</UI.Table.Cell>
             </UI.Table.Row>
         );
     }

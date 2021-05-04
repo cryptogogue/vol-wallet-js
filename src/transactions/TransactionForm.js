@@ -31,15 +31,15 @@ export const TransactionBalanceHeader = observer (( props ) => {
 
     const { controller } = props;
 
-    const balance       = controller.balance > 0 ? controller.balance : 0;
-    const textColor     = balance > 0 ? 'black' : 'red';
+    const balance           = controller.balance > 0 ? controller.balance : 0;
+    const balanceColor      = balance > 0 ? 'black' : 'red';
 
     return (
         <React.Fragment>
 
             <UI.Header
                 as = 'h4'
-                style = {{ color: textColor, marginBottom: 0 }}
+                style = {{ color: balanceColor, marginBottom: 0 }}
             >
                 Balance: { vol.format ( balance )}
             </UI.Header>

@@ -30,28 +30,31 @@ export const TRANSACTION_TYPE = {
 
 export const TX_STATUS = {
 
-    // undent
-    STAGED:             'STAGED',           // gray
-
-    // sent but not accepted
-    PENDING:            'PENDING',          // puple
-    
-    // sent and accepted
-    ACCEPTED:           'ACCEPTED',         // green
-};
-
-export const TX_SUB_STATUS = {
-
-    // ACCEPTED
-    LOCAL:              'LOCAL',
-    RESTORED:           'RESTORED',
+    // STAGED
+    STAGED:             'STAGED',
 
     // PENDING
+    PENDING:            'PENDING',
     SENT:               'SENT',
-    MIXED:              'MIXED',            // yellow
-    REJECTED:           'REJECTED',         // red
-    STALLED:            'STALLED',          // gray
-    LOST:               'LOST',             // yellow
+    MIXED:              'MIXED',
+
+    // STOPPED
+    REJECTED:           'REJECTED',
+    BLOCKED:            'BLOCKED',
+
+    // ACCEPTED
+    ACCEPTED:           'ACCEPTED',
+    RESTORED:           'RESTORED',
+    LOST:               'LOST',
+};
+
+export const TX_QUEUE_STATUS = {
+
+    STAGED:             'STAGED',
+    PENDING:            'PENDING',
+    BLOCKED:            'BLOCKED',
+    ACCEPTED:           'ACCEPTED',
+    LOST:               'LOST',
 };
 
 //================================================================//
@@ -60,15 +63,19 @@ export const TX_SUB_STATUS = {
 export class Transaction {
 
     @observable status        = TX_STATUS.STAGED;
-    @observable subStatus     = TX_SUB_STATUS.LOCAL;
     @observable assets        = [];
     @observable miners        = [];
     @observable envelope      = false;
 
     @computed get accountID         () { return this.maker.accountName; }
     @computed get cost              () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
+    @computed get isAccepted        () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
+    @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
+    @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
+    @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING )); }
     @computed get maker             () { return this.body.maker; }
     @computed get nonce             () { return this.maker.nonce; }
+    @computed get queueStatus       () { return this.getQueueStatus (); }
     @computed get type              () { return this.body.type; }
     @computed get uuid              () { return this.body.uuid || ''; }
     @computed get vol               () { return this.virtual_getSendVOL ? this.virtual_getSendVOL () : 0; }
@@ -136,13 +143,44 @@ export class Transaction {
     }
 
     //----------------------------------------------------------------//
+    getQueueStatus () {
+
+        switch ( this.status ) {
+
+            // STAGED
+            case TX_STATUS.STAGED:    // isUnsent
+                return TX_QUEUE_STATUS.STAGED;
+
+            // PENDING
+            case TX_STATUS.PENDING:
+            case TX_STATUS.SENT:
+            case TX_STATUS.MIXED:
+                return TX_QUEUE_STATUS.PENDING;
+
+            // BLOCKED
+            case TX_STATUS.REJECTED:  // isUnsent
+            case TX_STATUS.BLOCKED:   // isUnsent
+                return TX_QUEUE_STATUS.BLOCKED;
+
+            // ACCEPTED
+            case TX_STATUS.ACCEPTED:
+            case TX_STATUS.RESTORED:
+                return TX_QUEUE_STATUS.ACCEPTED;
+
+            // LOST
+            case TX_STATUS.LOST:      // isUnsent
+                return TX_QUEUE_STATUS.LOST;
+        }
+        assert ( false );
+    }
+
+    //----------------------------------------------------------------//
     @action
     static load ( transaction ) {
 
         const loadedTransaction = Transaction.fromBody ( transaction.body );
 
         loadedTransaction.status        = transaction.status;
-        loadedTransaction.subStatus     = transaction.subStatus;
         loadedTransaction.assets        = transaction.assets;
         loadedTransaction.miners        = transaction.miners;
         loadedTransaction.envelope      = transaction.envelope;
@@ -202,10 +240,9 @@ export class Transaction {
 
     //----------------------------------------------------------------//
     @action
-    setStatus ( status, subStatus ) {
+    setStatus ( status ) {
 
         this.status         = status;
-        this.subStatus      = subStatus;
     }
 
     //----------------------------------------------------------------//

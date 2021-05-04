@@ -31,10 +31,9 @@ const AccountDetailsView = observer (( props ) => {
     const consensusService      = networkService.consensusService;
     const accountURL            = networkService.getPrimaryURL ( `/accounts/${ accountService.accountID }`, undefined, true );
     const hasInfo               = accountService.hasAccountInfo && networkService.isCurrent;
-    
-    debugLog ( 'HAS INFO', accountService.hasAccountInfo );
-
-    const iconName = accountService.isMiner ? 'gem outline' : 'trophy';
+    const balance               = accountService.balance;
+    const balanceColor          = balance > 0 ? 'black' : 'red';
+    const iconName              = accountService.isMiner ? 'gem outline' : 'trophy';
 
     return (
         <div style = {{ textAlign: 'center' }}>
@@ -52,7 +51,7 @@ const AccountDetailsView = observer (( props ) => {
             </UI.Header>
 
             <div style = {{ visibility: hasInfo ? 'visible' : 'hidden' }}>
-                <UI.Header as = 'h3'>
+                <UI.Header as = 'h3' style = {{ color: balanceColor }}>
                     { `Balance: ${ vol.format ( accountService.balance )}` }
                 </UI.Header>
 

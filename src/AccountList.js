@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PollingList }                      from './PollingList';
+import * as vol                             from './util/vol';
 import * as bitcoin                         from 'bitcoinjs-lib';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';
@@ -51,6 +52,11 @@ export const AccountList = observer (( props ) => {
 
     const makeItemMessageBody = ( accountID, info ) => {
 
+        const accountService    = info && info.account && networkService.getAccount ( accountID ) || false;
+
+        const balance           = accountService ? accountService.balance : 0;
+        const balanceColor      = accountService && balance <= 0 ? 'red' : undefined;
+
         return (
             <React.Fragment>
                 <UI.Message.Header
@@ -59,7 +65,9 @@ export const AccountList = observer (( props ) => {
                 >
                     { `Account: ${ accountID }` }
                 </UI.Message.Header>
-                { `Balance: ${( info && info.account ) ? info.account.balance : '--' }` }
+                <div style = {{ color: balanceColor }}>
+                    { `Balance: ${ accountService ? vol.format ( accountService.balance ) : '--' }` }
+                </div>
             </React.Fragment>
         );
     }
