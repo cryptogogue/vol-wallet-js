@@ -16,6 +16,7 @@ import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
 import React, { Fragment, useState, useRef }                from 'react';
 import JSONTree                                             from 'react-json-tree';
+import { Redirect }                                         from 'react-router';
 import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
@@ -79,6 +80,8 @@ export const MinerControlActionsSegment = observer (( props ) => {
 // MinerControlScreen
 //================================================================//
 export const MinerControlScreen = observer (( props ) => {
+
+    if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
     const [ importKeyModalOpen, setImportKeyModalOpen ] = useState ( false );
 

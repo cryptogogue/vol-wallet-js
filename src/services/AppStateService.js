@@ -2,13 +2,16 @@
 
 import { AppDB }                        from './AppDB';
 import { NetworkStateService }          from './NetworkStateService';
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SharedStorage, SingleColumnContainerView, StorageContext, util } from 'fgc';
+import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SharedStorage, SingleColumnContainerView, storage, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import React                            from 'react';
 
+export const HARD_RESET_VERSION = 1;
+
 const STORE_FLAGS               = '.vol.flags';
+const STORE_HARD_RESET_VERSION  = '.vol.hardResetVersion';
 const STORE_NETWORK_IDS         = '.vol.networkIDs';
 const STORE_PASSWORD_HASH       = '.vol.passwordHash';
 const STORE_SESSION             = '.vol.session';
@@ -138,9 +141,16 @@ export class AppStateService {
 
         console.log ( 'NETWORK IDS:', JSON.stringify ( this.networkIDs ));
 
-        for ( let networkID of this.networkIDs ) {
-            debugLog ( 'loading network', networkID );
-            this.affirmNetwork ( networkID );
+        if ( AppStateService.needsReset ()) return;
+
+        try {
+
+            for ( let networkID of this.networkIDs ) {
+                debugLog ( 'loading network', networkID );
+                this.affirmNetwork ( networkID );
+            }
+        }
+        catch ( error ) {
         }
     }
 
@@ -196,7 +206,7 @@ export class AppStateService {
     //----------------------------------------------------------------//
     @computed get
     isLoggedIn () {
-        return ( this.session.isLoggedIn === true );
+        return ( this.hasUser && ( this.session.isLoggedIn === true ));
     }
 
     //----------------------------------------------------------------//
@@ -209,6 +219,20 @@ export class AppStateService {
     //----------------------------------------------------------------//
     makeSession ( isLoggedIn ) {
         return { isLoggedIn: isLoggedIn };
+    }
+
+    //----------------------------------------------------------------//
+    static needsReset () {
+
+        const passwordHash      = storage.getItem ( STORE_PASSWORD_HASH );
+        let hardResetVersion    = storage.getItem ( STORE_HARD_RESET_VERSION );
+
+        hardResetVersion = hardResetVersion ? hardResetVersion.version : false;
+
+        debugLog ( 'STORED HARD RESET VESION:', hardResetVersion );
+        debugLog ( 'HARD RESET VESION:', HARD_RESET_VERSION );
+
+        return ( passwordHash && passwordHash.length && ( hardResetVersion !== HARD_RESET_VERSION ));
     }
 
     //----------------------------------------------------------------//
@@ -227,6 +251,8 @@ export class AppStateService {
         assert ( passwordHash.length > 0 );
 
         this.passwordHash = passwordHash;
+
+        storage.setItem ( STORE_HARD_RESET_VERSION, { version: HARD_RESET_VERSION });
 
         if ( login ) {
             this.login ( password );

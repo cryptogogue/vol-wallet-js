@@ -1,5 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { ResetController }                  from './ResetController';
+import { hooks }                            from 'fgc';
+import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import { Redirect }                         from 'react-router';
@@ -14,19 +17,29 @@ const debugLog = function ( ...args ) { console.log ( '@NAV:', ...args ); }
 //================================================================//
 export const NavigationBar = observer (( props ) => {
 
-    const params = useParams ();
+    const params            = useParams ();
 
-    const networkID = params.networkID || '';
-    const accountID = params.accountID || '';
+    const networkID         = params.networkID || '';
+    const accountID         = params.accountID || '';
 
-    const accountTab = props.accountTab || '';
-    const networkTab = props.networkTab || '';
+    const accountTab        = props.accountTab || '';
+    const networkTab        = props.networkTab || '';
 
     const networkService    = props.networkService || false;
     const appState          = props.appState || networkService.appState;
 
-    if ( !appState.hasUser )      return (<Redirect to = { '/' }/>);
-    if ( !appState.isLoggedIn )   return (<Redirect to = { '/' }/>);
+    const checkForReset = () => {
+
+        if ( !( appState.hasUser && appState.isLoggedIn )) return true;
+        if ( networkID && networkService && !appState.hasNetwork ( networkID )) return true;
+        if ( accountID && networkService && !networkService.hasAccount ( accountID )) return true;
+
+        return false;
+    }
+
+    const resetController   = hooks.useFinalizable (() => new ResetController ( appState, checkForReset ));
+
+    if ( checkForReset () || resetController.reset || !appState.isLoggedIn ) return (<Redirect to = { '/' }/>);
 
     const networkDropdown = [];
     const accountDropdown = [];

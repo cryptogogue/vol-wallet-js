@@ -12,7 +12,7 @@ import url                              from 'url';
 import { vol }                          from 'vol';
 
 //const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@CONSENSUS SERVICE:', ...args ); }
+const debugLog = function ( ...args ) { console.log ( '@CONSENSUS:', ...args ); }
 
 //================================================================//
 // ConsensusService
@@ -25,7 +25,7 @@ export class ConsensusService {
     @observable identity;
     @observable height;
 
-    @observable currentDigest;
+    @observable digest;
     @observable step;
     @observable isCurrent;
 
@@ -48,13 +48,12 @@ export class ConsensusService {
 
         debugLog ( 'AFFIRMING MINER', minerID, nodeURL );
 
-        miner.minerID   = minerID;
-        miner.height    = -1;
-        miner.prev      = false;
-        miner.peek      = false;
-        miner.url       = nodeURL;
-        miner.isBusy    = false;
-        miner.online    = true;
+        miner.minerID           = minerID;
+        miner.digest            = false;        // digest at current consensus height (prev)
+        miner.nextDigest        = false;        // digest at next consensus height (peek)
+        miner.url               = nodeURL;
+        miner.isBusy            = false;
+        miner.online            = true;
 
         this.minersByID [ minerID ] = miner;
     }
@@ -73,7 +72,7 @@ export class ConsensusService {
         const miners = [];
 
         for ( let miner of this.onlineMiners ) {
-            if (( miner.prev !== false ) && ( miner.height === this.height )) {
+            if ( miner.digest === this.digest ) {
                 miners.push ( miner );
             }
         }
@@ -277,8 +276,9 @@ export class ConsensusService {
         this.identity           = '';
         this.height             = 0;
 
-        this.currentDigest      = false;
+        this.digest             = false;
         this.step               = 0;
+        this.skip               = false;
         this.isCurrent          = false;
 
         this.minersByID         = {};
@@ -291,12 +291,14 @@ export class ConsensusService {
     //----------------------------------------------------------------//
     async serviceLoop () {
 
+        assert ( false );
+
         await this.discoverMinersAsync ();
         await this.updateMinersAsync ();
 
         let timeout = 5000;
         if ( this.onlineMiners.length ) {
-            await this.updateConsensusAsync ();
+            await this.updateConsensus ();
             timeout = this.isCurrent ? 15000 : 1;
         }
         debugLog ( 'Next update in...', timeout );
@@ -317,147 +319,149 @@ export class ConsensusService {
 
     //----------------------------------------------------------------//
     @action
-    setMinerStatus ( minerID, height, url, prev, peek ) {
+    setMinerStatus ( minerID, url, prev, peek ) {
 
-        const miner         = this.minersByID [ minerID ];
+        const miner             = this.minersByID [ minerID ];
 
-        debugLog ( 'UPDATE MINER', minerID, height, this.height, url, prev, peek );
-
-        miner.minerID       = minerID;
-        miner.height        = height;
-        miner.prev          = prev ? prev.digest : false;
-        miner.peek          = peek ? peek.digest : false;
-        miner.url           = url;
-        miner.isBusy        = false;
-        miner.online        = true;
+        miner.minerID           = minerID;
+        miner.digest            = prev ? prev.digest : false;
+        miner.nextDigest        = peek ? peek.digest : false;
+        miner.url               = url;
+        miner.isBusy            = false;
+        miner.online            = true;
     }
 
     //----------------------------------------------------------------//
     @action
-    updateConsensusAsync () {
+    updateConsensus () {
 
-        debugLog ( 'UPDATE' );
-
-        const nextHeight = this.height + this.step;
-
-        let minerCount      = 0;
-        let currentCount    = 0;
-        let matchCount      = 0;
-        let missingCount    = 0;
-
-        let nextDigest      = false;
-
-        const currentMiners = [];
-
-        for ( let minerID in this.minersByID ) {
-
-            assert ( minerID );
-
-            const miner = this.minersByID [ minerID ];
-            debugLog ( 'MINER', miner.height, minerID, miner.prev, miner.peek );
-
-            // completely ignore offline miners and miners not at current height
-            if ( !miner.online ) continue;
-            if ( miner.height !== this.height ) continue;
-
-            // running count of miners we care about
-            minerCount++;
-
-            // exclude nodes missing 'prev'
-            if ( miner.prev === false ) {
-                debugLog ( 'MISSING', minerID, miner.height );
-                missingCount++;
-                continue;
-            }
-
-            currentCount++;
-            currentMiners.push ( miner );
-
-            // 'header' may be missing if 'nextHeight' hasn't yet been mined.
-            if ( miner.peek ) {
-
-                nextDigest = nextDigest || miner.peek;
-
-                if ( miner.peek === nextDigest ) {
-                    matchCount++;
-                }
+        // see if we need a rollback (all online miners have wrong 'current' digest
+        let rollbackCount = 0;
+        for ( let miner of this.onlineMiners ) {
+            if ( miner.digest !== this.digest ) {
+                rollbackCount++;
             }
         }
 
-        debugLog ( 'CURRENT COUNT:', currentCount, 'MATCH COUNT:', matchCount );
+        if ( rollbackCount == this.onlineMiners.length ) {
 
-        // no miners for current step
-        if ( minerCount === 0 ) return;
-
-        if ( currentCount > 0 ) {
-
-            if ( matchCount === currentCount ) {
-
-                debugLog ( 'SPEED UP' );
-
-                if ( this.step > 2 ) {
-                    this.isCurrent = false;
-                }
-
-                this.height     = nextHeight;
-                this.digest     = nextDigest;
-
-                this.step = this.step ? this.step * 2 : 1;
-
-                for ( let miner of currentMiners ) {
-                    miner.height = this.height;
-                }
-            }
-            else {
-
-                debugLog ( 'SLOW DOWN' );
-
-                // the check failed and is only one step ahead, thus the current height must be current.
-                if ( this.step === 1 ) {
-                    this.isCurrent = true;
-                }
-                this.step = this.step > 1 ? this.step / 2 : 1;
-            }
-        }
-        else if ( missingCount === minerCount ) {
-
-            debugLog ( 'RESET', missingCount, minerCount, JSON.stringify ( this.minersByID, null, 4 ));
+            debugLog ( 'CONTROL: ************** ROLLBACK **************' );
 
             // every single node has backslid; start over.
             this.height         = 0;
             this.digest         = this.genesis;
             this.step           = 0;
             this.isCurrent      = false;
+
+            return;
         }
 
-        debugLog ( 'STEP', {
-            currentCount:   currentCount,
-            matchCount:     matchCount,
-            height:         this.height,
-            step:           this.step,
-            digest:         this.digest,
-        });
+        const minerCount = this.currentMiners.length;
+        if ( !minerCount ) return; // no online miners
 
-        debugLog ( 'MINERS', JSON.stringify ( this.minersByID, null, 4 ));
+        const nextHeight = this.height + this.step;
+
+        // build a histogram of digest at next height; also get the rollback count
+        const histogram = {}; // counts by digest
+        for ( let miner of this.currentMiners ) {
+
+            if ( miner.nextDigest ) {
+                const count = histogram [ miner.nextDigest ] || 0;
+                histogram [ miner.nextDigest ] = count + 1;
+            }
+        }
+
+        let bestCount = 0;
+        let bestDigest = false;
+
+        for ( let digest in histogram ) {
+            const count = histogram [ digest ];
+            if ( bestCount < count ) {
+                bestCount       = count;
+                bestDigest      = digest;
+            }
+        }
+
+        const bestConsensus = bestCount / minerCount;
+
+        const accept = () => {
+
+            this.isCurrent = false;
+
+            const minersByID = _.cloneDeep ( this.minersByID );
+
+            for ( let minerID in minersByID ) {
+                const miner = minersByID [ minerID ];
+                if ( miner.nextDigest === bestDigest ) {
+                    miner.digest = bestDigest;
+                }
+            }
+
+            this.minersByID = minersByID;
+
+            this.height     = nextHeight;
+            this.digest     = bestDigest;
+        }
+
+        if ( this.skip ) {
+
+            if ( this.skip === bestConsensus ) {
+                accept ();
+                debugLog ( `CONTROL: SKIPPED: ${ this.height } --> ${ nextHeight }` );
+            }
+
+            this.isCurrent = false;
+            this.step = 1;
+            this.skip = false;
+        }
+        else {
+
+            this.skip = false;
+
+            if ( bestConsensus === 1.0 ) {
+
+                accept ();
+                this.step = this.step > 0 ? this.step * 2 : 1;
+
+                debugLog ( 'CONTROL: SPEED UP:', this.step );
+            }
+            else if (( this.step === 1 ) && ( bestConsensus > 0.5 )) {
+
+                this.isCurrent = false;
+
+                this.isCurrent      = false;
+                this.checkCurrent   = false;
+
+                this.step = 10;
+                this.skip = bestConsensus;
+
+                debugLog ( 'CONTROL: SKIP:', this.step );
+            }
+            else {
+
+                this.isCurrent = ( this.step === 1 );
+
+                this.step = this.step > 1 ? this.step / 2 : 1;
+
+                debugLog ( 'CONTROL: SLOW DOWN:', this.step );
+            }
+        }   
     }
 
     //----------------------------------------------------------------//
     @action
     async updateMinersAsync () {
 
-        debugLog ( 'SCAN MINERS' );
-        debugLog ( 'SCANNED', JSON.stringify ( this.ignoreURLs ));
+        debugLog ( 'SYNC: MINERS: SCAN MINERS' );
 
         const nextHeight = this.height + this.step;
 
         if ( _.size ( this.minersByID ) === 0 ) {
-            debugLog ( 'No miners found.' );
+            debugLog ( 'SYNC: No miners found.' );
             return 5000;
         }
 
         const peek = async ( miner ) => {
-
-            debugLog ( 'PEEK:', miner.url, this.height, nextHeight );
 
             runInAction (() => {
                 miner.isBusy = true;
@@ -466,27 +470,28 @@ export class ConsensusService {
             try {
 
                 // "peek" at the headers of the current and next block; also get a random sample of up to 16 miners.
-                const peekURL       = url.parse ( miner.url );
+                let peekURL         = url.parse ( miner.url );
                 peekURL.pathname    = `/consensus/peek`;
                 peekURL.query       = { peek: nextHeight, prev: this.height, sampleMiners : 16 };
+                peekURL             = url.format ( peekURL );
 
-                const height        = this.height;
+                debugLog ( 'SYNC: PEEK:', peekURL );
 
                 const result = await this.revocable.fetchJSON ( url.format ( peekURL ));
                 
-                debugLog ( 'PEEK RESULT:', miner.url, result );
+                debugLog ( 'SYNC: PEEK RESULT:', result );
 
                 if ( result.genesis === this.genesis ) {
                     result.miners.push ( miner.url );
                     this.extendNetwork ( result.miners );
-                    this.setMinerStatus ( result.minerID, height, miner.url, result.prev, result.peek );
+                    this.setMinerStatus ( result.minerID, miner.url, result.prev, result.peek );
                 }
                 else {
                     this.setMinerOffline ( miner.minerID );
                 }
             }
             catch ( error ) {
-                debugLog ( error );
+                debugLog ( 'SYNC: MINERS:', error );
                 this.setMinerOffline ( miner.minerID );
             }
         }
@@ -496,13 +501,11 @@ export class ConsensusService {
             const miner = this.minersByID [ minerID ];
             if ( miner.isBusy ) continue;
 
-            const promise = peek ( miner );
-
-            if (( miner.height <= 0 ) || ( miner.prev )) {
-                promises.push ( promise );
-            }
+            promises.push ( peek ( miner ));
         }
 
         await this.revocable.all ( promises );
+
+        debugLog ( 'SYNC: UPDATED MINERS:', JSON.stringify ( this.minersByID, null, 4 ));
     }
 }

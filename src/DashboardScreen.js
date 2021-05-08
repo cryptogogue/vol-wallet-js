@@ -12,6 +12,7 @@ import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState, useRef }          from 'react';
+import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
@@ -48,6 +49,8 @@ export const NetworkList = observer (( props ) => {
     }
 
     const makeItemMessageBody = ( networkID, info ) => {
+
+        console.log ( 'MAKE ITEM MESSAGE BODY:', networkID, info );
 
         const networkService = appState.networksByID [ networkID ];
 
@@ -139,6 +142,8 @@ export const DashboardActionsSegment = observer (( props ) => {
 // DashboardScreen
 //================================================================//
 export const DashboardScreen = observer (( props ) => {
+
+    if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
     const appState      = hooks.useFinalizable (() => new AppStateService ());
 

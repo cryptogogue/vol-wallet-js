@@ -237,7 +237,7 @@ export class NetworkStateService {
         const onlineURLs = this.consensusService.onlineURLs;
 
         if (( onlineURLs.length === 0 ) || onlineURLs.includes ( this.network.nodeURL )) {
-            debugLog ( 'getServiceURL: miners offline OR primary node online', onlineURLs.length );
+            debugLog ( 'getServiceURL: all miners are offline OR primary node is online', onlineURLs.length );
             return this.getPrimaryURL ( path, query, mostCurrent );
         }
         debugLog ( 'getServiceURL: picking at random' );
@@ -320,7 +320,7 @@ export class NetworkStateService {
         let timeout = 5000;
         if ( this.consensusService.onlineMiners.length ) {
 
-            await this.consensusService.updateConsensusAsync ();
+            await this.consensusService.updateConsensus ();
 
             runInAction (() => {
                 this.network.height         = this.height;
@@ -329,6 +329,7 @@ export class NetworkStateService {
             });
 
             timeout = this.consensusService.isCurrent ? 15000 : 1;
+            // timeout = this.consensusService.isCurrent ? 1000 : 1000;
         }
         debugLog ( 'Next update in...', timeout );
         this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );

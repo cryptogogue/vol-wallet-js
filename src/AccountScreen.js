@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppStateService }                  from './services/AppStateService';
 import { AccountStateService }              from './services/AccountStateService';
+import { AppStateService }                  from './services/AppStateService';
 import { TransactionModal }                 from './transactions/TransactionModal';
 import * as vol                             from './util/vol';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
@@ -124,6 +124,8 @@ export const AccountActionsSegment = observer (( props ) => {
 // AccountScreen
 //================================================================//
 export const AccountScreen = observer (( props ) => {
+
+    if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
     console.log ( 'RENDER ACCOUNT SCREEN' );
 

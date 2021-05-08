@@ -28,6 +28,8 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 export const InventoryScreen = observer (( props ) => {
 
+    if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
+
     const [ batchSelect, setBatchSelect ]           = useState ( false );
     const [ zoomedAssetID, setZoomedAssetID ]       = useState ( false );
     const [ assetsUtilized, setAssetsUtilized ]     = useState ( false );

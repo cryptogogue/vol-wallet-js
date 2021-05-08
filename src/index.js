@@ -19,6 +19,7 @@ import { DashboardScreen }              from './DashboardScreen';
 import { DebugHTTPScreen }              from './debug/DebugHTTPScreen';
 import { DebugNetMonScreen }            from './debug/DebugNetMonScreen';
 import { DebugNetStatScreen }           from './debug/DebugNetStatScreen';
+import { DiagnosticAndRecoveryScreen }  from './DiagnosticAndRecoveryScreen';
 import { InventoryScreen }              from './InventoryScreen';
 import { KeysScreen }                   from './KeysScreen';
 import { KeyUtilScreen }                from './KeyUtilScreen';
@@ -29,6 +30,7 @@ import { SchemaUtilScreen }             from './SchemaUtilScreen';
 import { TransactionHistoryScreen }     from './TransactionHistoryScreen';
 import { TransactionUtilScreen }        from './TransactionUtilScreen';
 import registerServiceWorker            from './util/registerServiceWorker';
+import { WalletResetScreen }            from 'WalletResetScreen';
 import React                            from 'react';
 import { useClearCache }                from "react-clear-cache";
 import ReactDOM                         from 'react-dom';
@@ -57,8 +59,10 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/history"        component = { TransactionHistoryScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
+                <Route exact path = "/util/diagnostic"          component = { DiagnosticAndRecoveryScreen }/>
                 <Route exact path = "/util/key"                 component = { KeyUtilScreen }/>
                 <Route exact path = "/util/miner"               component = { MinerInfoUtilScreen }/>
+                <Route exact path = "/util/reset"               component = { WalletResetScreen }/>
                 <Route exact path = "/util/schema"              component = { SchemaUtilScreen }/>
                 <Route exact path = "/util/transaction"         component = { TransactionUtilScreen }/>
 

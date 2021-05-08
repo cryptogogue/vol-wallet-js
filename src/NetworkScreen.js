@@ -11,6 +11,7 @@ import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util
 import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState, useRef }          from 'react';
+import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
@@ -79,6 +80,8 @@ export const NetworkActionsSegment = observer (( props ) => {
 // NetworkScreen
 //================================================================//
 export const NetworkScreen = observer (( props ) => {
+
+    if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const appState                  = hooks.useFinalizable (() => new AppStateService ());

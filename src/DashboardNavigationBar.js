@@ -50,7 +50,6 @@ export const DashboardNavigationBar = observer (( props ) => {
                     <Dropdown
                         item
                         icon = "settings"
-                        disabled = { appState.flags.promptFirstNetwork }
                     >
                         <Dropdown.Menu>
                             <Dropdown.Item icon = "wrench"          text = 'Schema Util'            as = { Link } to = { `/util/schema` }/>
