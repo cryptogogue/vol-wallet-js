@@ -329,7 +329,6 @@ export class NetworkStateService {
             });
 
             timeout = this.consensusService.isCurrent ? 15000 : 1;
-            // timeout = this.consensusService.isCurrent ? 1000 : 1000;
         }
         debugLog ( 'Next update in...', timeout );
         this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );

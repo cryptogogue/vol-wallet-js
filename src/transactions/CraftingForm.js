@@ -21,7 +21,7 @@ const InvocationAssetParamRow = observer (( props ) => {
     const assetID = invocation.assetParams [ paramName ] || '';
 
     if ( assetID ) {
-        const asset = controller.inventory.assets [ assetID ];
+        const asset = controller.inventory.rawAssets [ assetID ];
         name = controller.inventory.schema.getFriendlyNameForAsset ( asset );
     }
 

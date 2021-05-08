@@ -91,7 +91,7 @@ export class InventoryService {
 
         let assets = {};
         
-        const record = await this.db.assets.get ({ networkID: this.networkID, accountID: this.accountID });
+        const record = await this.db.assets.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
         
         if ( record ) {
             debugLog ( 'HAS CACHED ASSETS' );
@@ -112,7 +112,7 @@ export class InventoryService {
         
         this.progress.setLoading ( true );
 
-        const version = await this.db.accounts.get ({ networkID: this.networkID, accountID: this.accountID });
+        const version = await this.db.accounts.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
         if ( version ) {
 
             debugLog ( 'LOADING SCHEMA AND INVENTORY FROM DB' );

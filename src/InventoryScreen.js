@@ -137,7 +137,7 @@ export const InventoryScreen = observer (( props ) => {
                             />
                             <div style = {{ flex: 1 }}>
                                 <InventoryView
-                                    key         = { `${ controller.sortMode } ${ controller.zoom }` }
+                                    key         = { `${ inventoryService.nonce } ${ controller.sortMode } ${ controller.zoom }` }
                                     controller  = { controller }
                                     onSelect    = { onAssetSelect }
                                     onMagnify   = { batchSelect ? undefined : onAssetMagnify }
