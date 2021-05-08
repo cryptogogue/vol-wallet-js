@@ -50,7 +50,7 @@ export const InventoryScreen = observer (( props ) => {
         return tags.isAssetVisible ( assetID ) && !( accountService.assetsUtilized.includes ( assetID ) || inventoryService.isNew ( assetID ));
     });
 
-    const controller                = hooks.useFinalizable (() => new InventoryViewController ( viewFilter ));
+    const controller                = hooks.useFinalizable (() => new InventoryViewController ( viewFilter, undefined, true ));
     const printController           = hooks.useFinalizable (() => new InventoryPrintController ( controller ));
 
     const upgradesFilter = new InventoryFilter ( inventory, ( assetID ) => {
