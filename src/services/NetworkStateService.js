@@ -20,10 +20,12 @@ const debugLog = function ( ...args ) { console.log ( '@NETWORK SERVICE:', ...ar
 //================================================================//
 export class NetworkStateService {
 
-    @observable accounts        = {};
-    @observable networkID       = '';
-    @observable minersByID      = {};
-    @observable ignoreURLs      = {};
+    @observable accounts                = {};
+    @observable consensusService        = false;
+    @observable ignoreURLs              = {};
+    @observable minersByID              = {};
+    @observable networkID               = '';
+    @observable serviceCountdown        = 1.0;
 
     @computed get accountIndices        () { return this.network.accountIndices; }
     @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
@@ -115,16 +117,12 @@ export class NetworkStateService {
             assert ( this.network && this.network.identity && this.network.genesis );
 
             consensusService = new ConsensusService ();
-            consensusService.initialize (
-                this.network.identity,
-                this.network.genesis,
-                this.network.height,
-                this.network.digest,
-                this.network.minerURLs.concat ([ this.network.nodeURL ])
-            );
+            consensusService.load ( this.network );
         }
 
-        this.consensusService = consensusService;
+        runInAction (() => {
+            this.consensusService = consensusService;
+        });
 
         for ( let accountIndex of this.accountIndices ) {
 
@@ -300,6 +298,35 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
+    @action
+    async resetConsensus () {
+
+        this.revocable.revokeAll ();
+        this.consensusService.finalize ();
+
+        this.network.height = 0;
+        this.network.digest = this.network.genesis;
+        this.network.minerURLs = [];
+        
+        this.consensusService = new ConsensusService ();
+        this.consensusService.load ( this.network );
+        this.startServiceLoopAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    saveConsensusState () {
+
+        this.consensusService.save ( this.network );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setServiceCountdown ( countdown ) {
+        this.serviceCountdown = countdown;
+    }
+
+    //----------------------------------------------------------------//
     async startServiceLoopAsync () {
 
         // await this.revocable.allFromMap ( this.accounts, account => account.startServiceLoopAsync ());
@@ -309,6 +336,13 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     async serviceLoopAsync () {
+
+        if ( this.serviceCountdownTimeout ) {
+            this.revocable.revoke ( this.serviceCountdownTimeout );
+            this.serviceCountdownTimeout = false;
+        }
+
+        this.setServiceCountdown ( 0 );
 
         let count = this.serviceLoopCount || 0;
         debugLog ( 'SERVICE LOOP RUN:', count );
@@ -321,15 +355,27 @@ export class NetworkStateService {
         if ( this.consensusService.onlineMiners.length ) {
 
             await this.consensusService.updateConsensus ();
-
-            runInAction (() => {
-                this.network.height         = this.height;
-                this.network.digest         = this.digest;
-                this.network.minerURLs      = this.consensusService.onlineURLs;
-            });
+            this.saveConsensusState ();
 
             timeout = this.consensusService.isCurrent ? 15000 : 1;
         }
+
+        this.setServiceCountdown ( 1 );
+
+        if ( timeout > 1000 ) {
+
+            const delay = Math.floor ( timeout / 100 );
+            let i = 0;
+
+            const countdown = () => {
+                if ( i++ < 100 ) {
+                    this.setServiceCountdown ( 1.0 - ( i / 100 ));
+                    this.serviceCountdownTimeout = this.revocable.timeout (() => { countdown ()}, delay );
+                }
+            }
+            countdown ();
+        }
+
         debugLog ( 'Next update in...', timeout );
         this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
     }

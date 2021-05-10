@@ -15,6 +15,7 @@ configure ({
 
 import { AccountScreen }                from './AccountScreen';
 import { AccountDebugScreen }           from './AccountDebugScreen';
+import { ConsensusScreen }              from './ConsensusScreen';
 import { DashboardScreen }              from './DashboardScreen';
 import { DebugHTTPScreen }              from './debug/DebugHTTPScreen';
 import { DebugNetMonScreen }            from './debug/DebugNetMonScreen';
@@ -53,6 +54,7 @@ const App = () => {
             
                 <Route exact path = "/net/:networkID/account/:accountID"                component = { AccountScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/debug"          component = { AccountDebugScreen }/>
+                <Route exact path = "/net/:networkID/consensus"                         component = { ConsensusScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/miner"          component = { MinerControlScreen }/>

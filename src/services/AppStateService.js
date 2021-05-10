@@ -229,9 +229,6 @@ export class AppStateService {
 
         hardResetVersion = hardResetVersion ? hardResetVersion.version : false;
 
-        debugLog ( 'STORED HARD RESET VESION:', hardResetVersion );
-        debugLog ( 'HARD RESET VESION:', HARD_RESET_VERSION );
-
         return ( passwordHash && passwordHash.length && ( hardResetVersion !== HARD_RESET_VERSION ));
     }
 

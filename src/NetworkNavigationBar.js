@@ -39,8 +39,8 @@ export const NetworkNavigationBar = observer (( props ) => {
 
     const { networkService, navTitle, networkID, tab } = props;
 
-    const chainURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
-    const networkURL            = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
+    const chainURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
+    const networkURL        = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
 
     const networkTab            = getNetworkTabURL ( tab );
 
@@ -70,6 +70,18 @@ export const NetworkNavigationBar = observer (( props ) => {
                         </If>
                     </Dropdown.Menu>
                 </Dropdown>
+
+                <Menu.Menu position = 'right'>
+                    <Dropdown
+                        item
+                        icon = "settings"
+                    >
+                        <Dropdown.Menu>
+                            <Dropdown.Item icon = "wrench"      text = 'Consensus Settings'     as = { Link } to = { `/net/${ networkID }/consensus` }/>
+                            <Dropdown.Divider />
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </Menu.Menu>
 
             </Menu>
         </React.Fragment>

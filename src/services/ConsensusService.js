@@ -14,6 +14,9 @@ import { vol }                          from 'vol';
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@CONSENSUS:', ...args ); }
 
+const DEFAULT_TIMEOUT       = 1000;
+const LATENCY_SAMPLE_SIZE   = 10;
+
 //================================================================//
 // ConsensusService
 //================================================================//
@@ -35,6 +38,10 @@ export class ConsensusService {
 
     @observable pendingURLs; // 'true' if scanned; 'false' if not
 
+    @observable ignored     = {};
+    @observable timeout     = DEFAULT_TIMEOUT;
+    @observable threshold   = 1.0;
+
     //----------------------------------------------------------------//
     @action
     affirmMiner ( minerID, nodeURL ) {
@@ -49,17 +56,19 @@ export class ConsensusService {
         debugLog ( 'AFFIRMING MINER', minerID, nodeURL );
 
         miner.minerID           = minerID;
+        miner.height            = 0;
         miner.digest            = false;        // digest at current consensus height (prev)
         miner.nextDigest        = false;        // digest at next consensus height (peek)
         miner.url               = nodeURL;
         miner.isBusy            = false;
         miner.online            = true;
+        miner.latency           = 0;
 
         this.minersByID [ minerID ] = miner;
     }
 
     //----------------------------------------------------------------//
-    constructor () {
+    constructor ( ignored ) {
 
         this.revocable = new RevocableContext ();
         this.reset ();
@@ -184,15 +193,16 @@ export class ConsensusService {
     }
 
     //----------------------------------------------------------------//
-    @action
-    initialize ( identity, genesis, height, digest, nodeURLs ) {
+    @computed get
+    ignoredMiners () {
 
-        this.identity   = identity;
-        this.genesis    = genesis;
-        this.height     = height;
-        this.digest     = digest;
-
-        this.extendNetwork ( nodeURLs );
+        const ignored = [];
+        for ( let minerID in this.ignored ) {
+            if ( this.ignored [ minerID ]) {
+                ignored.push ( minerID );
+            }
+        }
+        return ignored;
     }
 
     //----------------------------------------------------------------//
@@ -213,7 +223,17 @@ export class ConsensusService {
                         nodeURL = accountInfo.miner.url;
                     }
                 }
-                this.initialize ( info.identity, info.genesis, 0, info.genesis, nodeURL );
+
+                this.load ({
+                    identity:       info.identity,
+                    genesis:        info.genesis,
+                    height:         0,
+                    digest:         info.genesis,
+                    timeout:        DEFAULT_TIMEOUT,
+                    minerURLs:      [],
+                    nodeURL:        nodeURL,
+                });
+
                 await this.discoverMinersAsync ();
 
                 if ( !this.onlineMiners.length ) return 'Problem getting miners.';
@@ -231,11 +251,37 @@ export class ConsensusService {
     }
 
     //----------------------------------------------------------------//
+    isIgnored ( minerID ) {
+        
+        return Boolean ( this.ignored [ minerID ]);
+    }
+
+    //----------------------------------------------------------------//
     @computed get
     isOnline () {
 
         const totalMiners = _.size ( this.minersByID );
         return totalMiners ? ( this.onlineMiners.length > Math.floor ( totalMiners / 2 )) : false;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    load ( store ) {
+
+        this.identity   = store.identity;
+        this.genesis    = store.genesis;
+        this.height     = store.height;
+        this.digest     = store.digest;
+        this.timeout    = !isNaN ( store.timeout ) ? store.timeout : DEFAULT_TIMEOUT;
+
+        if ( store.ignored ) {
+            for ( let minerID of store.ignored ) {
+                this.toggleIgnored ( minerID );
+            }
+        }
+
+        const nodeURLs = store.minerURLs.concat ( store.nodeURL );
+        this.extendNetwork ( nodeURLs );
     }
 
     //----------------------------------------------------------------//
@@ -246,7 +292,7 @@ export class ConsensusService {
 
         for ( let minerID in this.minersByID ) {
             const miner = this.minersByID [ minerID ];
-            if ( miner.online ) {
+            if ( miner.online && !this.isIgnored ( minerID )) {
                 miners.push ( miner );
             }
         }
@@ -289,6 +335,17 @@ export class ConsensusService {
     }
 
     //----------------------------------------------------------------//
+    @action
+    save ( store ) {
+
+        store.height            = this.height;
+        store.digest            = this.digest;
+        store.minerURLs         = this.onlineURLs;
+        store.ignored           = this.ignoredMiners;
+        store.timeout           = this.timeout;
+    }
+
+    //----------------------------------------------------------------//
     async serviceLoop () {
 
         assert ( false );
@@ -319,7 +376,7 @@ export class ConsensusService {
 
     //----------------------------------------------------------------//
     @action
-    setMinerStatus ( minerID, url, prev, peek ) {
+    setMinerStatus ( minerID, url, total, prev, peek, latency ) {
 
         const miner             = this.minersByID [ minerID ];
 
@@ -327,8 +384,31 @@ export class ConsensusService {
         miner.digest            = prev ? prev.digest : false;
         miner.nextDigest        = peek ? peek.digest : false;
         miner.url               = url;
+        miner.total             = total;
         miner.isBusy            = false;
         miner.online            = true;
+        miner.latency           = ( miner.latency * (( LATENCY_SAMPLE_SIZE - 1 ) / LATENCY_SAMPLE_SIZE )) + ( latency / LATENCY_SAMPLE_SIZE );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setThreshold ( threshold ) {
+
+        this.threshold = threshold;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setTimeout ( timeout ) {
+
+        this.timeout = timeout;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    toggleIgnored ( minerID ) {
+
+        this.ignored [ minerID ] = !this.isIgnored ( minerID );
     }
 
     //----------------------------------------------------------------//
@@ -384,6 +464,8 @@ export class ConsensusService {
 
         const bestConsensus = bestCount / minerCount;
 
+        debugLog ( `CONTROL: BEST CONSENSUS: ${ bestConsensus } AT: ${ nextHeight }` );
+
         const accept = () => {
 
             this.isCurrent = false;
@@ -393,7 +475,8 @@ export class ConsensusService {
             for ( let minerID in minersByID ) {
                 const miner = minersByID [ minerID ];
                 if ( miner.nextDigest === bestDigest ) {
-                    miner.digest = bestDigest;
+                    miner.height    = nextHeight;
+                    miner.digest    = bestDigest;
                 }
             }
 
@@ -408,9 +491,12 @@ export class ConsensusService {
             if ( this.skip === bestConsensus ) {
                 accept ();
                 debugLog ( `CONTROL: SKIPPED: ${ this.height } --> ${ nextHeight }` );
+                this.isCurrent = false;
+            }
+            else {
+                this.isCurrent = true;
             }
 
-            this.isCurrent = false;
             this.step = 1;
             this.skip = false;
         }
@@ -418,7 +504,7 @@ export class ConsensusService {
 
             this.skip = false;
 
-            if ( bestConsensus === 1.0 ) {
+            if (( this.threshold === 1.0 && bestConsensus === 1.0 ) || ( this.threshold < bestConsensus )) {
 
                 accept ();
                 this.step = this.step > 0 ? this.step * 2 : 1;
@@ -477,14 +563,16 @@ export class ConsensusService {
 
                 debugLog ( 'SYNC: PEEK:', peekURL );
 
-                const result = await this.revocable.fetchJSON ( url.format ( peekURL ));
-                
+                let latency = ( new Date ()).getTime ();
+                const result = await this.revocable.fetchJSON ( url.format ( peekURL ), undefined, this.timeout );
+                latency = ( new Date ()).getTime () - latency;
+
                 debugLog ( 'SYNC: PEEK RESULT:', result );
 
                 if ( result.genesis === this.genesis ) {
                     result.miners.push ( miner.url );
                     this.extendNetwork ( result.miners );
-                    this.setMinerStatus ( result.minerID, miner.url, result.prev, result.peek );
+                    this.setMinerStatus ( result.minerID, miner.url, result.totalBlocks, result.prev, result.peek, latency );
                 }
                 else {
                     this.setMinerOffline ( miner.minerID );
@@ -500,6 +588,7 @@ export class ConsensusService {
         for ( let minerID in this.minersByID ) {
             const miner = this.minersByID [ minerID ];
             if ( miner.isBusy ) continue;
+            if ( this.isIgnored ( minerID )) continue;
 
             promises.push ( peek ( miner ));
         }

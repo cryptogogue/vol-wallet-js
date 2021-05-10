@@ -60,7 +60,7 @@ class PagingController {
 
         if ( advance > 0 ) {
 
-            if ( this.page >= this.pageMenuMax - 1 ) {
+            if (( this.pageCount > PAGE_MENU_SIZE ) && ( this.page >= this.pageMenuMax - 1 )) {
         
                 this.pageMenuMin = this.page;
 
