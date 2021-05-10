@@ -78,7 +78,6 @@ export const NetworkNavigationBar = observer (( props ) => {
                     >
                         <Dropdown.Menu>
                             <Dropdown.Item icon = "wrench"      text = 'Consensus Settings'     as = { Link } to = { `/net/${ networkID }/consensus` }/>
-                            <Dropdown.Divider />
                         </Dropdown.Menu>
                     </Dropdown>
                 </Menu.Menu>
