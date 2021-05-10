@@ -103,7 +103,7 @@ export const ConsensusScreen = observer (( props ) => {
             <SingleColumnContainerView>
                 <NetworkNavigationBar
                     networkService      = { networkService }
-                    tab                 = { NETWORK_TABS.NETWORK }
+                    tab                 = { NETWORK_TABS.CONSENSUS }
                     networkID           = { networkIDFromEndpoint }
                 />
             </SingleColumnContainerView>
