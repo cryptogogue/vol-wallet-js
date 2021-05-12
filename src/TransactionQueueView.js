@@ -267,7 +267,7 @@ export const TransactionQueueView = observer (( props ) => {
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{( !transaction.isUnsent ) ? transaction.nonce : '--' }</UI.Table.Cell>
-                <UI.Table.Cell collapsing>{( transaction.isPending ) ? transaction.miners.length : '--' }</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{( transaction.isPending ) ? `${ transaction.acceptedCount } / ${ transaction.miners.length }` : '--' }</UI.Table.Cell>
             </UI.Table.Row>
         );
     }

@@ -62,10 +62,11 @@ export const TX_QUEUE_STATUS = {
 //================================================================//
 export class Transaction {
 
-    @observable status        = TX_STATUS.STAGED;
-    @observable assets        = [];
-    @observable miners        = [];
-    @observable envelope      = false;
+    @observable status          = TX_STATUS.STAGED;
+    @observable assets          = [];
+    @observable miners          = [];
+    @observable envelope        = false;
+    @observable acceptedCount   = 0;
 
     @computed get accountID         () { return this.maker.accountName; }
     @computed get cost              () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
@@ -186,6 +187,13 @@ export class Transaction {
         loadedTransaction.envelope      = transaction.envelope;
     
         return loadedTransaction;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setAcceptedCount ( acceptedCount ) {
+
+        this.acceptedCount              = acceptedCount;
     }
 
     //----------------------------------------------------------------//

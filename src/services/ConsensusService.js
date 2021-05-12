@@ -14,6 +14,7 @@ import { vol }                          from 'vol';
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@CONSENSUS:', ...args ); }
 
+const DEFAULT_THRESHOLD     = 1.0;
 const DEFAULT_TIMEOUT       = 1000;
 const LATENCY_SAMPLE_SIZE   = 10;
 
@@ -40,7 +41,7 @@ export class ConsensusService {
 
     @observable ignored     = {};
     @observable timeout     = DEFAULT_TIMEOUT;
-    @observable threshold   = 1.0;
+    @observable threshold   = DEFAULT_THRESHOLD;
 
     //----------------------------------------------------------------//
     @action
@@ -273,6 +274,7 @@ export class ConsensusService {
         this.height     = store.height;
         this.digest     = store.digest;
         this.timeout    = !isNaN ( store.timeout ) ? store.timeout : DEFAULT_TIMEOUT;
+        this.threshold  = !isNaN ( store.threshold ) ? store.threshold : DEFAULT_THRESHOLD;
 
         if ( store.ignored ) {
             for ( let minerID of store.ignored ) {
@@ -343,6 +345,7 @@ export class ConsensusService {
         store.minerURLs         = this.onlineURLs;
         store.ignored           = this.ignoredMiners;
         store.timeout           = this.timeout;
+        store.threshold         = this.threshold;
     }
 
     //----------------------------------------------------------------//

@@ -308,7 +308,7 @@ export class TransactionQueueService {
             debugLog ( 'processTransaction checkTransactionStatus', minerURL );
 
             try {
-                const response = await this.revocable.fetchJSON ( serviceURL );
+                const response = await this.revocable.fetchJSON ( serviceURL, undefined, 10000 );
                 debugLog ( 'response:', response );
                 
                 responseCount++;
@@ -356,8 +356,10 @@ export class TransactionQueueService {
             debugLog ( 'NONCE:', transaction.nonce );
             debugLog ( 'ACCOUNT NONCE:', this.accountService.nonce );
 
+            transaction.setAcceptedCount ( acceptedCount );
+
             // if *all* nodes have accepted the transaction, remove it from the queue and advance.
-            if (( transaction.nonce < this.accountService.nonce ) && ( acceptedCount === responseCount )) {
+            if ( transaction.nonce < this.accountService.nonce ) {
 
                 runInAction (() => {
 
