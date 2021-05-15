@@ -72,7 +72,6 @@ export const AddNetworkModalBody = observer (( props ) => {
         }
         else {
             setState ( NODE_INFO_STATE.DONE );
-            consensusService.serviceLoop ();
         }
 
         setState ( error ? NODE_INFO_STATE.ERROR : NODE_INFO_STATE.DONE );

@@ -157,6 +157,8 @@ export class ConsensusService {
     //----------------------------------------------------------------//
     finalize () {
 
+        console.log ( 'FINALIZING CONSENSUS SERVICE' );
+
         this.revocable.finalize ();
     }
 
@@ -346,23 +348,6 @@ export class ConsensusService {
         store.ignored           = this.ignoredMiners;
         store.timeout           = this.timeout;
         store.threshold         = this.threshold;
-    }
-
-    //----------------------------------------------------------------//
-    async serviceLoop () {
-
-        assert ( false );
-
-        await this.discoverMinersAsync ();
-        await this.updateMinersAsync ();
-
-        let timeout = 5000;
-        if ( this.onlineMiners.length ) {
-            await this.updateConsensus ();
-            timeout = this.isCurrent ? 15000 : 1;
-        }
-        debugLog ( 'Next update in...', timeout );
-        this.revocable.timeout (() => { this.serviceLoop ()}, timeout );
     }
 
     //----------------------------------------------------------------//

@@ -113,12 +113,12 @@ export class NetworkStateService {
         else {
 
             this.storage.persist ( this, 'network',     storageKey );
-
             assert ( this.network && this.network.identity && this.network.genesis );
-
-            consensusService = new ConsensusService ();
-            consensusService.load ( this.network );
         }
+
+        // don't use the passed in consensus service
+        consensusService = new ConsensusService ();
+        consensusService.load ( this.network );
 
         runInAction (() => {
             this.consensusService = consensusService;
