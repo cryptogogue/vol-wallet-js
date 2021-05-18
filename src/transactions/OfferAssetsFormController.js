@@ -20,6 +20,7 @@ export class OfferAssetsFormController extends TransactionFormController {
         const fieldsArray = [
             new Fields.AssetSelectionFieldController    ( 'assetIdentifiers',   'Assets', _.cloneDeep ( selection )),
             new Fields.VOLFieldController               ( 'minimumPrice',       'Price' ),
+            new Fields.StringFieldController            ( 'expiration',         'Expiration Date' ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.OFFER_ASSETS, fieldsArray );
     }
