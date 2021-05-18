@@ -8,6 +8,7 @@ import { InventoryFilterDropdown }                          from './InventoryFil
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { AppStateService }                                  from './services/AppStateService';
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
+import { OfferAssetsFormController }                        from './transactions/OfferAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryController, InventoryDownloadModal, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
@@ -47,6 +48,15 @@ export const InventoryMenu = observer (( props ) => {
                 pages:  printController.pages,
             });
         }
+    }
+
+    const onClickOfferAssets = () => {
+        setTransactionController (
+            new OfferAssetsFormController (
+                accountService,
+                controller.selection
+            )
+        );
     }
 
     const onClickSendAssets = () => {
@@ -169,6 +179,11 @@ export const InventoryMenu = observer (( props ) => {
                 <InventoryFilterDropdown tags = { tags }/>
 
                 <Menu.Menu position = 'right'>
+                    <Menu.Item
+                        icon        = 'dolly'
+                        disabled    = { isPrintLayout || !controller.hasSelection }
+                        onClick     = {() => { onClickOfferAssets ()}}
+                    />
                     <Menu.Item
                         icon        = 'share'
                         disabled    = { isPrintLayout || !controller.hasSelection }

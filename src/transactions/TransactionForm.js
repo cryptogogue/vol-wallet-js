@@ -8,6 +8,7 @@ import { BetaGetAssetsForm }                    from './BetaGetAssetsForm';
 import { BetaGetDeckForm }                      from './BetaGetDeckForm';
 import { CraftingForm }                         from './CraftingForm';
 import { KeyPolicyForm }                        from './KeyPolicyForm';
+import { OfferAssetsForm }                      from './OfferAssetsForm';
 import { OpenAccountForm }                      from './OpenAccountForm';
 import { PublishSchemaForm }                    from './PublishSchemaForm';
 import { RegisterMinerForm }                    from './RegisterMinerForm';
@@ -75,6 +76,7 @@ export const TransactionFormBody = observer (({ controller }) => {
         case TRANSACTION_TYPE.BETA_GET_ASSETS:              return ( <BetaGetAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.BETA_GET_DECK:                return ( <BetaGetDeckForm controller = { controller }/> );
         case TRANSACTION_TYPE.KEY_POLICY:                   return ( <KeyPolicyForm controller = { controller }/> );
+        case TRANSACTION_TYPE.OFFER_ASSETS:                 return ( <OfferAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return ( <OpenAccountForm controller = { controller }/> );
         case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return ( <PublishSchemaForm controller = { controller }/> );
         case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return ( <PublishSchemaForm controller = { controller }/> );

@@ -14,6 +14,7 @@ export const TRANSACTION_TYPE = {
     HARD_RESET:                 'HARD_RESET',
     KEY_POLICY:                 'KEY_POLICY',
     OPEN_ACCOUNT:               'OPEN_ACCOUNT',
+    OFFER_ASSETS:               'OFFER_ASSETS',
     PUBLISH_SCHEMA:             'PUBLISH_SCHEMA',
     PUBLISH_SCHEMA_AND_RESET:   'PUBLISH_SCHEMA_AND_RESET',
     REGISTER_MINER:             'REGISTER_MINER',
@@ -115,6 +116,7 @@ export class Transaction {
             case TRANSACTION_TYPE.BETA_GET_DECK:                return 'BETA Get Deck';
             case TRANSACTION_TYPE.BETA_GET_ASSETS:              return 'BETA Get Assets';
             case TRANSACTION_TYPE.KEY_POLICY:                   return 'Key Policy';
+            case TRANSACTION_TYPE.OFFER_ASSETS:                 return 'Sell Assets';
             case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return 'Sponsor Account';
             case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return 'Publish Schema';
             case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return 'Publish Schema and Reset';
@@ -136,10 +138,10 @@ export class Transaction {
     static fromBody ( body ) {
 
         switch ( body.type ) {
-            case TRANSACTION_TYPE.OPEN_ACCOUNT: return new Transaction_OpenAccount ( body );
-            case TRANSACTION_TYPE.RUN_SCRIPT:   return new Transaction_RunScript ( body );
-            case TRANSACTION_TYPE.SEND_VOL:     return new Transaction_SendVOL ( body );
-            default:                            return new Transaction ( body );
+            case TRANSACTION_TYPE.OPEN_ACCOUNT:     return new Transaction_OpenAccount ( body );
+            case TRANSACTION_TYPE.RUN_SCRIPT:       return new Transaction_RunScript ( body );
+            case TRANSACTION_TYPE.SEND_VOL:         return new Transaction_SendVOL ( body );
+            default:                                return new Transaction ( body );
         }
     }
 
