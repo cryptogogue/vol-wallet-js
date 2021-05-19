@@ -14,17 +14,18 @@ import * as UI                              from 'semantic-ui-react';
 export const VOLField = observer (( props ) => {
 
     const { field } = props;
+    const [ inputString, setInputString ] = useState ( '' );
 
     const errorMsg      = field.error || '';
     const hasError      = ( errorMsg.length > 0 );
 
     const onChange = ( event ) => {
-        field.setInputString ( event.target.value );
+        setInputString ( event.target.value );
     };
 
     const onBlur = () => {
-        const value = event.target.value ? vol.format ( Number ( event.target.value ) * 1000 ) : '';
-        field.setInputString ( value );
+        field.setInputString ( inputString );
+        setInputString ( field.inputString );
     };
 
     return (
@@ -32,9 +33,9 @@ export const VOLField = observer (( props ) => {
             fluid
             type            = 'number'
             step            = '0.001'
-            placeholder     = { field.friendlyName }
+            placeholder     = { props.placeholder }
             name            = { field.fieldName }
-            value           = { field.inputString }
+            value           = { inputString }
             onChange        = { onChange }
             onBlur          = { onBlur }
             error           = { hasError ? errorMsg : false }

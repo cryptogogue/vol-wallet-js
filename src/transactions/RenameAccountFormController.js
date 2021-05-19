@@ -31,7 +31,7 @@ export class RenameAccountFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController    ( 'revealedName',   'New Name' ),
+            new Fields.StringFieldController    ( 'revealedName' ),
         ];
         this.initialize ( appState, TRANSACTION_TYPE.RENAME_ACCOUNT, fieldsArray );
     }

@@ -15,36 +15,27 @@ export const CryptoKeyField = observer (( props ) => {
 
     const { field } = props;
 
+    const [ phraseOrKey, setPhraseOrKey ] = useState ( '' );
+
     const errorMsg      = field.error || '';
     const hasError      = ( errorMsg.length > 0 );
 
-    const onPhraseOrKey = async ( phraseOrKey ) => {
-
-        field.setInputString ( phraseOrKey );
-        field.setKey ( false );
-
-        if ( !phraseOrKey ) return;
-
-        try {
-            const key = await crypto.loadKeyAsync ( phraseOrKey );
-            field.setKey ( key );
-        }
-        catch ( error ) {
-            field.setError ( 'Invalid Phrase or Key.' );
-        }
+    const loadPhraseOrKey = ( text ) => {
+        setPhraseOrKey ( text );
+        field.loadKeyAsync ( text );
     }
 
-    const loadFile = ( text ) => {
-        onPhraseOrKey ( text )
-    }
+    const onBlur = () => {
+        loadPhraseOrKey ( phraseOrKey );
+    };
 
     return (
         <React.Fragment>
             <UI.Menu attached = 'top'>
                 <FilePickerMenuItem
-                    loadFile = { loadFile }
-                    format = 'text'
-                    accept = { '.json, .pem' }
+                    loadFile        = { loadPhraseOrKey }
+                    format          = 'text'
+                    accept          = { '.json, .pem' }
                 />
             </UI.Menu>
 
@@ -53,10 +44,11 @@ export const CryptoKeyField = observer (( props ) => {
                     attached        = 'bottom'
                     style           = {{ fontFamily: 'monospace' }}
                     rows            = { field.rows || 8 }
-                    placeholder     = { field.friendlyName || 'Mnemonic Phrase or Private Key' }
+                    placeholder     = { props.placeholder || 'Mnemonic Phrase or Private Key' }
                     name            = { field.fieldName }
-                    value           = { field.inputString }
-                    onChange        = {( event ) => { onPhraseOrKey ( event.target.value )}}
+                    value           = { field.phraseOrKey }
+                    onChange        = {( event ) => { setPhraseOrKey ( event.target.value )}}
+                    onBlur          = { onBlur }
                     error           = { hasError ? errorMsg : false }
                 />
             </UI.Segment>

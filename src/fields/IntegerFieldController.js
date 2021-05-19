@@ -1,20 +1,26 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { FieldController } from './FieldController'
+import { InputFieldController } from './InputFieldController'
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
 // IntegerFieldController
 //================================================================//
-export class IntegerFieldController extends FieldController {
+export class IntegerFieldController extends InputFieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
-        super ( fieldName, friendlyName, defaultValue, initialValue );
+    constructor ( fieldName, defaultValue, initialValue ) {
+        super ( fieldName, defaultValue, initialValue );
     }
 
     //----------------------------------------------------------------//
-    virtual_coerce ( inputValue ) {
-        return Number ( inputValue );
+    virtual_fromString ( value ) {
+        value = parseInt ( value );
+        return isNaN ( value ) ? undefined : value;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_toString ( value ) {
+        return String ( value );
     }
 }

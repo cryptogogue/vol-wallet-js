@@ -14,7 +14,7 @@ export const ReserveAccountNameForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
-            <Fields.StringField field = { controller.fields.secretName }/>
+            <Fields.StringField     placeholder = 'Reserve Name' field = { controller.fields.secretName }/>
         </React.Fragment>
     );
 });

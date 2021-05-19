@@ -7,52 +7,23 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 //================================================================//
 export class FieldController {
 
+    @observable error       = false;
+
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
-
-        this.fieldName      = fieldName;
-        this.friendlyName   = friendlyName;
-        this.isHidden       = false;
-        this.defaultValue   = defaultValue,
-
-        extendObservable ( this, {
-            error:          false,
-            inputString:    initialValue === undefined ? '' : String ( initialValue ),
-        });
+    constructor ( fieldName ) {
+        this.fieldName = fieldName;
     }
 
     //----------------------------------------------------------------//
-    finalize () {
+    @computed get
+    isComplete () {
+        return this.virtual_isComplete ();
     }
 
     //----------------------------------------------------------------//
-    @computed
-    get hasValue () {
-        return ( this.inputString !== '' );
-    }
-
-    //----------------------------------------------------------------//
-    @computed
-    get isComplete () {
-        return ( this.virtual_isComplete () || !this.isRequired );
-    }
-
-    //----------------------------------------------------------------//
-    @computed
-    get isCompleteAndErrorFree () {
+    @computed get
+    isCompleteAndErrorFree () {
         return ( this.isComplete && ( this.error === false ));
-    }
-
-    //----------------------------------------------------------------//
-    @computed
-    get isRequired () {
-        return ( this.defaultValue === undefined );
-    }
-
-    //----------------------------------------------------------------//
-    @computed
-    get value () {
-        return this.virtual_format ( this.inputString ? this.virtual_coerce ( this.inputString ) : this.defaultValue );
     }
 
     //----------------------------------------------------------------//
@@ -62,30 +33,26 @@ export class FieldController {
     }
 
     //----------------------------------------------------------------//
-    @action
-    setInputString ( inputString ) {
-        this.inputString = String ( inputString ) || '';
+    @computed get
+    transactionFieldValue () {
+        return this.isCompleteAndErrorFree ? this.virtual_toTransactionFieldValue () : undefined;
+    }
+
+    //----------------------------------------------------------------//
+    update () {
         this.formController && this.formController.validate ? this.formController.validate () : this.validate ();
     }
 
     //----------------------------------------------------------------//
+    @action
     validate () {
+        this.error = false;
         this.virtual_validate ();
     }
 
     //----------------------------------------------------------------//
-    virtual_coerce ( inputValue ) {
-        return inputValue;
-    }
-
-    //----------------------------------------------------------------//
-    virtual_format ( value ) {
-        return value;
-    }
-
-    //----------------------------------------------------------------//
     virtual_isComplete () {
-        return this.hasValue;
+        return true;
     }
 
     //----------------------------------------------------------------//

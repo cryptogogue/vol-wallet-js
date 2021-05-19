@@ -8,29 +8,43 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 //================================================================//
 export class CryptoKeyFieldController extends FieldController {
 
-	@observable key = false;
+    @observable     phraseOrKey         = '';
+    @observable     key                 = false;
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, rows, defaultValue, initialValue ) {
-        super ( fieldName, friendlyName, defaultValue, initialValue );
-        this.rows = rows;
+    constructor ( fieldName ) {
+        super ( fieldName );
     }
 
     //----------------------------------------------------------------//
     @action
-    setKey ( key ) {
-    	this.key = key;
-        this.formController && this.formController.validate ? this.formController.validate () : this.validate ();
-    }
+    async loadKeyAsync ( phraseOrKey ) {
+    	
+        this.phraseOrKey = phraseOrKey;
+        this.key = false;
 
-    //----------------------------------------------------------------//
-    virtual_coerce ( inputValue ) {
-        return ( this.inputString === inputValue ) ? this.key : false;
+        if ( phraseOrKey ) {
+
+            try {
+                const key = await crypto.loadKeyAsync ( phraseOrKey );
+                runInAction (() => {
+                    this.key = key;
+                });
+            }
+            catch ( error ) {
+                this.setError ( 'Invalid Phrase or Key.' );
+            }
+        }
+        this.update ();
     }
 
     //----------------------------------------------------------------//
     virtual_isComplete () {
-        console.log ( 'CryptoKeyFieldController virtual_isComplete' );
-        return this.hasValue && ( this.key !== false );
+        return Boolean ( this.key );
+    }
+
+    //----------------------------------------------------------------//
+    virtual_toTransactionFieldValue () {
+        return this.phraseOrKey;
     }
 }

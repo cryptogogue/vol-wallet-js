@@ -1,6 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { DateTime, Duration }               from 'luxon';
+import { ScannerReportMessages, SchemaScannerXLSX } from 'cardmotron';
+import { assert, crypto, excel, hooks, FilePickerMenuItem, util } from 'fgc';
+import JSONTree                             from 'react-json-tree';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
@@ -8,27 +10,20 @@ import { DateInput, TimeInput }             from 'semantic-ui-calendar-react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
-// DateTimeInputField
+// DateTimeField
 //================================================================//
-export const DateTimeInputField = observer (( props ) => {
+export const DateTimeField = observer (( props ) => {
 
-    const { date, setDate }         = props;
+    const { field } = props;
 
-    const updateDate = ( value ) => {
-        const newDate = DateTime.fromISO ( value ); 
-        setDate ( DateTime.local ( newDate.year, newDate.month, newDate.day, date.hour, date.minute ));
-    }
+    const errorMsg      = field.error || '';
+    const hasError      = ( errorMsg.length > 0 );
 
-    const updateTime = ( value ) => {
-        const duration = Duration.fromISOTime ( value );
-        setDate ( DateTime.local ( date.year, date.month, date.day, duration.hours, duration.minutes ));
-    }
-
-    const dateStr = date.toISODate ();
-    const timeStr = date.toFormat ( 'HH:mm' );
+    const dateStr = field.dateTime.toISODate ();
+    const timeStr = field.dateTime.toFormat ( 'HH:mm' );
 
     return (
-        <UI.Form.Group widths='equal'>
+        <UI.Form.Group widths = 'equal'>
 
             <UI.Popup
                 trigger = {
@@ -48,9 +43,9 @@ export const DateTimeInputField = observer (( props ) => {
                         inline
                         name            = 'date'
                         dateFormat      = 'YYYY-MM-DD'
-                        minDate         = { props.minDate.toISODate ()}
+                        minDate         = { field.minDateTime ? field.minDateTime.toISODate () : undefined }
                         value           = { dateStr }
-                        onChange        = {( event, { value }) => { updateDate ( value )}}
+                        onChange        = {( event, { value }) => { field.setDate ( value )}}
                     />
                 }
             />
@@ -64,6 +59,7 @@ export const DateTimeInputField = observer (( props ) => {
                         type            = 'string'
                         placeholder     = 'Expiration Time'
                         value           = { timeStr }
+                        error           = { hasError ? errorMsg : false }
                     />
                 }
                 on = 'click'
@@ -74,7 +70,7 @@ export const DateTimeInputField = observer (( props ) => {
                         disableMinute
                         name            = 'time'
                         value           = { timeStr }
-                        onChange        = {( event, { value }) => { updateTime ( value )}}
+                        onChange        = {( event, { value }) => { field.setTime ( value )}}
                     />
                 }
             />

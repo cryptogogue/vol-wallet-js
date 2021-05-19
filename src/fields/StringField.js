@@ -26,7 +26,7 @@ export const StringField = observer (( props ) => {
          <UI.Form.Input
             fluid
             type            = 'string'
-            placeholder     = { field.friendlyName }
+            placeholder     = { props.placeholder }
             name            = { field.fieldName }
             value           = { field.inputString }
             onChange        = { onChange }

@@ -18,8 +18,8 @@ export class AccountPolicyFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController	( 'policyName',     'Policy Name' ),
-            new Fields.TextFieldController		( 'policy',         'Policy', 8 ),
+            new Fields.StringFieldController	( 'policyName' ),
+            new Fields.StringFieldController    ( 'policy' ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.ACCOUNT_POLICY, fieldsArray );
     }

@@ -15,11 +15,11 @@ export const AssetSelectionField = observer (( props ) => {
 
     const { field } = props;
 
-    const selection = field.defaultValue;
+    const assets = field.assets;
 
     const sorted = [];
-    for ( let assetID in selection ) {
-        sorted.push ( selection [ assetID ]);
+    for ( let assetID in assets ) {
+        sorted.push ( assets [ assetID ]);
     }
     sorted.sort (( asset0, asset1 ) => asset0.type.localeCompare ( asset1.type ));
 

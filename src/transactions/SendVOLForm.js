@@ -14,8 +14,8 @@ export const SendVOLForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
-            <Fields.StringField field = { controller.fields.accountName }/>
-            <Fields.VOLField field = { controller.fields.amount }/>
+            <Fields.StringField     placeholder = 'Recipient' field = { controller.fields.accountName }/>
+            <Fields.VOLField        placeholder = 'Amount' field = { controller.fields.amount }/>
         </React.Fragment>
     );
 });

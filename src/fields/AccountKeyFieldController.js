@@ -9,8 +9,17 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 export class AccountKeyFieldController extends FieldController {
 
     //----------------------------------------------------------------//
-    constructor ( accountService, fieldName, friendlyName, value ) {
-        super ( fieldName, friendlyName, value );
+    constructor ( accountService, fieldName, initialValue ) {
+        super ( fieldName );
         this.accountService = accountService;
+
+        extendObservable ( this, {
+            keyName:        initialValue || '',
+        });
+    }
+
+    //----------------------------------------------------------------//
+    virtual_toTransactionFieldValue () {
+        return this.keyName;
     }
 }

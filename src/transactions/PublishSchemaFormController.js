@@ -24,7 +24,7 @@ export class PublishSchemaFormController extends TransactionFormController {
 
         // TODO: using a field for this is just silly; refactor into its own view (like the crafting form.)
         const fieldsArray = [
-            new Fields.SchemaFieldController    ( 'schema',     'Schema' ),
+            new Fields.SchemaFieldController    ( 'schema' ),
         ];
 
         const transactionType = andReset ? TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET : TRANSACTION_TYPE.PUBLISH_SCHEMA;
@@ -49,7 +49,7 @@ export class PublishSchemaFormController extends TransactionFormController {
 
         if ( this.fields.schema.value ) {
             try {
-                body.schema = JSON.parse ( this.fields.schema.value );
+                body.schema = this.fields.schema.schema;
             }
             catch ( error ) {
             }
@@ -63,9 +63,9 @@ export class PublishSchemaFormController extends TransactionFormController {
 
         try {
 
-            if ( this.fields.schema.value ) {
+            if ( this.fields.schema.schema ) {
 
-                const schema = JSON.parse ( this.fields.schema.value );
+                const schema = this.fields.schema.schema;
             
                 const size =
                     Object.keys ( schema.decks ).length +

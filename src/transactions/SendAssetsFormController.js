@@ -18,8 +18,8 @@ export class SendAssetsFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController            ( 'accountName',        'Recipient' ),
-            new Fields.AssetSelectionFieldController    ( 'assetIdentifiers',   'Assets', _.cloneDeep ( selection )),
+            new Fields.StringFieldController            ( 'accountName' ),
+            new Fields.AssetSelectionFieldController    ( 'assetIdentifiers', _.cloneDeep ( selection )),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.SEND_ASSETS, fieldsArray );
     }
@@ -27,7 +27,7 @@ export class SendAssetsFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     virtual_decorateTransaction ( transaction ) {
 
-        transaction.setAssetsUtilized ( this.fields.assetIdentifiers.value );
+        transaction.setAssetsUtilized ( this.fields.assetIdentifiers.selection );
     }
 
     //----------------------------------------------------------------//

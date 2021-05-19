@@ -1,27 +1,34 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { FieldController } from './FieldController'
+import { InputFieldController }             from './InputFieldController'
+import * as vol                             from '../util/vol';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
 // VOLFieldController
 //================================================================//
-export class VOLFieldController extends FieldController {
+export class VOLFieldController extends InputFieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
-        super ( fieldName, friendlyName, defaultValue, initialValue );
+    constructor ( fieldName, defaultValue, initialValue ) {
+        super ( fieldName, defaultValue, initialValue );
     }
 
     //----------------------------------------------------------------//
-    virtual_coerce ( inputValue ) {
-        return parseFloat ( inputValue ) * 1000;
+    virtual_fromString ( value ) {
+        value = parseFloat ( value );
+        return isNaN ( value ) ? undefined : value * 1000;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_toString ( value ) {
+        return vol.format ( value );
     }
 
     //----------------------------------------------------------------//
     virtual_validate () {
 
-        if ( !this.hasValue ) return;
+        if ( this.inputValue === undefined ) return;
 
         if ( this.value < 0 ) {
             this.error = 'Cannot be a negative number.';

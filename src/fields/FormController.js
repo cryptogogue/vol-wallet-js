@@ -70,7 +70,6 @@ export class FormController {
 
         // reset errors
         for ( let field of this.fieldsArray ) {
-            field.error = false;
             field.validate ();
         }
 

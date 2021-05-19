@@ -18,8 +18,8 @@ export class SendVOLFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController    ( 'accountName',    'Recipient' ),
-            new Fields.VOLFieldController       ( 'amount',         'Amount' ),
+            new Fields.StringFieldController    ( 'accountName' ),
+            new Fields.VOLFieldController       ( 'amount' ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.SEND_VOL, fieldsArray );
     }

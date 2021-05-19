@@ -16,7 +16,6 @@ export const SchemaField = observer (( props ) => {
     const { field }                     = props;
     const [ errors, setErrors ]         = useState ([]);
     const [ warnings, setWarnings ]     = useState ([]);
-    const [ schema, setSchema ]         = useState ( false );
     const [ isLoading, setIsLoading ]   = useState ( false );
 
     const formController    = field.formController;
@@ -72,9 +71,8 @@ export const SchemaField = observer (( props ) => {
 
     const loadFile = async ( binary ) => {
 
-        setSchema ( false );
         setIsLoading ( true );
-        field.setInputString ( '' );
+        field.setSchema ();
         let errorMessages = [];
         let warningMessages = [];
 
@@ -140,12 +138,9 @@ export const SchemaField = observer (( props ) => {
             }
 
             if ( scanner ) {
-                setSchema ( scanner.schema );
-                field.setInputString ( JSON.stringify ( scanner.schema ));
+                field.setSchema ( scanner.schema );
             }
         }
-
-        formController.validate ();
 
         if ( field.error ) {
             errorMessages.push ({ header: 'Field Error', body: field.error });
@@ -157,15 +152,15 @@ export const SchemaField = observer (( props ) => {
     }
 
     let deckOptions = [];
-    if ( schema && formController.isPublishAndReset ) {
+    if ( field.schema && formController.isPublishAndReset ) {
 
         const sortedDecksAndSets = [];
 
-        for ( let deckName in schema.decks ) {
+        for ( let deckName in field.schema.decks ) {
             sortedDecksAndSets.push ( deckName );
         }
 
-        for ( let setName in schema.sets ) {
+        for ( let setName in field.schema.sets ) {
             sortedDecksAndSets.push ( setName );
         }
 
@@ -217,8 +212,8 @@ export const SchemaField = observer (( props ) => {
 
             <If condition = {( errors.length === 0 )}>
 
-                <If condition = { schema }>
-                    <JSONTree hideRoot data = { schema } theme = 'bright'/>
+                <If condition = { field.schema }>
+                    <JSONTree hideRoot data = { field.schema } theme = 'bright'/>
                 </If>
 
                 <If condition = { deckOptions.length > 0 }>

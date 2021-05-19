@@ -17,8 +17,8 @@ export const OpenAccountForm = observer (({ controller }) => {
     return (
         <React.Fragment>
             <UI.Header as = 'h3'>{ accountName }</UI.Header>
-            <Fields.TextField field = { controller.fields.request }/>
-            <Fields.VOLField field = { controller.fields.grant }/>
+            <Fields.TextField       placeholder = 'New Account Request' field = { controller.fields.request } rows = { 6 }/>
+            <Fields.VOLField        placeholder = 'Grant' field = { controller.fields.grant }/>
         </React.Fragment>
     );
 });

@@ -29,9 +29,9 @@ export class OpenAccountFormController extends TransactionFormController {
         console.log ( 'SUFFIX:', suffix );
 
         const fieldsArray = [
-            new Fields.StringFieldController        ( 'suffix',         'Suffix', suffix ),
-            new Fields.TextFieldController          ( 'request',        'New Account Request', 6 ),
-            new Fields.VOLFieldController           ( 'grant',          'Grant', 0 ),
+            new Fields.StringFieldController        ( 'suffix', suffix ),
+            new Fields.StringFieldController        ( 'request' ),
+            new Fields.VOLFieldController           ( 'grant', 0 ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.OPEN_ACCOUNT, fieldsArray );
     }

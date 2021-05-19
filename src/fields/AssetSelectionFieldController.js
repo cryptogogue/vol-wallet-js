@@ -9,12 +9,22 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 export class AssetSelectionFieldController extends FieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, value ) {
-        super ( fieldName, friendlyName, value );
+    constructor ( fieldName, assets ) {
+        super ( fieldName, );
+
+        extendObservable ( this, {
+            assets:     assets || {},
+        });
     }
 
     //----------------------------------------------------------------//
-    virtual_format ( value ) {
-        return Object.keys ( value );
+    @computed get
+    selection () {
+        return Object.keys ( this.assets );
+    }
+
+    //----------------------------------------------------------------//
+    virtual_toTransactionFieldValue () {
+        return this.selection;
     }
 }

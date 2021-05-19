@@ -18,9 +18,9 @@ export class AffirmKeyFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController    ( 'keyName',        'Key Name' ),
-            new Fields.StringFieldController    ( 'key',            'Key' ),
-            new Fields.StringFieldController    ( 'policyName',     'Policy' ),
+            new Fields.StringFieldController    ( 'keyName' ),
+            new Fields.StringFieldController    ( 'key' ),
+            new Fields.StringFieldController    ( 'policyName' ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.AFFIRM_KEY, fieldsArray );
     }

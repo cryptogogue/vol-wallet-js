@@ -14,9 +14,9 @@ export const AffirmKeyForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
-            <Fields.StringField field = { controller.fields.keyName }/>
-            <Fields.StringField field = { controller.fields.key }/>
-            <Fields.StringField field = { controller.fields.policyName }/>
+            <Fields.StringField     placeholder = 'Key Name' field = { controller.fields.keyName }/>
+            <Fields.StringField     placeholder = 'Key' field = { controller.fields.key }/>
+            <Fields.StringField     placeholder = 'Policy' field = { controller.fields.policyName }/>
         </React.Fragment>
     );
 });

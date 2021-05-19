@@ -19,7 +19,7 @@ export class ReserveAccountNameFormController extends TransactionFormController 
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController    ( 'secretName',     'Reserve Name' ),
+            new Fields.StringFieldController    ( 'secretName' ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME, fieldsArray );
     }

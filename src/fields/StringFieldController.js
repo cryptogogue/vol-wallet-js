@@ -1,15 +1,25 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { FieldController } from './FieldController'
+import { InputFieldController } from './InputFieldController'
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
 // StringFieldController
 //================================================================//
-export class StringFieldController extends FieldController {
+export class StringFieldController extends InputFieldController {
 
     //----------------------------------------------------------------//
-    constructor ( fieldName, friendlyName, defaultValue, initialValue ) {
-        super ( fieldName, friendlyName, defaultValue, initialValue );
+    constructor ( fieldName, defaultValue, initialValue ) {
+        super ( fieldName, defaultValue, initialValue );
+    }
+
+    //----------------------------------------------------------------//
+    virtual_fromString ( value ) {
+        return value;
+    }
+
+    //----------------------------------------------------------------//
+    virtual_toString ( value ) {
+        return value;
     }
 }

@@ -109,15 +109,15 @@ export const TransactionForm = observer (( props ) => {
             <UI.Form>
                 <fieldset style = {{ border: 0, margin: 0, padding: 0 }} disabled = { props.disabled }>
                     <TransactionFormBody controller = { controller }/>
-                    <Fields.VOLField field = { controller.fields.gratuity }/>
+                    <Fields.VOLField placeholder = 'Gratuity' field = { controller.fields.gratuity }/>
 
                     <If condition = { controller.standalone }>
-                        <Fields.VOLField field = { controller.fields.profitShare }/>
-                        <Fields.VOLField field = { controller.fields.transferTax }/>
+                        <Fields.VOLField placeholder = 'Profit Share' field = { controller.fields.profitShare }/>
+                        <Fields.VOLField placeholder = 'Transfer Tax' field = { controller.fields.transferTax }/>
                     </If>
 
                     <If condition = { !controller.standalone }>
-                        <Fields.AccountKeyField field = { controller.fields.makerKeyName } disabled = { props.disabled }/>
+                        <Fields.AccountKeyField placeholder = 'Maker Key' field = { controller.fields.makerKeyName } disabled = { props.disabled }/>
                     </If>
                 </fieldset>
             </UI.Form>

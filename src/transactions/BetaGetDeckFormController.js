@@ -18,7 +18,7 @@ export class BetaGetDeckFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.StringFieldController	( 'deckName', 'Deck Name' ),
+            new Fields.StringFieldController	( 'deckName' ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.BETA_GET_DECK, fieldsArray );
     }

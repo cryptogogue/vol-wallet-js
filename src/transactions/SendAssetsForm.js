@@ -14,8 +14,8 @@ export const SendAssetsForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
-            <Fields.StringField field           = { controller.fields.accountName }/>
-            <Fields.AssetSelectionField field   = { controller.fields.assetIdentifiers }/>
+            <Fields.StringField             placeholder = 'Recipient' field = { controller.fields.accountName }/>
+            <Fields.AssetSelectionField     placeholder = 'Assets' field = { controller.fields.assetIdentifiers }/>
         </React.Fragment>
     );
 });

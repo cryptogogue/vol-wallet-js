@@ -14,7 +14,7 @@ export const RenameAccountForm = observer (({ controller }) => {
 
     return (
         <React.Fragment>
-            <Fields.StringField field = { controller.fields.revealedName }/>
+            <Fields.StringField     placeholder = 'New Name' field = { controller.fields.revealedName }/>
         </React.Fragment>
     );
 });

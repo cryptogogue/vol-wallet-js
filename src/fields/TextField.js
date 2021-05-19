@@ -19,15 +19,15 @@ export const TextField = observer (( props ) => {
     const hasError          = ( errorMsg.length > 0 );
 
     const onChange = ( event ) => {
-        field.setInputString ( event.target.value );
+        field.inputValue = event.target.value;
     };
 
     return (
          <UI.Form.TextArea
-            rows            = { field.rows || 8 }
-            placeholder     = { field.friendlyName }
+            rows            = { props.rows || 8 }
+            placeholder     = { props.placeholder }
             name            = { field.fieldName }
-            value           = { field.inputString }
+            value           = { field.inputValue }
             onChange        = { onChange }
             error           = { hasError ? errorMsg : false }
         />

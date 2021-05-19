@@ -26,7 +26,7 @@ export const IntegerField = observer (( props ) => {
          <UI.Form.Input
             fluid
             type            = 'number'
-            placeholder     = { field.friendlyName }
+            placeholder     = { props.placeholder }
             name            = { field.fieldName }
             value           = { field.inputString }
             onChange        = { onChange }

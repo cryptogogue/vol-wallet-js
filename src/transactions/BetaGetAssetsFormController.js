@@ -18,7 +18,7 @@ export class BetaGetAssetsFormController extends TransactionFormController {
         super ();
 
         const fieldsArray = [
-            new Fields.IntegerFieldController	( 'numAssets',      'Copies', 1 ),
+            new Fields.IntegerFieldController	( 'numAssets', 1 ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.BETA_GET_ASSETS, fieldsArray );
     }

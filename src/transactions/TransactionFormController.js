@@ -49,7 +49,7 @@ export class TransactionFormController {
         for ( let field of this.fieldsArray ) {
             const fieldName = field.fieldName;
             if ( !SPECIAL_FIELDS.includes ( fieldName )) {
-                result [ fieldName ] = field.value;
+                result [ fieldName ] = field.transactionFieldValue;
             }
         }
         return result;
@@ -70,15 +70,15 @@ export class TransactionFormController {
 
         fieldsArray = fieldsArray || [];
 
-        fieldsArray.push ( new Fields.VOLFieldController ( 'gratuity',       'Gratuity', 0 ));
+        fieldsArray.push ( new Fields.VOLFieldController ( 'gratuity', 0 ));
 
         if ( !this.standalone ) {
-            fieldsArray.push ( new Fields.AccountKeyFieldController ( accountService, 'makerKeyName', 'Maker Key', accountService.getDefaultAccountKeyName ()));
+            fieldsArray.push ( new Fields.AccountKeyFieldController ( accountService, 'makerKeyName', accountService.getDefaultAccountKeyName ()));
         }
         else {
             // these get calculated automatically if not standalone
-            fieldsArray.push ( new Fields.VOLFieldController ( 'profitShare',   'Profit Share',     0 ));
-            fieldsArray.push ( new Fields.VOLFieldController ( 'transferTax',   'Transfer Tax',     0 ));
+            fieldsArray.push ( new Fields.VOLFieldController ( 'profitShare', 0 ));
+            fieldsArray.push ( new Fields.VOLFieldController ( 'transferTax', 0 ));
         }
 
         const fields = {};
@@ -134,11 +134,11 @@ export class TransactionFormController {
         body.type   = this.type;
 
         body.maker = {
-            gratuity:           this.fields.gratuity.value,
-            profitShare:        this.standalone ? this.fields.profitShare.value : 0,
-            transferTax:        this.standalone ? this.fields.transferTax.value : 0,
+            gratuity:           this.fields.gratuity.transactionFieldValue,
+            profitShare:        this.standalone ? this.fields.profitShare.transactionFieldValue : 0,
+            transferTax:        this.standalone ? this.fields.transferTax.transactionFieldValue : 0,
             accountName:        this.standalone ? '' : this.makerAccountName,
-            keyName:            this.standalone ? '' : this.fields.makerKeyName.value,
+            keyName:            this.standalone ? '' : this.fields.makerKeyName.transactionFieldValue,
             nonce:              -1,
         }
         return body;
