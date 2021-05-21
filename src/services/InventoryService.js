@@ -17,6 +17,7 @@ export class InventoryService {
     @observable assets          = {};
     @observable version         = false;
     @observable isLoaded        = false;
+    @observable schema          = false;
 
     @computed get accountID     () { return this.accountService.accountID; }
     @computed get accountIndex  () { return this.accountService.index; }

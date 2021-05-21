@@ -1,7 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import './InventoryScreen.css';
-
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
