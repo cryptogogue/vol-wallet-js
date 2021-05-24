@@ -19,12 +19,12 @@ export class AssetSelectionFieldController extends FieldController {
 
     //----------------------------------------------------------------//
     @computed get
-    selection () {
+    assetIDs () {
         return Object.keys ( this.assets );
     }
 
     //----------------------------------------------------------------//
     virtual_toTransactionFieldValue () {
-        return this.selection;
+        return this.assetIDs;
     }
 }

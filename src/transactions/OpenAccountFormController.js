@@ -52,7 +52,7 @@ export class OpenAccountFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    virtual_composeBody ( fieldValues ) {
+    virtual_composeBody () {
 
         const request = this.decodeRequest ();
 

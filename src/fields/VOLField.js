@@ -14,7 +14,7 @@ import * as UI                              from 'semantic-ui-react';
 export const VOLField = observer (( props ) => {
 
     const { field } = props;
-    const [ inputString, setInputString ] = useState ( '' );
+    const [ inputString, setInputString ] = useState ( field.inputString );
 
     const errorMsg      = field.error || '';
     const hasError      = ( errorMsg.length > 0 );

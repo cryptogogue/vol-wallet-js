@@ -75,7 +75,7 @@ export class UpdateMinerInfoFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    virtual_composeBody ( fieldValues ) {
+    virtual_composeBody () {
 
         const body = {
         	accountName: 	this.accountService.accountID,

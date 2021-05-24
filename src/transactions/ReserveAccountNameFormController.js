@@ -32,7 +32,7 @@ export class ReserveAccountNameFormController extends TransactionFormController 
     }
 
     //----------------------------------------------------------------//
-    virtual_composeBody ( fieldValues ) {
+    virtual_composeBody () {
 
         const secretNameLower   = this.secretName.toLowerCase ();
         const accountNameLower  = this.makerAccountName.toLowerCase ();

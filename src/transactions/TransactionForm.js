@@ -6,6 +6,7 @@ import { AccountPolicyForm }                    from './AccountPolicyForm';
 import { AffirmKeyForm }                        from './AffirmKeyForm';
 import { BetaGetAssetsForm }                    from './BetaGetAssetsForm';
 import { BetaGetDeckForm }                      from './BetaGetDeckForm';
+import { BuyAssetsForm }                        from './BuyAssetsForm';
 import { CraftingForm }                         from './CraftingForm';
 import { KeyPolicyForm }                        from './KeyPolicyForm';
 import { OfferAssetsForm }                      from './OfferAssetsForm';
@@ -75,6 +76,7 @@ export const TransactionFormBody = observer (({ controller }) => {
         case TRANSACTION_TYPE.AFFIRM_KEY:                   return ( <AffirmKeyForm controller = { controller }/> );
         case TRANSACTION_TYPE.BETA_GET_ASSETS:              return ( <BetaGetAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.BETA_GET_DECK:                return ( <BetaGetDeckForm controller = { controller }/> );
+        case TRANSACTION_TYPE.BUY_ASSETS:                   return ( <BuyAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.KEY_POLICY:                   return ( <KeyPolicyForm controller = { controller }/> );
         case TRANSACTION_TYPE.OFFER_ASSETS:                 return ( <OfferAssetsForm controller = { controller }/> );
         case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return ( <OpenAccountForm controller = { controller }/> );

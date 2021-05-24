@@ -44,7 +44,7 @@ export class RenameAccountFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    virtual_composeBody ( fieldValues ) {
+    virtual_composeBody () {
 
         return {
             revealedName: this.revealedName,

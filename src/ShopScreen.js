@@ -4,9 +4,8 @@ import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavig
 import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { AccountStateService }                              from './services/AccountStateService';
 import { AppStateService }                                  from './services/AppStateService';
-import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
+import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
-import { UpgradeAssetsFormController }                      from './transactions/UpgradeAssetsFormController';
 import * as vol                                             from './util/vol';
 import { AssetModal, InventoryController, InventoryView, InventoryViewController } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
@@ -138,8 +137,9 @@ export const ShopScreen = observer (( props ) => {
 
     const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ());
 
-    const [ assetID, setAssetID ]               = useState ( '' );
-    const [ zoomedAssetID, setZoomedAssetID ]   = useState ( false );
+    const [ assetID, setAssetID ]                               = useState ( '' );
+    const [ zoomedAssetID, setZoomedAssetID ]                   = useState ( false );
+    const [ transactionController, setTransactionController ]   = useState ( false );
 
     const onBlur = () => {
         if ( assetID ) {
@@ -151,6 +151,20 @@ export const ShopScreen = observer (( props ) => {
         if ( event.key === 'Enter' ) {
             event.target.blur ();
         }
+    }
+
+    const onClickBuy = () => {
+        setTransactionController (
+            new BuyAssetsFormController (
+                accountService,
+                controller.info.price,
+                controller.inventory.assets
+            )
+        );
+    }
+
+    const onCloseTransactionModal = () => {
+        setTransactionController ( false );
     }
 
     const onAssetMagnify = ( asset ) => {
@@ -197,7 +211,7 @@ export const ShopScreen = observer (( props ) => {
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
-                                <UI.Button fluid color = 'green'>Buy</UI.Button>
+                                <UI.Button fluid color = 'green' onClick = {() => { onClickBuy ()}}>Buy</UI.Button>
                             </UI.Segment>
                         </When>
 
@@ -236,6 +250,13 @@ export const ShopScreen = observer (( props ) => {
                 </If>
 
             </ProgressSpinner>
+
+            <TransactionModal
+                accountService      = { accountService }
+                controller          = { transactionController }
+                open                = { transactionController !== false }
+                onClose             = { onCloseTransactionModal }
+            />
         </div>
     );
 });

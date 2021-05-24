@@ -39,21 +39,14 @@ export class PublishSchemaFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    virtual_composeBody ( fieldValues ) {
+    virtual_composeBody () {
 
         const body = {};
         
         if ( this.isPublishAndReset ) {
             body.deckName = this.deckName;
         }
-
-        if ( this.fields.schema.value ) {
-            try {
-                body.schema = this.fields.schema.schema;
-            }
-            catch ( error ) {
-            }
-        }
+        body.schema = this.fields.schema.schema;
         return body;
     }
 

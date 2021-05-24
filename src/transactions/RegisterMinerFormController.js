@@ -87,7 +87,7 @@ export class RegisterMinerFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    virtual_composeBody ( fieldValues ) {
+    virtual_composeBody () {
 
         const body = {
         	accountName: 	this.minerID,

@@ -29,7 +29,7 @@ export const InventoryMenu = observer (( props ) => {
     const binding = craftingFormController.binding;
 
     const onClickDownloadAssets = () => {
-
+        
         const assets = controller.hasSelection ? Object.values ( controller.selection ) : controller.getSortedAssets ( false );
         if ( assets && ( assets.length > 0 )) {
             setDownloadOptions ({
@@ -40,7 +40,6 @@ export const InventoryMenu = observer (( props ) => {
     }
 
     const onClickDownloadPages = () => {
-        
         if ( printController.hasPages ) {
             setDownloadOptions ({
                 pages:  printController.pages,
