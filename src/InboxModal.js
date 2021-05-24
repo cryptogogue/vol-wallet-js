@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AssetCardView, InventoryFilter, InventoryView, InventoryViewController } from 'cardmotron';
+import { AssetCardView, InventoryWithFilter, InventoryView, InventoryViewController } from 'cardmotron';
 import { hooks, ProgressSpinner }           from 'fgc';
 import React, { useEffect, useState }       from 'react';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
@@ -27,11 +27,11 @@ export const InboxModal = observer (( props ) => {
     const [ dateTag ]       = useState ( `New Assets - ${ getShortDateString ()}` );
     const [ tag, setTag ]   = useState ( dateTag );
 
-    const viewFilter = new InventoryFilter ( inventory, ( assetID ) => {
+    const filter = ( assetID ) => {
         return inventoryService.isNew ( assetID );
-    });
+    }
 
-    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( viewFilter, false ));
+    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( new InventoryWithFilter ( inventory, filter ), false ));
 
     const tagNames = tags.tagNames.slice ( 0 );
     tagNames.push ( dateTag );
@@ -49,7 +49,7 @@ export const InboxModal = observer (( props ) => {
 
     const onClickSubmit = () => {
         tags.tagSelection ( inventoryService.newAssets, tag, true );
-        inventoryService.updateNonceAsync ();
+        inventoryService.clearInbox ();
         onClose ();
     };
 

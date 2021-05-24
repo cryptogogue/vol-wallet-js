@@ -3,7 +3,7 @@
 import { AccountStateService }          from './AccountStateService';
 import { AppStateService }              from './AppStateService';
 import { ConsensusService }             from './ConsensusService';
-import { InventoryController }          from 'cardmotron';
+import { Inventory }                    from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, storage, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';

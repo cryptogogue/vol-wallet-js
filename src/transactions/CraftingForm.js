@@ -235,27 +235,27 @@ export const CraftingForm = observer (( props ) => {
     return (
         <React.Fragment>
             <UI.Segment>
-                <UI.Form>
-                    { invocationFields }
 
-                    <If condition = { controller.hasErrors }>
-                        <UI.Message icon negative>
-                            <UI.Icon name = 'warning circle'/>
-                            <UI.Message.Content>
-                                <UI.Message.Header>Error</UI.Message.Header>
-                                <p>One or more multi-parameter constraints have not been satisfied.</p>
-                            </UI.Message.Content>
-                        </UI.Message>
-                    </If>
+                { invocationFields }
 
-                    <If condition = { showDropdown }>
-                        <MethodDropdown
-                            key             = { controller.invocations.length }
-                            controller      = { controller }
-                            addInvocation   = { addInvocation }
-                        />
-                    </If>
-                </UI.Form>
+                <If condition = { controller.hasErrors }>
+                    <UI.Message icon negative>
+                        <UI.Icon name = 'warning circle'/>
+                        <UI.Message.Content>
+                            <UI.Message.Header>Error</UI.Message.Header>
+                            <p>One or more multi-parameter constraints have not been satisfied.</p>
+                        </UI.Message.Content>
+                    </UI.Message>
+                </If>
+
+                <If condition = { showDropdown }>
+                    <MethodDropdown
+                        key             = { controller.invocations.length }
+                        controller      = { controller }
+                        addInvocation   = { addInvocation }
+                    />
+                </If>
+
             </UI.Segment>
         </React.Fragment>
     );

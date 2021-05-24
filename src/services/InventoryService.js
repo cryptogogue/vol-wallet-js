@@ -15,6 +15,7 @@ const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); 
 export class InventoryService {
 
     @observable assets          = {};
+    @observable inbox           = [];
     @observable version         = false;
     @observable isLoaded        = false;
     @observable schema          = false;
@@ -23,7 +24,13 @@ export class InventoryService {
     @computed get accountIndex  () { return this.accountService.index; }
     @computed get networkID     () { return this.accountService.networkService.networkID; }
     @computed get nonce         () { return this.version.nonce; }
-    @computed get serverNonce   () { return this.version.serverNonce; }
+
+    //----------------------------------------------------------------//
+    @action
+    async clearInbox () {
+        this.inbox = [];
+        await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, inbox: []});
+    }
 
     //----------------------------------------------------------------//
     constructor ( accountService, inventoryController, progressController ) {
@@ -44,7 +51,6 @@ export class InventoryService {
                 networkID:      this.networkID,
                 accountIndex:   this.accountIndex,
                 nonce:          0,
-                serverNonce:    0,
                 timestamp:      false,
             }
         });
@@ -66,23 +72,13 @@ export class InventoryService {
     @computed
     get inboxSize () {
 
-        if ( !this.isLoaded ) return 0;
-
-        let count = 0;
-        for ( let assetID in this.assets ) {
-            if ( this.isNew ( assetID )) {
-                count++;
-            }
-        }
-        debugLog ( 'INBOX SIZE:', count );
-        return count;
+        return this.inbox.length;
     }
 
     //----------------------------------------------------------------//
     isNew ( assetID ) {
 
-        const asset = this.assets [ assetID ];
-        return asset ? ( this.nonce <= asset.inventoryNonce ) : false;
+        return this.inbox.includes ( assetID );
     }
 
     //----------------------------------------------------------------//
@@ -90,17 +86,25 @@ export class InventoryService {
 
         debugLog ( 'LOADING ASSETS' );
 
-        let assets = {};
+        let assets  = {};
+        let inbox   = [];
         
-        const record = await this.db.assets.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
+        const assetsRecord = await this.db.assets.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
         
-        if ( record ) {
+        if ( assetsRecord ) {
             debugLog ( 'HAS CACHED ASSETS' );
-            assets = record.assets;
+            assets = assetsRecord.assets;
+        }
+
+        const inboxRecord = await this.db.inbox.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
+        
+        if ( inboxRecord ) {
+            inbox = inboxRecord.inbox || [];
         }
 
         runInAction (() => {
             this.assets = assets;
+            this.inbox = inbox;
         });
 
         this.inventory.setAssets ( assets );
@@ -158,14 +162,10 @@ export class InventoryService {
     get newAssets () {
 
         const newAssets = {};
-        if ( !this.isLoaded ) return newAssets;
 
-        for ( let assetID in this.assets ) {
-            if ( this.isNew ( assetID )) {
-                newAssets [ assetID ] = this.assets [ assetID ];
-            }
+        for ( let assetID of this.inbox ) {
+            newAssets [ assetID ] = this.assets [ assetID ];
         }
-        debugLog ( 'NEW ASSETS:', newAssets );
         return newAssets;
     }
 
@@ -176,13 +176,14 @@ export class InventoryService {
         debugLog ( 'RESET' );
 
         this.version.nonce          = 0;
-        this.version.serverNonce    = 0;
         this.version.timestamp      = false;
 
         if ( Object.keys ( this.assets ).length > 0 ) {
             this.assets = {};
+            this.inbox = [];
             this.inventory.setAssets ({});
-            await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete ();
+            await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete (); // deleted the assets *and* the inbox
+            await this.db.inbox.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete (); // deleted the assets *and* the inbox
         }
 
         debugLog ( 'PUTTING VERSION:', JSON.stringify ( this.version, null, 4 ));
@@ -208,7 +209,7 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async updateAsync () {
 
-        debugLog ( 'UPDATE' );
+        debugLog ( 'UPDATE INVENTORY' );
 
         let more = false;
 
@@ -226,7 +227,6 @@ export class InventoryService {
             if ( this.schema ) {
 
                 await this.progress.onProgress ( 'Updating Inventory' );
-                debugLog ( 'UPDATING INVENTORY' );
                 more = await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
             }
         }
@@ -241,9 +241,9 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async updateDeltaAsync ( nextNonce, timestamp ) {
 
-        debugLog ( 'UPDATE DELTA' );
+        debugLog ( 'UPDATE INVENTORY (DELTA)' );
 
-        let currentNonce = this.version.serverNonce;
+        let currentNonce = this.version.nonce;
 
         debugLog ( 'CURRENT NONCE:', currentNonce );
         debugLog ( 'NEXT NONCE:', nextNonce );
@@ -264,47 +264,48 @@ export class InventoryService {
 
         if ( data.nextNonce <= currentNonce ) return false;
 
-        const assetsSent = _.clone ( this.accountService.account.assetsSent || {});
+        const assetsFiltered = _.clone ( this.accountService.account.assetsFiltered || {});
 
         runInAction (() => {
 
             for ( let asset of data.assets ) {
-                delete assetsSent [ asset.assetID ];
+                delete assetsFiltered [ asset.assetID ]; // just in case
                 debugLog ( 'ADDING ASSET', asset.assetID );
+
+                // if the asset is new to the inventory (as opposed to just being updated)
+                if ( !( _.has ( this.assets, asset.assetID ) || this.inbox.includes ( asset.assetID ))) {
+                    this.inbox.push ( asset.assetID );
+                }
+
+                // update or overwrite with the latest version
                 this.assets [ asset.assetID ] = asset;
                 this.inventory.setAsset ( asset );
             }
 
             for ( let assetID of data.deletions ) {
-                delete assetsSent [ assetID ];
-                if ( data.additions.includes ( assetID )) continue;
+                delete assetsFiltered [ assetID ];
+                if ( data.additions.includes ( assetID )) continue; // skip if removed then re-added
                 debugLog ( 'DELETING ASSET', assetID );
                 delete this.assets [ assetID ];
                 this.inventory.deleteAsset ( assetID );
             }
 
-            this.accountService.account.assetsSent = assetsSent;
+            this.accountService.account.assetsFiltered = assetsFiltered;
         });
 
+        // update the inventory db with the latest set of assets
         await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assets: _.cloneDeep ( this.assets )});
+        await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, inbox: _.cloneDeep ( this.inbox )});
 
         this.inventory.setAssets ( this.assets );
 
         runInAction (() => {
-            this.version.serverNonce    = data.nextNonce;
+            this.version.nonce          = data.nextNonce;
             this.version.timestamp      = timestamp;
         });
         await this.db.accounts.put ( _.cloneDeep ( this.version ));
 
         return true;
-    }
-
-    //----------------------------------------------------------------//
-    async updateNonceAsync () {
-        runInAction (() => {
-            this.version.nonce = this.version.serverNonce;
-        });
-        await this.db.accounts.put ( _.cloneDeep ( this.version ));
     }
 
     //----------------------------------------------------------------//

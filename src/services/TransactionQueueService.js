@@ -5,7 +5,7 @@ import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
 import { Transaction, TX_STATUS }       from '../transactions/Transaction';
-import { InventoryController }          from 'cardmotron';
+import { Inventory }                    from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
@@ -41,14 +41,14 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @computed get
-    assetsUtilized () {
+    assetsFiltered () {
 
-        let assetsUtilized = [];
+        const assetsFiltered = {};
 
         for ( let transaction of this.costBearingTransactions ) {
-            assetsUtilized = assetsUtilized.concat ( transaction.assets );
+            _.assign ( assetsFiltered, transaction.assetsFiltered );
         }
-        return assetsUtilized;
+        return assetsFiltered;
     }
 
     //----------------------------------------------------------------//
@@ -363,15 +363,15 @@ export class TransactionQueueService {
 
                 runInAction (() => {
 
-                    const assetsSent = _.clone ( account.assetsSent || {});
-                    for ( let assetID of transaction.assets ) {
-                        assetsSent [ assetID ] = assetID;
+                    const assetsFiltered = _.clone ( account.assetsFiltered || {});
+                    for ( let assetID in transaction.assetsFiltered ) {
+                        assetsFiltered [ assetID ] = transaction.assetsFiltered [ assetID ];
                     }
 
                     transaction.setStatus ( TX_STATUS.ACCEPTED );
                     transaction.clearMiners ();
 
-                    account.assetsSent = assetsSent;
+                    account.assetsFiltered = assetsFiltered;
                 });
             }
 

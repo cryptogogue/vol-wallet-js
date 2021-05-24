@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { assert, util } from 'fgc';
+import { assert, util }                 from 'fgc';
 import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //const debugLog = function () {}
@@ -64,11 +64,11 @@ export const TX_QUEUE_STATUS = {
 //================================================================//
 export class Transaction {
 
-    @observable status          = TX_STATUS.STAGED;
-    @observable assets          = [];
-    @observable miners          = [];
-    @observable envelope        = false;
-    @observable acceptedCount   = 0;
+    @observable status              = TX_STATUS.STAGED;
+    @observable assetsFiltered      = {};
+    @observable miners              = [];
+    @observable envelope            = false;
+    @observable acceptedCount       = 0;
 
     @computed get accountID         () { return this.maker.accountName; }
     @computed get cost              () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
@@ -185,10 +185,10 @@ export class Transaction {
 
         const loadedTransaction = Transaction.fromBody ( transaction.body );
 
-        loadedTransaction.status        = transaction.status;
-        loadedTransaction.assets        = transaction.assets;
-        loadedTransaction.miners        = transaction.miners;
-        loadedTransaction.envelope      = transaction.envelope;
+        loadedTransaction.status            = transaction.status;
+        loadedTransaction.assetsFiltered    = transaction.assetsFiltered || {};
+        loadedTransaction.miners            = transaction.miners;
+        loadedTransaction.envelope          = transaction.envelope;
     
         return loadedTransaction;
     }
@@ -202,9 +202,12 @@ export class Transaction {
 
     //----------------------------------------------------------------//
     @action
-    setAssetsUtilized ( assets ) {
+    setAssetsFiltered ( assetIDs, filterStatus ) {
 
-        this.assets = assets.splice ( 0 );
+        this.assetsFiltered = this.assetsFiltered || {};
+        for ( let assetID of assetIDs ) {
+            this.assetsFiltered [ assetID ] = filterStatus;
+        }
     }
 
     //----------------------------------------------------------------//

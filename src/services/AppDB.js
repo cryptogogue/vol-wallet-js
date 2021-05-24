@@ -29,6 +29,9 @@ export class AppDB {
             assets:         '[networkID+accountIndex], networkID',
             transactions:   '[networkID+accountIndex]',
         });
+        this.db.version ( 2 ).stores ({
+            inbox:          '[networkID+accountIndex]',
+        });
         this.db.open ();
     }
 

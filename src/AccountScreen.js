@@ -60,7 +60,7 @@ const AccountDetailsView = observer (( props ) => {
                 </UI.Header.Subheader>
 
                 <UI.Header.Subheader>
-                    { `Inventory Nonce: ${ accountService.serverInventoryNonce }` }
+                    { `Inventory Nonce: ${ accountService.inventoryNonce }` }
                 </UI.Header.Subheader>
             </div>
 

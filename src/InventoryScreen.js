@@ -10,7 +10,7 @@ import { AppStateService }                                  from './services/App
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import { UpgradeAssetsFormController }                      from './transactions/UpgradeAssetsFormController';
-import { AssetModal, AssetTagsModal, InventoryFilter, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { AssetModal, AssetTagsModal, InventoryWithFilter, INVENTORY_FILTER_STATUS, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable }   from "mobx";
@@ -44,22 +44,31 @@ export const InventoryScreen = observer (( props ) => {
     const inventoryService          = accountService.inventoryService;
     const tags                      = accountService.inventoryTags;
 
-    const viewFilter = new InventoryFilter ( inventory, ( assetID ) => {
-        return tags.isAssetVisible ( assetID ) && !( accountService.assetsUtilized.includes ( assetID ) || inventoryService.isNew ( assetID ));
-    });
+    const viewFilter = ( assetID ) => {
 
-    const controller                = hooks.useFinalizable (() => new InventoryViewController ( viewFilter, undefined, true ));
-    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( controller ));
+        if ( tags.isAssetVisible ( assetID ) && !inventoryService.isNew ( assetID )) {
 
-    const upgradesFilter = new InventoryFilter ( inventory, ( assetID ) => {
-        return viewFilter.filterFunc ( assetID ) && ( controller.hasSelection ? controller.isSelected ( assetID ) : true );
-    });
+            const asset = inventory.assets [ assetID ];
+            if ( asset.offerID ) return INVENTORY_FILTER_STATUS.DISABLED;
 
-    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( accountService, viewFilter ));
-    const upgradesFormController    = hooks.useFinalizable (() => new UpgradeAssetsFormController ( accountService, upgradesFilter ));
+            const assetsFiltered = accountService.assetsFiltered;
+            return _.has ( assetsFiltered, assetID ) ? assetsFiltered [ assetID ] : true;
+        }
+        return false;
+    }
+
+    const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ( new InventoryWithFilter ( inventory, viewFilter ), undefined, true ));
+    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( inventoryViewController ));
+
+    const upgradesFilter = ( assetID ) => {
+        return inventoryViewController.inventory.isVisible ( assetID ) && !inventoryViewController.inventory.isDisabled ( assetID ) && ( inventoryViewController.hasSelection ? inventoryViewController.isSelected ( assetID ) : true );
+    }
+
+    const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( accountService ));
+    const upgradesFormController    = hooks.useFinalizable (() => new UpgradeAssetsFormController ( accountService, new InventoryWithFilter ( inventory, upgradesFilter )));
 
     const onAssetSelect = ( asset, toggle ) => {
-        controller.toggleAssetSelection ( asset );
+        inventoryViewController.toggleAssetSelection ( asset );
     }
 
     const onAssetMagnify = ( asset ) => {
@@ -72,7 +81,7 @@ export const InventoryScreen = observer (( props ) => {
 
     const onDeselect = () => {
         if ( !batchSelect ) {
-            controller.clearSelection ();
+            inventoryViewController.clearSelection ();
         }
     }
 
@@ -81,7 +90,7 @@ export const InventoryScreen = observer (( props ) => {
         return <a href = { assetURL } target = '_blank'>{ assetID }</a>
     }
 
-    const hasAssets = ( inventoryService.isLoaded && ( inventory.assetsArray.length > 0 ));
+    const hasAssets = ( inventoryService.isLoaded && ( inventoryViewController.assetsArray.length > 0 ));
 
     return (
         <div style = {{
@@ -97,7 +106,7 @@ export const InventoryScreen = observer (( props ) => {
                     />
                     <InventoryMenu
                         accountService          = { accountService }
-                        controller              = { controller }
+                        controller              = { inventoryViewController }
                         printController         = { printController }
                         craftingFormController  = { craftingFormController }
                         upgradesFormController  = { upgradesFormController }
@@ -110,7 +119,7 @@ export const InventoryScreen = observer (( props ) => {
 
                 <If condition = { hasAssets }>
                     <Choose>
-                        <When condition = { controller.isPrintLayout }>
+                        <When condition = { inventoryViewController.isPrintLayout }>
                             <InventoryPrintView
                                 key = { printController.pages.length }
                                 pages = { printController.pages }
@@ -135,15 +144,15 @@ export const InventoryScreen = observer (( props ) => {
                             />
                             <div style = {{ flex: 1 }}>
                                 <InventoryView
-                                    key         = { `${ inventoryService.nonce } ${ controller.sortMode } ${ controller.zoom }` }
-                                    controller  = { controller }
+                                    key         = { `${ inventoryService.nonce }.${ inventoryViewController.sortMode }.${ inventoryViewController.zoom }` }
+                                    controller  = { inventoryViewController }
                                     onSelect    = { onAssetSelect }
                                     onMagnify   = { batchSelect ? undefined : onAssetMagnify }
                                     onDeselect  = { onDeselect }
                                 />
                             </div>
                             <AssetModal
-                                controller      = { controller }
+                                controller      = { inventoryViewController }
                                 assetID         = { zoomedAssetID }
                                 formatAssetID   = { assetIDtoAnchor }
                                 onClose         = {() => { setZoomedAssetID ( false )}}

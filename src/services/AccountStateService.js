@@ -6,7 +6,7 @@ import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
 import { TransactionQueueService }      from './TransactionQueueService';
 import * as bitcoin                     from 'bitcoinjs-lib';
-import { InventoryController }          from 'cardmotron';
+import { Inventory }                    from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
@@ -35,7 +35,6 @@ export class AccountStateService {
     @computed get network                   () { return this.networkService; }
     @computed get networkID                 () { return this.networkService.networkID; }
     @computed get nonce                     () { return this.account.nonce || 0; }
-    @computed get serverInventoryNonce      () { return this.inventoryService.serverNonce; }
 
     //----------------------------------------------------------------//
     @action
@@ -56,10 +55,13 @@ export class AccountStateService {
 
     //----------------------------------------------------------------//
     @computed get
-    assetsUtilized () {
+    assetsFiltered () {
 
-        let assetsUtilized = this.account.assetsSent ? Object.keys ( this.account.assetsSent ) : [];
-        return assetsUtilized.concat ( this.transactionQueue.assetsUtilized );
+        const assetsFiltered = this.account.assetsFiltered ? _.cloneDeep ( this.account.assetsFiltered ) : {};
+        for ( let assetID in this.transactionQueue.assetsFiltered ) {
+            assetsFiltered [ assetID ] = this.transactionQueue.assetsFiltered [ assetID ];
+        }
+        return assetsFiltered;
     }
 
     //----------------------------------------------------------------//
@@ -102,7 +104,7 @@ export class AccountStateService {
         this.storage.persist ( this, 'account',     `.vol.NETWORK.${ networkService.networkID }.ACCOUNT.${ accountIndex }`,       accountInit );
 
         this.inventoryProgress      = new ProgressController ();
-        this.inventory              = new InventoryController ( this.inventoryProgress );
+        this.inventory              = new Inventory ( this.inventoryProgress );
         this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
         this.inventoryTags          = new InventoryTagsController ();
         this.transactionQueue       = new TransactionQueueService ( this );

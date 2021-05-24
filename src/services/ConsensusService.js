@@ -2,7 +2,7 @@
 
 import { AccountStateService }          from './AccountStateService';
 import { AppStateService }              from './AppStateService';
-import { InventoryController }          from 'cardmotron';
+import { Inventory }                    from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';

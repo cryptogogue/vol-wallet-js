@@ -2,7 +2,7 @@
 
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
-import { Binding, MethodBinding }           from 'cardmotron';
+import { Binding, MethodBinding, INVENTORY_FILTER_STATUS, InventoryWithFilter } from 'cardmotron';
 import { assert, randomBytes, util }        from 'fgc';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
@@ -65,10 +65,17 @@ export class CraftingFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    constructor ( accountService, inventory, singleInvocation ) {
+    constructor ( accountService, singleInvocation ) {
         super ();
 
-        this.inventory = inventory;
+        const inventory = accountService.inventory;
+        const inventoryFilter = ( assetID ) => {
+            const asset = inventory.assets [ assetID ];
+            return !( asset.offerID || _.has ( accountService.assetsFiltered, assetID ));
+
+        };
+
+        this.inventory = new InventoryWithFilter ( inventory, inventoryFilter );
         this.initialize ( accountService, TRANSACTION_TYPE.RUN_SCRIPT );
 
         extendObservable ( this, {
@@ -203,21 +210,21 @@ export class CraftingFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
     @action
-    setAssetParam ( invocation, paramName, assetID ) {
+    setAssetParam ( invocation, paramName, assetIDorFalse ) {
 
-        const prevValue = invocation.assetParams [ paramName ];
-        if ( assetID === prevValue ) return;
+        const prevValue = invocation.assetParams [ paramName ] || false;
+        if ( prevValue === assetIDorFalse ) return;
 
-        if ( prevValue === true ) {
+        if ( prevValue !== false ) {
             delete this.assetsUtilized [ prevValue ];
             delete invocation.assetsUtilized [ prevValue ];
         }
 
-        invocation.assetParams [ paramName ] = assetID;
+        invocation.assetParams [ paramName ] = assetIDorFalse;
 
-        if ( assetID !== false ) {
-            this.assetsUtilized [ assetID ] = true;
-            invocation.assetsUtilized [ assetID ] = true;
+        if ( assetIDorFalse !== false ) {
+            this.assetsUtilized [ assetIDorFalse ] = true;
+            invocation.assetsUtilized [ assetIDorFalse ] = true;
         }
         this.validate ();
     }
@@ -286,6 +293,6 @@ export class CraftingFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     virtual_decorateTransaction ( transaction ) {
 
-        transaction.setAssetsUtilized ( Object.keys ( this.assetsUtilized ));
+        transaction.setAssetsFiltered ( Object.keys ( this.assetsUtilized ), INVENTORY_FILTER_STATUS.HIDDEN );
     }
 }

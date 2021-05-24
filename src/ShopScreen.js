@@ -1,13 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { AccountStateService }                              from './services/AccountStateService';
 import { AppStateService }                                  from './services/AppStateService';
 import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import * as vol                                             from './util/vol';
-import { AssetModal, InventoryController, InventoryView, InventoryViewController } from 'cardmotron';
+import { AssetModal, Inventory, InventoryView, InventoryViewController } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
@@ -96,7 +95,7 @@ class StoreScreenController {
     setAssets ( assets ) {
 
         if ( assets && assets.length ) {
-            this.inventory = new InventoryController ();
+            this.inventory = new Inventory ();
             this.inventory.setSchema ( this.inventoryService.schema );
             this.inventory.setAssets ( assets );
         }

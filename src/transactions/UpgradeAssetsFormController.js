@@ -2,6 +2,7 @@
 
 import { Transaction, TRANSACTION_TYPE }    from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
+import { INVENTORY_FILTER_STATUS }          from 'cardmotron';
 import { assert, randomBytes, util }        from 'fgc';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
@@ -194,6 +195,6 @@ export class UpgradeAssetsFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     virtual_decorateTransaction ( transaction ) {
 
-        transaction.setAssetsUtilized ( Object.keys ( this.upgradeMap ));
+        transaction.setAssetsFiltered ( Object.keys ( this.upgradeMap ), INVENTORY_FILTER_STATUS.HIDDEN );
     }
 }
