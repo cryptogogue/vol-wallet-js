@@ -148,7 +148,7 @@ export class TransactionFormController {
     @action
     validate () {
 
-        this.transaction            = this.makeTransaction ();
+        this.transaction = this.makeTransaction ();
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();

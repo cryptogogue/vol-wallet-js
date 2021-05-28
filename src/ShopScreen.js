@@ -4,6 +4,7 @@ import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavig
 import { AccountStateService }                              from './services/AccountStateService';
 import { AppStateService }                                  from './services/AppStateService';
 import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
+import { CancelOfferFormController }                        from './transactions/CancelOfferFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import * as vol                                             from './util/vol';
 import { AssetModal, Inventory, InventoryView, InventoryViewController } from 'cardmotron';
@@ -18,12 +19,13 @@ import { Link }                                             from 'react-router-d
 import * as UI                                              from 'semantic-ui-react';
 
 const status = {
-    IDLE:           'IDLE',
-    BUSY:           'BUSY',
-    NOT_FOUND:      'NOT_FOUND',
-    FOR_SALE:       'FOR_SALE',
-    NOT_FOR_SALE:   'NOT_FOR_SALE',
-    ERROR:          'ERROR',
+    IDLE:               'IDLE',
+    BUSY:               'BUSY',
+    NOT_FOUND:          'NOT_FOUND',
+    FOR_SALE:           'FOR_SALE',
+    FOR_SALE_BY_SELF:   'FOR_SALE_BY_SELF',
+    NOT_FOR_SALE:       'NOT_FOR_SALE',
+    ERROR:              'ERROR',
 };
 
 //const debugLog = function () {}
@@ -39,10 +41,11 @@ class StoreScreenController {
     @observable info            = false;
 
     //----------------------------------------------------------------//
-    constructor ( inventoryService, networkService ) {
+    constructor ( accountService ) {
 
-        this.inventoryService   = inventoryService;
-        this.networkService     = networkService;
+        this.accountService     = accountService;
+        this.inventoryService   = accountService.inventoryService;
+        this.networkService     = accountService.networkService;
         this.revocable          = new RevocableContext ();
     }
 
@@ -72,7 +75,7 @@ class StoreScreenController {
             }
             else if ( result.status === status.FOR_SALE ) {
 
-                this.setStatus ( status.FOR_SALE );
+                this.setStatus (( result.seller === this.accountService.accountID ) ? status.FOR_SALE_BY_SELF : status.FOR_SALE );
                 
                 info.seller = result.seller;
                 info.price = result.minimumPrice;
@@ -131,7 +134,7 @@ export const ShopScreen = observer (( props ) => {
     const accountService            = appState.assertAccountService ( networkID, accountID );
     const networkService            = accountService.networkService;
     const inventoryService          = accountService.inventoryService;
-    const controller                = hooks.useFinalizable (() => new StoreScreenController ( inventoryService, networkService ));
+    const controller                = hooks.useFinalizable (() => new StoreScreenController ( accountService ));
     const progress                  = accountService.inventoryProgress;
 
     const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ());
@@ -157,6 +160,15 @@ export const ShopScreen = observer (( props ) => {
             new BuyAssetsFormController (
                 accountService,
                 controller.info.price,
+                controller.inventory.assets
+            )
+        );
+    }
+
+    const onClickCancel = () => {
+        setTransactionController (
+            new CancelOfferFormController (
+                accountService,
                 controller.inventory.assets
             )
         );
@@ -211,6 +223,14 @@ export const ShopScreen = observer (( props ) => {
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
                                 <UI.Button fluid color = 'green' onClick = {() => { onClickBuy ()}}>Buy</UI.Button>
+                            </UI.Segment>
+                        </When>
+
+                        <When condition = { controller.status === status.FOR_SALE_BY_SELF }>
+                            <UI.Segment>
+                                <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
+                                <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
+                                <UI.Button fluid color = 'red' onClick = {() => { onClickCancel ()}}>Cancel Offer</UI.Button>
                             </UI.Segment>
                         </When>
 

@@ -251,7 +251,6 @@ export class CraftingFormController extends TransactionFormController {
                 }
             }
             invocation.hasParams = hasParams;
-            invocation.hasErrors = hasParams ? !invocation.methodBinding.checkParams ( invocation.assetParams ) : false;
         }
         return (( this.invocations.length > 0 ) && ( this.canAddInvocation ));
     }
@@ -294,5 +293,20 @@ export class CraftingFormController extends TransactionFormController {
     virtual_decorateTransaction ( transaction ) {
 
         transaction.setAssetsFiltered ( Object.keys ( this.assetsUtilized ), INVENTORY_FILTER_STATUS.HIDDEN );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    virtual_validate () {        
+
+        for ( let invocation of this.invocations ) {
+
+            invocation.errorReport  = invocation.methodBinding.checkParams ( invocation.assetParams, invocation.constParams );
+            invocation.hasErrors    = invocation.errorReport !== undefined;
+
+            if ( invocation.hasErrors ) {
+                this.isErrorFree = false;
+            }
+        }
     }
 }

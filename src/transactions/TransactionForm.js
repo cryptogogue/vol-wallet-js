@@ -7,6 +7,7 @@ import { AffirmKeyForm }                        from './AffirmKeyForm';
 import { BetaGetAssetsForm }                    from './BetaGetAssetsForm';
 import { BetaGetDeckForm }                      from './BetaGetDeckForm';
 import { BuyAssetsForm }                        from './BuyAssetsForm';
+import { CancelOfferForm }                      from './CancelOfferForm';
 import { CraftingForm }                         from './CraftingForm';
 import { KeyPolicyForm }                        from './KeyPolicyForm';
 import { OfferAssetsForm }                      from './OfferAssetsForm';
@@ -72,24 +73,25 @@ export const TransactionBalanceHeader = observer (( props ) => {
 export const TransactionFormBody = observer (({ controller }) => {
 
     switch ( controller.type ) {
-        case TRANSACTION_TYPE.ACCOUNT_POLICY:               return ( <AccountPolicyForm controller = { controller }/> );
-        case TRANSACTION_TYPE.AFFIRM_KEY:                   return ( <AffirmKeyForm controller = { controller }/> );
-        case TRANSACTION_TYPE.BETA_GET_ASSETS:              return ( <BetaGetAssetsForm controller = { controller }/> );
-        case TRANSACTION_TYPE.BETA_GET_DECK:                return ( <BetaGetDeckForm controller = { controller }/> );
-        case TRANSACTION_TYPE.BUY_ASSETS:                   return ( <BuyAssetsForm controller = { controller }/> );
-        case TRANSACTION_TYPE.KEY_POLICY:                   return ( <KeyPolicyForm controller = { controller }/> );
-        case TRANSACTION_TYPE.OFFER_ASSETS:                 return ( <OfferAssetsForm controller = { controller }/> );
-        case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return ( <OpenAccountForm controller = { controller }/> );
-        case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return ( <PublishSchemaForm controller = { controller }/> );
-        case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return ( <PublishSchemaForm controller = { controller }/> );
-        case TRANSACTION_TYPE.REGISTER_MINER:               return ( <RegisterMinerForm controller = { controller }/> );
-        case TRANSACTION_TYPE.RENAME_ACCOUNT:               return ( <RenameAccountForm controller = { controller }/> );
-        case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return ( <ReserveAccountNameForm controller = { controller }/> );
-        case TRANSACTION_TYPE.RUN_SCRIPT:                   return ( <CraftingForm controller = { controller }/> );
-        case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm controller = { controller }/> );
-        case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm controller = { controller }/> );
-        case TRANSACTION_TYPE.UPGRADE_ASSETS:               return ( <UpgradeAssetsForm controller = { controller }/> );
-        case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return ( <UpdateMinerInfoForm controller = { controller }/> );
+        case TRANSACTION_TYPE.ACCOUNT_POLICY:               return ( <AccountPolicyForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.AFFIRM_KEY:                   return ( <AffirmKeyForm             controller = { controller }/> );
+        case TRANSACTION_TYPE.BETA_GET_ASSETS:              return ( <BetaGetAssetsForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.BETA_GET_DECK:                return ( <BetaGetDeckForm           controller = { controller }/> );
+        case TRANSACTION_TYPE.BUY_ASSETS:                   return ( <BuyAssetsForm             controller = { controller }/> );
+        case TRANSACTION_TYPE.CANCEL_OFFER:                 return ( <CancelOfferForm           controller = { controller }/> );
+        case TRANSACTION_TYPE.KEY_POLICY:                   return ( <KeyPolicyForm             controller = { controller }/> );
+        case TRANSACTION_TYPE.OFFER_ASSETS:                 return ( <OfferAssetsForm           controller = { controller }/> );
+        case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return ( <OpenAccountForm           controller = { controller }/> );
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return ( <PublishSchemaForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET:     return ( <PublishSchemaForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.REGISTER_MINER:               return ( <RegisterMinerForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.RENAME_ACCOUNT:               return ( <RenameAccountForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return ( <ReserveAccountNameForm    controller = { controller }/> );
+        case TRANSACTION_TYPE.RUN_SCRIPT:                   return ( <CraftingForm              controller = { controller }/> );
+        case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm            controller = { controller }/> );
+        case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm               controller = { controller }/> );
+        case TRANSACTION_TYPE.UPGRADE_ASSETS:               return ( <UpgradeAssetsForm         controller = { controller }/> );
+        case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return ( <UpdateMinerInfoForm       controller = { controller }/> );
     }
     return (
         <div/>

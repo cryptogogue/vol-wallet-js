@@ -49,7 +49,7 @@ export const InventoryScreen = observer (( props ) => {
         if ( tags.isAssetVisible ( assetID ) && !inventoryService.isNew ( assetID )) {
 
             const asset = inventory.assets [ assetID ];
-            if ( asset.offerID ) return INVENTORY_FILTER_STATUS.DISABLED;
+            if ( asset.offerID !== undefined ) return INVENTORY_FILTER_STATUS.DISABLED;
 
             const assetsFiltered = accountService.assetsFiltered;
             return _.has ( assetsFiltered, assetID ) ? assetsFiltered [ assetID ] : true;

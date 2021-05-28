@@ -12,6 +12,7 @@ export const TRANSACTION_TYPE = {
     BETA_GET_ASSETS:            'BETA_GET_ASSETS',
     BETA_GET_DECK:              'BETA_GET_DECK',
     BUY_ASSETS:                 'BUY_ASSETS',
+    CANCEL_OFFER:               'CANCEL_OFFER',
     HARD_RESET:                 'HARD_RESET',
     KEY_POLICY:                 'KEY_POLICY',
     OPEN_ACCOUNT:               'OPEN_ACCOUNT',
@@ -117,6 +118,7 @@ export class Transaction {
             case TRANSACTION_TYPE.BETA_GET_DECK:                return 'BETA Get Deck';
             case TRANSACTION_TYPE.BETA_GET_ASSETS:              return 'BETA Get Assets';
             case TRANSACTION_TYPE.BUY_ASSETS:                   return 'Buy Assets';
+            case TRANSACTION_TYPE.CANCEL_OFFER:                 return 'Cancel Offer';
             case TRANSACTION_TYPE.KEY_POLICY:                   return 'Key Policy';
             case TRANSACTION_TYPE.OFFER_ASSETS:                 return 'Sell Assets';
             case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return 'Sponsor Account';

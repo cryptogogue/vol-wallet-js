@@ -11,25 +11,18 @@ import { action, computed, extendObservable, observable, observe, runInAction } 
 import { observer }                         from 'mobx-react';
 
 //================================================================//
-// BuyAssetsFormController
+// CancelOfferFormController
 //================================================================//
-export class BuyAssetsFormController extends TransactionFormController {
+export class CancelOfferFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( accountService, price, selection ) {
+    constructor ( accountService, selection ) {
         super ();
-
-        this.minimumPrice = price;
 
         const fieldsArray = [
             new Fields.AssetSelectionFieldController    ( 'selection', _.cloneDeep ( selection )),
-            new Fields.VOLFieldController               ( 'price', price, price ),
         ];
-        this.initialize ( accountService, TRANSACTION_TYPE.BUY_ASSETS, fieldsArray );
-    }
-
-    //----------------------------------------------------------------//
-    virtual_decorateTransaction ( transaction ) {
+        this.initialize ( accountService, TRANSACTION_TYPE.CANCEL_OFFER, fieldsArray );
     }
 
     //----------------------------------------------------------------//
@@ -43,16 +36,6 @@ export class BuyAssetsFormController extends TransactionFormController {
 
         return {
             identifier:     this.fields.selection.assetIDs [ 0 ],
-            price:          this.fields.price.value,
         };
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    virtual_validate () {
-
-        if ( this.fields.price.value < this.minimumPrice ) {
-            this.fields.price.error = `Offer price must meet or exceed ${ vol.format ( this.minimumPrice )}.`;
-        }
     }
 }

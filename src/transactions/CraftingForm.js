@@ -34,6 +34,7 @@ const InvocationAssetParamRow = observer (( props ) => {
                     paramName:      paramName,
                 });
             }}
+            error = { props.error }
         >
             <UI.Table.Cell collapsing>
                 { paramName }
@@ -53,9 +54,9 @@ const InvocationAssetParamRow = observer (( props ) => {
 });
 
 //================================================================//
-// InvocationConstParamRow
+// InvocationConstImageParamRow
 //================================================================//
-const InvocationConstParamRow = observer (( props ) => {
+const InvocationConstImageParamRow = observer (( props ) => {
 
     const { controller, paramName, invocation } = props;
     const [ showModal, setShowModal ] = useState ( false );
@@ -77,12 +78,13 @@ const InvocationConstParamRow = observer (( props ) => {
                 onClick = {( e ) => {
                     setShowModal ( true );
                 }}
+                error = { props.error }
             >
                 <UI.Table.Cell collapsing>
                     { paramName }
                 </UI.Table.Cell>
 
-                <UI.Table.Cell>
+                <UI.Table.Cell colSpan='2'>
                     { displayURL }
                 </UI.Table.Cell>
             </UI.Table.Row>
@@ -95,6 +97,89 @@ const InvocationConstParamRow = observer (( props ) => {
             />
         </React.Fragment>
     );
+});
+
+//================================================================//
+// InvocationConstStringParamRow
+//================================================================//
+const InvocationConstStringParamRow = observer (( props ) => {
+
+    const { controller, paramName, invocation } = props;
+
+    const value = invocation.constParams [ paramName ].value || '';
+
+    const setValue = ( value ) => {
+        controller.setConstParam ( invocation, paramName, value );
+    }
+
+    return (
+        <React.Fragment>
+            <UI.Table.Row key = { paramName } error = { props.error }>
+                <UI.Table.Cell collapsing>
+                    { paramName }
+                </UI.Table.Cell>
+
+                <UI.Table.Cell colSpan='2'>
+                    <UI.Form.Input
+                        fluid
+                        placeholder     = 'String Param'
+                        type            = 'string'
+                        name            = { paramName }
+                        value           = { value }
+                        onChange        = {( event ) => { setValue ( event.target.value )}}
+                    />
+                </UI.Table.Cell>
+            </UI.Table.Row>
+        </React.Fragment>
+    );
+});
+
+//================================================================//
+// InvocationConstTextParamRow
+//================================================================//
+const InvocationConstTextParamRow = observer (( props ) => {
+
+    const { controller, paramName, invocation } = props;
+
+    const value = invocation.constParams [ paramName ].value || '';
+
+    const setValue = ( value ) => {
+        controller.setConstParam ( invocation, paramName, value );
+    }
+
+    return (
+        <React.Fragment>
+            <UI.Table.Row key = { paramName } error = { props.error }>
+                <UI.Table.Cell collapsing>
+                    { paramName }
+                </UI.Table.Cell>
+
+                <UI.Table.Cell colSpan='2'>
+                    <UI.Form.TextArea
+                        rows            = '6'
+                        placeholder     = 'Text Param'
+                        name            = { paramName }
+                        value           = { value }
+                        onChange        = {( event ) => { setValue ( event.target.value )}}
+                    />
+                </UI.Table.Cell>
+            </UI.Table.Row>
+        </React.Fragment>
+    );
+});
+
+//================================================================//
+// InvocationConstParamRow
+//================================================================//
+const InvocationConstParamRow = observer (( props ) => {
+
+    const inputSchemeType = props.invocation.method.constArgs [ props.paramName ].inputScheme.type;
+
+    switch ( inputSchemeType ) {
+        case 'image':               return <InvocationConstImageParamRow { ...props }/>;
+        case 'string':              return <InvocationConstStringParamRow { ...props }/>;
+        case 'text':                return <InvocationConstTextParamRow { ...props }/>;
+    }
 });
 
 //================================================================//
@@ -115,6 +200,7 @@ const InvocationField = observer (( props ) => {
                 controller  = { controller }
                 invocation  = { invocation }
                 setParamModalState = { setParamModalState }
+                error       = { invocation.hasErrors ? invocation.errorReport.paramErrors [ paramName ] : undefined }
             />
         );
     }
@@ -126,6 +212,7 @@ const InvocationField = observer (( props ) => {
                 paramName   = { paramName }
                 controller  = { controller }
                 invocation  = { invocation }
+                error       = { invocation.hasErrors ? invocation.errorReport.paramErrors [ paramName ] : undefined }
             />
         );
     }
@@ -243,7 +330,7 @@ export const CraftingForm = observer (( props ) => {
                         <UI.Icon name = 'warning circle'/>
                         <UI.Message.Content>
                             <UI.Message.Header>Error</UI.Message.Header>
-                            <p>One or more multi-parameter constraints have not been satisfied.</p>
+                            <p>One or more invocations has param or constraint errors.</p>
                         </UI.Message.Content>
                     </UI.Message>
                 </If>
