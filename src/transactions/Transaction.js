@@ -49,6 +49,9 @@ export const TX_STATUS = {
     ACCEPTED:           'ACCEPTED',
     RESTORED:           'RESTORED',
     LOST:               'LOST',
+
+    // HISTORY
+    HISTORY:            'HISTORY',
 };
 
 export const TX_QUEUE_STATUS = {
@@ -76,6 +79,7 @@ export class Transaction {
     @computed get isAccepted        () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
     @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
     @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
+    @computed get isRestored        () { return ( this.queueStatus === TX_QUEUE_STATUS.RESTORED ); }
     @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING )); }
     @computed get maker             () { return this.body.maker; }
     @computed get nonce             () { return this.maker.nonce; }
@@ -192,6 +196,8 @@ export class Transaction {
         loadedTransaction.miners            = transaction.miners;
         loadedTransaction.envelope          = transaction.envelope;
     
+        loadedTransaction.makerIndex        = transaction.makerIndex;
+
         return loadedTransaction;
     }
 

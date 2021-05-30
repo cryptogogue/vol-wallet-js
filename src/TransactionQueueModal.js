@@ -14,7 +14,7 @@ export const TransactionQueueModal = observer (( props ) => {
     const { accountService, open, onClose } = props;
 
     const appState      = accountService.appState;
-    const queue         = accountService.transactionQueue;
+    const transactionQueue         = accountService.transactionQueue;
 
     const [ count, setCount ]           = useState ( 0 );
     const [ busy, setBusy ]             = useState ( false );
@@ -32,30 +32,30 @@ export const TransactionQueueModal = observer (( props ) => {
         setError ( '' );
         clearPassword ();
 
-        queue.clearTransactionError ();
+        transactionQueue.clearTransactionError ();
 
-        const nonce = await queue.findNonceAsync ( accountService.accountID );
+        const nonce = await transactionQueue.findNonceAsync ( accountService.accountID );
         setBusy ( false );
 
         if ( nonce === false ) {
             setError ( 'Could not synchronize nonce. Try again later.' );    
             return;
         }
-        await queue.submitTransactionsAsync ( password, nonce );
+        await transactionQueue.submitTransactionsAsync ( password, nonce );
     };
     
     let onClickClear = async () => {
         setBusy ( true );
         clearPassword ();
-        await queue.clearUnsentTransactionsAsync ();
+        await transactionQueue.clearUnsentTransactionsAsync ();
         setBusy ( false );
     };
 
-    const transactions = queue.transactions;
+    const transactions      = transactionQueue.queue;
 
     const passwordIsValid   = appState.checkPassword ( password );
-    const clearEnabled      = ( passwordIsValid && queue.hasUnsentTransactions );
-    const submitEnabled     = ( passwordIsValid && queue.hasUnsentTransactions );
+    const clearEnabled      = ( passwordIsValid && transactionQueue.hasUnsentTransactions );
+    const submitEnabled     = ( passwordIsValid && transactionQueue.hasUnsentTransactions );
 
     return (
         <UI.Modal
@@ -68,17 +68,17 @@ export const TransactionQueueModal = observer (( props ) => {
 
             <UI.Modal.Content>
                 
-                <If condition = { queue.hasTransactionError }>
+                <If condition = { transactionQueue.hasTransactionError }>
                     <UI.Message
                         error
                         icon            = 'exclamation triangle'
                         header          = 'Transaction Error Occured'
-                        content         = { queue.transactionError.message }
-                        onDismiss       = {() => { queue.clearTransactionError ()}}
+                        content         = { transactionQueue.transactionError.message }
+                        onDismiss       = {() => { transactionQueue.clearTransactionError ()}}
                     />
                 </If>
 
-                <TransactionQueueView key = { transactions.length } transactions = { transactions } error = { queue.transactionError }/>
+                <TransactionQueueView key = { transactions.length } transactions = { transactions } error = { transactionQueue.transactionError }/>
 
                 <If condition = { error }>
                     <UI.Message

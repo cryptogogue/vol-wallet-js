@@ -23,14 +23,13 @@ export class AppDB {
 
         this.db = new Dexie ( 'volwal' );
         this.db.version ( 1 ).stores ({
-            networks:       'networkID',
-            schemas:        '[networkID+key], networkID',
-            accounts:       '[networkID+accountIndex], networkID',
-            assets:         '[networkID+accountIndex], networkID',
-            transactions:   '[networkID+accountIndex]',
-        });
-        this.db.version ( 2 ).stores ({
-            inbox:          '[networkID+accountIndex]',
+            networks:               'networkID',
+            schemas:                '[networkID+key], networkID',
+            accounts:               '[networkID+accountIndex], networkID',
+            assets:                 '[networkID+accountIndex], networkID',
+            transactionHistory:     '[networkID+accountIndex]',
+            transactionQueue:       '[networkID+accountIndex]',
+            inbox:                  '[networkID+accountIndex]',
         });
         this.db.open ();
     }

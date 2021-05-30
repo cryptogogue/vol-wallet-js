@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { PagingMenu, PagingController } from './PagingMenu';
 import { TX_STATUS }        from './transactions/Transaction';
 import { Transaction }      from './transactions/Transaction';
 import * as vol             from './util/vol';
@@ -17,146 +18,6 @@ const ROW_STATUS = {
     WARNING:            'WARNING',
     ERROR:              'ERROR',
 };
-
-const PAGE_SIZE         = 8;
-const PAGE_MENU_SIZE    = 4;
-
-//================================================================//
-// PagingController
-//================================================================//
-class PagingController {
-
-    @observable totalItems      = 0;
-    @observable page            = 0;
-    @observable pageCount       = 0;
-    @observable pageMenuMin     = 0;
-
-    @computed get hasNextPage           () { return this.page < ( this.pageCount - 1 ); }
-    @computed get hasPrevPage           () { return this.page > 0; }
-
-    //----------------------------------------------------------------//
-    constructor ( totalItems ) {
-        runInAction (() => {
-            this.totalItems     = totalItems;
-            this.pageCount      = Math.ceil ( totalItems / PAGE_SIZE );
-        });
-    }
-
-    //----------------------------------------------------------------//
-    finalize () {
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    movePage ( advance ) {
-
-        let next = this.page + advance;
-
-        next = next >= this.pageCount ? this.pageCount - 1 : next;
-        next = next < 0 ? 0 : next;
-
-        if ( this.page === next ) return;
-        this.page = next;
-
-        if ( advance > 0 ) {
-
-            if (( this.pageCount > PAGE_MENU_SIZE ) && ( this.page >= this.pageMenuMax - 1 )) {
-        
-                this.pageMenuMin = this.page;
-
-                const max = this.pageCount - PAGE_MENU_SIZE;
-
-                if ( this.pageMenuMin > max ) {
-                    this.pageMenuMin = max;
-                }
-            }
-        }
-        else {
-            if ( this.page < this.pageMenuMin ) {
-                this.pageMenuMin = this.page > PAGE_MENU_SIZE ? this.pageMenuMin - PAGE_MENU_SIZE : 0;
-            }
-        }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    nextPage () {
-
-        this.movePage ( 1 );
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    pageItemMin () {
-
-        return this.page * PAGE_SIZE;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    pageItemMax () {
-
-        const max = this.pageItemMin + PAGE_SIZE;
-        return ( max < this.totalItems ) ? max : this.totalItems;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    pageMenuMax () {
-
-        const max = this.pageMenuMin + PAGE_MENU_SIZE;
-        return max < this.pageCount ? max : this.pageCount;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    prevPage () {
-
-        this.movePage ( -1 );
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setPage ( page ) {
-
-        this.movePage ( page - this.page );
-    }
-}
-
-//================================================================//
-// PagingMenu
-//================================================================//
-const PagingMenu = observer (( props ) => {
-
-    const { controller } = props;
-
-    const pageItems = [];
-    for ( let i = controller.pageMenuMin; i < controller.pageMenuMax; ++i ) {
-
-        pageItems.push (
-            <UI.Menu.Item
-                key = { i }
-                as = 'a'
-                onClick = {() => { controller.setPage ( i )}}
-                active = { i === controller.page }
-            >
-                { i + 1 }
-            </UI.Menu.Item>
-        );
-    }
-
-    return (
-        <UI.Menu floated = 'right' pagination>
-            <UI.Menu.Item as = 'a' icon onClick = {() => { controller.prevPage (); }} disabled = { !controller.hasPrevPage }>
-                <UI.Icon name = 'chevron left' />
-            </UI.Menu.Item>
-            { pageItems }
-            <UI.Menu.Item as = 'a' icon onClick = {() => { controller.nextPage (); }} disabled = { !controller.hasNextPage }>
-                <UI.Icon name = 'chevron right'/>
-            </UI.Menu.Item>
-        </UI.Menu>
-    );
-});
 
 //================================================================//
 // TransactionQueueView
@@ -272,7 +133,7 @@ export const TransactionQueueView = observer (( props ) => {
         );
     }
 
-    for ( let i = pagingController.pageItemMax; i < ( pagingController.pageItemMin + PAGE_SIZE ); ++i ) {
+    for ( let i = pagingController.pageItemMax; i < ( pagingController.pageItemMin + pagingController.pageSize ); ++i ) {
 
         transactionList.push (
             <UI.Table.Row

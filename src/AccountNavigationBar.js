@@ -2,6 +2,7 @@
 
 import { InboxLabel }                       from './InboxLabel';
 import { NavigationBar }                    from './NavigationBar';
+import { TransactionHistoryLabel }          from './TransactionHistoryLabel';
 import { TransactionQueueLabel }            from './TransactionQueueLabel';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
@@ -99,6 +100,7 @@ export const AccountNavigationBar = observer (( props ) => {
                     <Menu.Item>
                         <InboxLabel accountService = { accountService }/>
                         <TransactionQueueLabel accountService = { accountService }/>
+                        <TransactionHistoryLabel accountService = { accountService }/>
                     </Menu.Item>
                 </Menu.Menu>
             </Menu>
