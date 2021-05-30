@@ -126,7 +126,8 @@ export class TransactionQueueService {
             const transaction = Transaction.fromBody ( body );
             transaction.setEnvelope ( envelope );
             transaction.setStatus ( TX_STATUS.HISTORY );
-            transaction.makerIndex = envelope.makerIndex;
+            transaction.makerIndex      = envelope.makerIndex;
+            transaction.details         = envelope.details;
 
             this.history.push ( transaction );
         }
@@ -238,6 +239,20 @@ export class TransactionQueueService {
     @computed get
     hasUnsentTransactions () {
         return ( this.unsentTransactions.length > 0 );
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    inboxUnread () {
+
+        const inboxBase = this.accountService.inboxRead;
+        let count = 0;
+
+        for ( let i = inboxBase; i < this.history.length; ++i ) {
+            const tx = this.history [ i ];
+            if ( tx.makerIndex !== this.accountService.index ) count++;
+        }
+        return count;
     }
 
     //----------------------------------------------------------------//

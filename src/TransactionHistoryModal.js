@@ -15,6 +15,12 @@ export const TransactionHistoryModal = observer (( props ) => {
     const transactionQueue  = accountService.transactionQueue;
     const transactions      = transactionQueue.history;
 
+    const unread = accountService.transactionQueue.inboxUnread;
+
+    let onClickMarkAsRead = () => {
+        accountService.setInboxRead ( accountService.transactionQueue.history.length );
+    }
+
     return (
         <UI.Modal
             size = 'small'
@@ -27,6 +33,18 @@ export const TransactionHistoryModal = observer (( props ) => {
             <UI.Modal.Content>
                 <TransactionHistoryView key = { transactions.length } accountService = { accountService } transactions = { transactions }/>
             </UI.Modal.Content>
+
+
+            <UI.Modal.Actions>
+                <UI.Button
+                    positive
+                    disabled    = { unread === 0 }
+                    onClick     = { onClickMarkAsRead }
+                >
+                    Mark As Read
+                </UI.Button>
+            </UI.Modal.Actions>
+
         </UI.Modal>
     );
 });

@@ -28,6 +28,7 @@ export class AccountStateService {
     @computed get accountKeyNames           () { return ( this.account && Object.keys ( this.account.keys )) || []; }
     @computed get balance                   () { return this.account.balance - this.transactionQueue.cost; }
     @computed get controlKey                () { return this.account.controlKey; }
+    @computed get inboxRead                 () { return this.account.inboxRead || 0; }
     @computed get inventoryNonce            () { return this.inventoryService.nonce; }
     @computed get isMiner                   () { return Boolean ( this.minerInfo ); }
     @computed get keys                      () { return this.account.keys; }
@@ -270,6 +271,13 @@ export class AccountStateService {
         else {
             this.accountInfo = false;
         }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setInboxRead ( inboxRead ) {
+
+        this.account.inboxRead = inboxRead;
     }
 
     //----------------------------------------------------------------//

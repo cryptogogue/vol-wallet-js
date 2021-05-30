@@ -18,6 +18,8 @@ export const TransactionHistoryLabel = observer (( props ) => {
         setOpen ( false );
     }
 
+    const unread = accountService.transactionQueue.inboxUnread;
+
     return (
         <React.Fragment>
 
@@ -27,9 +29,9 @@ export const TransactionHistoryLabel = observer (( props ) => {
                 onClose         = { onClose }
             />
 
-            <UI.Label color = 'grey' onClick = {() => { accountService.transactionQueue.isLoaded && setOpen ( true )}}>
+            <UI.Label color = { unread ? 'green' : 'grey' } onClick = {() => { accountService.transactionQueue.isLoaded && setOpen ( true )}}>
                 <UI.Icon name = 'book'/>
-                Tx
+                { unread ? unread : 'Tx' }
             </UI.Label>
 
         </React.Fragment>

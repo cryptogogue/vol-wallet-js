@@ -77,8 +77,9 @@ class StoreScreenController {
 
                 this.setStatus (( result.seller === this.accountService.accountID ) ? status.FOR_SALE_BY_SELF : status.FOR_SALE );
                 
-                info.seller = result.seller;
-                info.price = result.minimumPrice;
+                info.offerID    = result.offerID;
+                info.seller     = result.seller;
+                info.price      = result.minimumPrice;
             }
             else if ( result.status === status.NOT_FOR_SALE ) {
 
@@ -160,6 +161,7 @@ export const ShopScreen = observer (( props ) => {
             new BuyAssetsFormController (
                 accountService,
                 controller.info.price,
+                controller.info.offerID,
                 controller.inventory.assets
             )
         );

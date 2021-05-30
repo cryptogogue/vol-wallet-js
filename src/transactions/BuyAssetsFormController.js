@@ -16,10 +16,11 @@ import { observer }                         from 'mobx-react';
 export class BuyAssetsFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( accountService, price, selection ) {
+    constructor ( accountService, price, offerID, selection ) {
         super ();
 
         this.minimumPrice = price;
+        this.offerID = offerID;
 
         const fieldsArray = [
             new Fields.AssetSelectionFieldController    ( 'selection', _.cloneDeep ( selection )),
@@ -42,7 +43,7 @@ export class BuyAssetsFormController extends TransactionFormController {
     virtual_composeBody () {
 
         return {
-            identifier:     this.fields.selection.assetIDs [ 0 ],
+            offerID:        this.offerID,
             price:          this.fields.price.value,
         };
     }

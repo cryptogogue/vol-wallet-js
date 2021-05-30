@@ -197,6 +197,7 @@ export class Transaction {
         loadedTransaction.envelope          = transaction.envelope;
     
         loadedTransaction.makerIndex        = transaction.makerIndex;
+        loadedTransaction.details           = transaction.details;
 
         return loadedTransaction;
     }

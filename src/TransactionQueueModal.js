@@ -42,14 +42,14 @@ export const TransactionQueueModal = observer (( props ) => {
             return;
         }
         await transactionQueue.submitTransactionsAsync ( password, nonce );
-    };
+    }
     
     let onClickClear = async () => {
         setBusy ( true );
         clearPassword ();
         await transactionQueue.clearUnsentTransactionsAsync ();
         setBusy ( false );
-    };
+    }
 
     const transactions      = transactionQueue.queue;
 

@@ -12,6 +12,23 @@ import { observer }         from 'mobx-react';
 import * as UI              from 'semantic-ui-react';
 
 //----------------------------------------------------------------//
+function formatAssetList ( assets ) {
+
+    if ( !assets.length ) return 'no assets';
+
+    if ( assets.length === 1 ) {
+        return `an asset (${ assets [ 0 ].assetID })`;
+    }
+
+    const assetIDs = [];
+    for ( let asset of assets ) {
+        assetIDs.push ( asset.assetID );
+    }
+
+    return `${ assets.length } assets (${ assetIDs.join ( ', ' )})`;
+}
+
+//----------------------------------------------------------------//
 function getExplanation ( accountService, tx ) {
 
     const isMaker = accountService.index === tx.makerIndex;
@@ -20,18 +37,19 @@ function getExplanation ( accountService, tx ) {
 
         case TRANSACTION_TYPE.BUY_ASSETS: {
 
-            const amount = vol.format ( tx.body.price );
+            const price = vol.format ( tx.body.price );
+            const assetList = formatAssetList ( tx.details.assets );
 
-            if ( isMaker ) return `You bought some assets for ${ amount }.`;
-            return `You sold some assets for ${ amount }.`;
+            if ( isMaker ) return `You bought ${ assetList } from ${ tx.details.from } for ${ price }.`;
+            return `You sold ${ assetList } to ${ tx.details.to } for ${ price }.`;
         }
         case TRANSACTION_TYPE.SEND_ASSETS: {
 
             const accountName = tx.body.accountName;
-            const amount = tx.body.assetIdentifiers.length;
+            const assetList = formatAssetList ( tx.details.assets );
 
-            if ( isMaker ) return `You sent ${ accountName } ${ amount } assets.`;
-            return `${ accountName } sent you ${ amount } assets.`;
+            if ( isMaker ) return `You sent ${ assetList } to ${ accountName }.`;
+            return `${ accountName } sent you ${ assetList }.`;
         }
         case TRANSACTION_TYPE.SEND_VOL: {
 
@@ -57,25 +75,28 @@ class Filter {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-    }
-
-    //----------------------------------------------------------------//
     @computed get
-    transactions () {
+    filtered () {
 
-        const transactions = [];
+        let index = 0;
+        const filtered = [];
         for ( let transaction of this.unfiltered ) {
 
             switch ( transaction.type ) {
                 case TRANSACTION_TYPE.BUY_ASSETS:
                 case TRANSACTION_TYPE.SEND_ASSETS:
-                case TRANSACTION_TYPE.SEND_VOL:
-                    transactions.push ( transaction );
+                case TRANSACTION_TYPE.SEND_VOL: {
+                    filtered.push ( index );
                     break;
+                }
             }
+            index++;
         }
-        return transactions;
+        return filtered;
+    }
+
+    //----------------------------------------------------------------//
+    finalize () {
     }
 };
 
@@ -86,18 +107,20 @@ export const TransactionHistoryView = observer (( props ) => {
     
     const accountService        = props.accountService;
     const filter                = hooks.useFinalizable (() => new Filter ( props.transactions ));
-    const pagingController      = hooks.useFinalizable (() => new PagingController ( filter.transactions.length ));
+    const pagingController      = hooks.useFinalizable (() => new PagingController ( filter.filtered.length ));
 
-    const transactions          = filter.transactions;
+    const filtered              = filter.filtered;
+    const transactions          = props.transactions;
 
     let transactionList = [];
     for ( let i = pagingController.pageItemMin; i < pagingController.pageItemMax; ++i ) {
 
-        const transaction = transactions [ transactions.length - i - 1 ];
-        let friendlyName = Transaction.friendlyNameForType ( transaction.type );
+        const index = filtered [ filtered.length - i - 1 ];
+        const transaction = transactions [ index ];
+        const isUnread = (( accountService.index !== transaction.makerIndex ) && ( index >= accountService.inboxRead ));
 
         transactionList.push (
-            <UI.Table.Row key = { i }>
+            <UI.Table.Row key = { i } positive = { isUnread }>
                 <UI.Table.Cell>{ getExplanation ( accountService, transaction )}</UI.Table.Cell>
             </UI.Table.Row>
         );
