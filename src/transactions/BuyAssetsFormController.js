@@ -24,7 +24,7 @@ export class BuyAssetsFormController extends TransactionFormController {
 
         const fieldsArray = [
             new Fields.AssetSelectionFieldController    ( 'selection', _.cloneDeep ( selection )),
-            new Fields.VOLFieldController               ( 'price', price, price ),
+            new Fields.VOLFieldController               ( 'price', 0, price ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.BUY_ASSETS, fieldsArray );
     }

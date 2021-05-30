@@ -23,6 +23,7 @@ const SPECIAL_FIELDS = [
 export class TransactionFormController {
 
     @observable     standalone              = false;
+    @observable     transaction             = false;
 
     @computed get balance                   () { return this.accountService.balance - this.cost; }
     @computed get cost                      () { return this.transaction ? this.transaction.cost : 0; }

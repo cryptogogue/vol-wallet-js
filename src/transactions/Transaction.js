@@ -146,6 +146,7 @@ export class Transaction {
     static fromBody ( body ) {
 
         switch ( body.type ) {
+            case TRANSACTION_TYPE.BUY_ASSETS:       return new Transaction_BuyAssets ( body );
             case TRANSACTION_TYPE.OPEN_ACCOUNT:     return new Transaction_OpenAccount ( body );
             case TRANSACTION_TYPE.RUN_SCRIPT:       return new Transaction_RunScript ( body );
             case TRANSACTION_TYPE.SEND_VOL:         return new Transaction_SendVOL ( body );
@@ -285,6 +286,18 @@ export class Transaction {
 };
 
 //================================================================//
+// Transaction_BuyAssets
+//================================================================//
+class Transaction_BuyAssets extends Transaction {
+
+    //----------------------------------------------------------------//
+    virtual_getSendVOL () {
+
+        return this.body.price || 0;
+    }
+};
+
+//================================================================//
 // Transaction_OpenAccount
 //================================================================//
 class Transaction_OpenAccount extends Transaction {
@@ -315,6 +328,8 @@ class Transaction_SendVOL extends Transaction {
 
     //----------------------------------------------------------------//
     virtual_getSendVOL () {
+
+        debugLog ( 'GET SEND VOL', this.body.amount );
 
         return this.body.amount || 0;
     }

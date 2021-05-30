@@ -10,6 +10,7 @@ import * as vol                                             from './util/vol';
 import { AssetModal, Inventory, InventoryView, InventoryViewController } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
+import { DateTime, Duration }                               from 'luxon';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
 import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
@@ -29,12 +30,12 @@ const status = {
 };
 
 //const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@STORE:', ...args ); }
+const debugLog = function ( ...args ) { console.log ( '@SHOP:', ...args ); }
 
 //================================================================//
-// StoreScreenController
+// ShopScreenController
 //================================================================//
-class StoreScreenController {
+class ShopScreenController {
 
     @observable status          = status.IDLE;
     @observable inventory       = false;
@@ -47,6 +48,12 @@ class StoreScreenController {
         this.inventoryService   = accountService.inventoryService;
         this.networkService     = accountService.networkService;
         this.revocable          = new RevocableContext ();
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    expires () {
+        return this.info && this.info.expiration ? DateTime.fromISO ( this.info.expiration ).toLocaleString ( DateTime.DATETIME_MED ) : '';
     }
 
     //----------------------------------------------------------------//
@@ -77,9 +84,10 @@ class StoreScreenController {
 
                 this.setStatus (( result.seller === this.accountService.accountID ) ? status.FOR_SALE_BY_SELF : status.FOR_SALE );
                 
-                info.offerID    = result.offerID;
-                info.seller     = result.seller;
-                info.price      = result.minimumPrice;
+                info.offerID        = result.offerID;
+                info.seller         = result.seller;
+                info.price          = result.minimumPrice;
+                info.expiration     = result.expiration;
             }
             else if ( result.status === status.NOT_FOR_SALE ) {
 
@@ -135,7 +143,7 @@ export const ShopScreen = observer (( props ) => {
     const accountService            = appState.assertAccountService ( networkID, accountID );
     const networkService            = accountService.networkService;
     const inventoryService          = accountService.inventoryService;
-    const controller                = hooks.useFinalizable (() => new StoreScreenController ( accountService ));
+    const controller                = hooks.useFinalizable (() => new ShopScreenController ( accountService ));
     const progress                  = accountService.inventoryProgress;
 
     const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ());
@@ -224,6 +232,7 @@ export const ShopScreen = observer (( props ) => {
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
+                                <UI.Header as = 'h3'>{ `Expires: ${ controller.expires }` }</UI.Header>
                                 <UI.Button fluid color = 'green' onClick = {() => { onClickBuy ()}}>Buy</UI.Button>
                             </UI.Segment>
                         </When>
@@ -232,6 +241,7 @@ export const ShopScreen = observer (( props ) => {
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
+                                <UI.Header as = 'h3'>{ `Expires: ${ controller.expires }` }</UI.Header>
                                 <UI.Button fluid color = 'red' onClick = {() => { onClickCancel ()}}>Cancel Offer</UI.Button>
                             </UI.Segment>
                         </When>

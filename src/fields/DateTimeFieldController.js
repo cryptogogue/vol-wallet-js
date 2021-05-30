@@ -47,7 +47,7 @@ export class DateTimeFieldController extends FieldController {
 
         // NOTE: time can be earlier than minDateTime only because of the way the time picker works; date cannot be earlier
         if ( this.minDateTime && ( this.dateTime < this.minDateTime )) {
-            this.error = `Cannot be earlier than ${ this.minDateTime.toFormat ( 'HH:mm' )}`;
+            this.error = `Cannot be earlier than ${ this.minDateTime.toLocaleString ( DateTime.DATETIME_MED )}`;
         }
     }
 }
