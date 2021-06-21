@@ -18,6 +18,7 @@ import { RenameAccountForm }                    from './RenameAccountForm';
 import { ReserveAccountNameForm }               from './ReserveAccountNameForm';
 import { SendAssetsForm }                       from './SendAssetsForm';
 import { SendVOLForm }                          from './SendVOLForm';
+import { StampAssetsForm }                      from './StampAssetsForm';
 import { TRANSACTION_TYPE }                     from './Transaction';
 import { UpgradeAssetsForm }                    from './UpgradeAssetsForm';
 import { UpdateMinerInfoForm }                  from './UpdateMinerInfoForm';
@@ -90,6 +91,7 @@ export const TransactionFormBody = observer (({ controller }) => {
         case TRANSACTION_TYPE.RUN_SCRIPT:                   return ( <CraftingForm              controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm            controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm               controller = { controller }/> );
+        case TRANSACTION_TYPE.STAMP_ASSETS:                 return ( <StampAssetsForm           controller = { controller }/> );
         case TRANSACTION_TYPE.UPGRADE_ASSETS:               return ( <UpgradeAssetsForm         controller = { controller }/> );
         case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return ( <UpdateMinerInfoForm       controller = { controller }/> );
     }

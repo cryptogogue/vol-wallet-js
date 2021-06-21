@@ -4,8 +4,9 @@ import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavig
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
 import { AppStateService }                                  from './services/AppStateService';
-import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { OfferAssetsFormController }                        from './transactions/OfferAssetsFormController';
+import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
+import { StampAssetsFormController }                        from './transactions/StampAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryDownloadModal } from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
@@ -60,6 +61,14 @@ export const InventoryMenu = observer (( props ) => {
             new SendAssetsFormController (
                 accountService,
                 controller.selection
+            )
+        );
+    }
+
+    const onClickStampAssets = () => {
+        setTransactionController (
+            new StampAssetsFormController (
+                accountService
             )
         );
     }
@@ -199,6 +208,11 @@ export const InventoryMenu = observer (( props ) => {
                             { methodListItems }
                         </Dropdown.Menu>
                     </Dropdown>
+                    <Menu.Item
+                        icon        = 'paint brush'
+                        disabled    = { isPrintLayout }
+                        onClick     = {() => { onClickStampAssets ()}}
+                    />
                 </Menu.Menu>
             </Menu>
 

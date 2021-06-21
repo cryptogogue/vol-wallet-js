@@ -26,6 +26,7 @@ export const TRANSACTION_TYPE = {
     SELECT_REWARD:              'SELECT_REWARD',
     SEND_ASSETS:                'SEND_ASSETS',
     SEND_VOL:                   'SEND_VOL',
+    STAMP_ASSETS:               'STAMP_ASSETS',
     SET_MINIMUM_GRATUITY:       'SET_MINIMUM_GRATUITY',
     UPGRADE_ASSETS:             'UPGRADE_ASSETS',
     UPDATE_MINER_INFO:          'UPDATE_MINER_INFO',
@@ -135,6 +136,7 @@ export class Transaction {
             case TRANSACTION_TYPE.SELECT_REWARD:                return 'Select Reward';
             case TRANSACTION_TYPE.SEND_ASSETS:                  return 'Send Assets';
             case TRANSACTION_TYPE.SEND_VOL:                     return 'Send VOL';
+            case TRANSACTION_TYPE.STAMP_ASSETS:                 return 'Stamp Assets';
             case TRANSACTION_TYPE.SET_MINIMUM_GRATUITY:         return 'Set Minimum Gratuity';
             case TRANSACTION_TYPE.UPGRADE_ASSETS:               return 'Upgrade Assets';
             case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return 'Update Miner Info';
@@ -150,6 +152,7 @@ export class Transaction {
             case TRANSACTION_TYPE.OPEN_ACCOUNT:     return new Transaction_OpenAccount ( body );
             case TRANSACTION_TYPE.RUN_SCRIPT:       return new Transaction_RunScript ( body );
             case TRANSACTION_TYPE.SEND_VOL:         return new Transaction_SendVOL ( body );
+            case TRANSACTION_TYPE.STAMP_ASSETS:     return new Transaction_StampAssets ( body );
             default:                                return new Transaction ( body );
         }
     }
@@ -329,8 +332,19 @@ class Transaction_SendVOL extends Transaction {
     //----------------------------------------------------------------//
     virtual_getSendVOL () {
 
-        debugLog ( 'GET SEND VOL', this.body.amount );
-
         return this.body.amount || 0;
     }
 };
+
+//================================================================//
+// Transaction_StampAssets
+//================================================================//
+class Transaction_StampAssets extends Transaction {
+
+    //----------------------------------------------------------------//
+    virtual_getSendVOL () {
+
+        return this.body.price * this.body.assetIdentifiers.length;
+    }
+};
+

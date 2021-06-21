@@ -98,13 +98,12 @@ export class TransactionFormController {
             isErrorFree:        false,
         });
 
-        this.transaction = this.makeTransaction ();
         this.validate ();
     }
 
     //----------------------------------------------------------------//
-    @computed
-    get isCompleteAndErrorFree () {
+    @computed get
+    isCompleteAndErrorFree () {
 
         return this.isComplete && this.isErrorFree;
     }
@@ -149,7 +148,7 @@ export class TransactionFormController {
     @action
     validate () {
 
-        this.transaction = this.makeTransaction ();
+        this.transaction = false;
 
         // check for completion
         this.isComplete = this.virtual_checkComplete ();
@@ -176,6 +175,8 @@ export class TransactionFormController {
                 break;
             }
         }
+
+        this.transaction = this.isCompleteAndErrorFree ? this.makeTransaction () : false;
 
         // check balance
         if ( !this.standalone ) {

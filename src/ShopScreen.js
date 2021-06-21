@@ -19,7 +19,7 @@ import { Redirect }                                         from 'react-router';
 import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
-const status = {
+const STATUS = {
     IDLE:               'IDLE',
     BUSY:               'BUSY',
     NOT_FOUND:          'NOT_FOUND',
@@ -37,7 +37,7 @@ const debugLog = function ( ...args ) { console.log ( '@SHOP:', ...args ); }
 //================================================================//
 class ShopScreenController {
 
-    @observable status          = status.IDLE;
+    @observable status          = STATUS.IDLE;
     @observable inventory       = false;
     @observable info            = false;
 
@@ -78,27 +78,27 @@ class ShopScreenController {
 
             if ( this.inventory === false ) {
 
-                this.setStatus ( status.NOT_FOUND );
+                this.setStatus ( STATUS.NOT_FOUND );
             }
-            else if ( result.status === status.FOR_SALE ) {
+            else if ( result.status === STATUS.FOR_SALE ) {
 
-                this.setStatus (( result.seller === this.accountService.accountID ) ? status.FOR_SALE_BY_SELF : status.FOR_SALE );
+                this.setStatus (( result.seller === this.accountService.accountID ) ? STATUS.FOR_SALE_BY_SELF : STATUS.FOR_SALE );
                 
                 info.offerID        = result.offerID;
                 info.seller         = result.seller;
                 info.price          = result.minimumPrice;
                 info.expiration     = result.expiration;
             }
-            else if ( result.status === status.NOT_FOR_SALE ) {
+            else if ( result.status === STATUS.NOT_FOR_SALE ) {
 
-                this.setStatus ( status.NOT_FOR_SALE );
+                this.setStatus ( STATUS.NOT_FOR_SALE );
             }
 
             this.setInfo ( info );
         }
         catch ( error ) {
             debugLog ( error );
-            this.setStatus ( status.ERROR );
+            this.setStatus ( STATUS.ERROR );
         }
     }
 
@@ -228,7 +228,7 @@ export const ShopScreen = observer (( props ) => {
                     
                     <Choose>
 
-                        <When condition = { controller.status === status.FOR_SALE }>
+                        <When condition = { controller.status === STATUS.FOR_SALE }>
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
@@ -237,7 +237,7 @@ export const ShopScreen = observer (( props ) => {
                             </UI.Segment>
                         </When>
 
-                        <When condition = { controller.status === status.FOR_SALE_BY_SELF }>
+                        <When condition = { controller.status === STATUS.FOR_SALE_BY_SELF }>
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
@@ -246,13 +246,13 @@ export const ShopScreen = observer (( props ) => {
                             </UI.Segment>
                         </When>
 
-                        <When condition = { controller.status === status.NOT_FOR_SALE }>
+                        <When condition = { controller.status === STATUS.NOT_FOR_SALE }>
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Sorry, ${ controller.info.assetID } is not for sale.` }</UI.Header>
                             </UI.Segment>
                         </When>
 
-                        <When condition = { controller.status === status.NOT_FOUND }>
+                        <When condition = { controller.status === STATUS.NOT_FOUND }>
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Could not find ${ controller.info.assetID }.` }</UI.Header>
                             </UI.Segment>

@@ -67,7 +67,7 @@ export const InventoryScreen = observer (( props ) => {
     const craftingFormController    = hooks.useFinalizable (() => new CraftingFormController ( accountService ));
     const upgradesFormController    = hooks.useFinalizable (() => new UpgradeAssetsFormController ( accountService, new InventoryWithFilter ( inventory, upgradesFilter )));
 
-    const onAssetSelect = ( asset, toggle ) => {
+    const onAssetSelect = ( asset ) => {
         inventoryViewController.toggleAssetSelection ( asset );
     }
 
