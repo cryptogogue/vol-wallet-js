@@ -12,7 +12,6 @@ import { Button, Dropdown, Header, Icon, Label, Menu } from 'semantic-ui-react';
 
 export const ACCOUNT_TABS = {
     ACCOUNT:        'ACCOUNT',
-    HISTORY:        'HISTORY',
     INVENTORY:      'INVENTORY',
     KEYS:           'KEYS',
     MINER:          'MINER',
@@ -24,7 +23,6 @@ function getAccountTabTitle ( tab ) {
 
     switch ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return 'Account';
-        case ACCOUNT_TABS.HISTORY:      return 'History';
         case ACCOUNT_TABS.INVENTORY:    return 'Inventory';
         case ACCOUNT_TABS.KEYS:         return 'Keys';
         case ACCOUNT_TABS.MINER:        return 'Miner';
@@ -38,7 +36,6 @@ function getAccountTabURL ( tab ) {
 
     switch ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return '';
-        case ACCOUNT_TABS.HISTORY:      return '/history';
         case ACCOUNT_TABS.INVENTORY:    return '/inventory';
         case ACCOUNT_TABS.KEYS:         return '/keys';
         case ACCOUNT_TABS.MINER:        return '/miner';
@@ -60,7 +57,6 @@ export const AccountNavigationBar = observer (( props ) => {
     const { accountService, tab } = props;
 
     const accountsURL           = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
-    const historyURL            = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.HISTORY )}`;
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
     const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
