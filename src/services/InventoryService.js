@@ -272,9 +272,13 @@ export class InventoryService {
                 delete assetsFiltered [ asset.assetID ]; // just in case
                 debugLog ( 'ADDING ASSET', asset.assetID );
 
-                // if the asset is new to the inventory (as opposed to just being updated)
-                if ( !( _.has ( this.assets, asset.assetID ) || this.inbox.includes ( asset.assetID ))) {
-                    this.inbox.push ( asset.assetID );
+                if ( !this.inbox.includes ( asset.assetID )) {
+
+                    const prevAsset = this.assets [ asset.assetID ];
+
+                    if ( !( prevAsset && ( prevAsset.inventoryNonce === asset.inventoryNonce ))) {
+                        this.inbox.push ( asset.assetID );
+                    }
                 }
 
                 // update or overwrite with the latest version

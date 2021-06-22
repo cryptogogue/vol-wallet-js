@@ -13,9 +13,7 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 export const AssetSelectionField = observer (( props ) => {
 
-    const { field } = props;
-
-    const assets = field.assets;
+    const assets = props.field ? props.field.assets : props.assets;
 
     const sorted = [];
     for ( let assetID in assets ) {

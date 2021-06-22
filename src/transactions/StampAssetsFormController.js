@@ -155,8 +155,8 @@ export class StampAssetsFormController extends TransactionFormController {
         const body = {};
         
         body.stamp              = this.stampAsset.assetID;
-        body.price              = this.stamp.price;
-        body.version            = 0;
+        body.price              = this.stampAsset.owner === this.accountService.accountID ? 0 : this.stamp.price;
+        body.version            = this.stamp.version;
         body.assetIdentifiers   = this.selectedAssetIDs;
         return body;
     }

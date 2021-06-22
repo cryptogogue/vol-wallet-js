@@ -209,7 +209,7 @@ export const InventoryMenu = observer (( props ) => {
                         </Dropdown.Menu>
                     </Dropdown>
                     <Menu.Item
-                        icon        = 'paint brush'
+                        icon        = 'images'
                         disabled    = { isPrintLayout }
                         onClick     = {() => { onClickStampAssets ()}}
                     />

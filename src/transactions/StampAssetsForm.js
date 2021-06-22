@@ -4,6 +4,7 @@ import { StampAssetPreviewModal }               from './StampAssetPreviewModal'
 import { StampAssetSelectionModal }             from './StampAssetSelectionModal'
 import { STATUS }                               from './StampAssetsFormController'
 import * as Fields                              from '../fields/fields'
+import * as vol                                 from '../util/vol';
 import { AssetCardView }                        from 'cardmotron';
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import { DateTime }                             from 'luxon';
@@ -12,49 +13,6 @@ import { observer }                             from 'mobx-react';
 import React, { useState }                      from 'react';
 import { DateInput, TimeInput }                 from 'semantic-ui-calendar-react';
 import * as UI                                  from 'semantic-ui-react';
-
-//================================================================//
-// StampAssetSelectionField
-//================================================================//
-export const StampAssetSelectionField = observer (( props ) => {
-
-    const { assets } = props;
-
-    const list = [];
-    for ( let assetID in assets ) {
-
-        const asset     = assets [ assetID ];
-        const name      = asset.fields.name ? asset.fields.name.value : assetID;
-
-        list.push (
-            <UI.Table.Row key = { assetID }>
-                <UI.Table.Cell collapsing>
-                    { assetID }
-                </UI.Table.Cell>
-
-                <UI.Table.Cell>
-                    { name }
-                </UI.Table.Cell>
-            </UI.Table.Row>
-        );
-    }
-
-    return (
-        <UI.Table celled unstackable>
-
-            <UI.Table.Header>
-                <UI.Table.Row>
-                    <UI.Table.HeaderCell>Asset ID</UI.Table.HeaderCell>
-                    <UI.Table.HeaderCell>Name</UI.Table.HeaderCell>
-                </UI.Table.Row>
-            </UI.Table.Header>
-
-            <UI.Table.Body>
-                { list }
-            </UI.Table.Body>
-        </UI.Table>
-    );
-});
 
 //================================================================//
 // StampAssetsForm
@@ -103,7 +61,15 @@ export const StampAssetsForm = observer (({ controller }) => {
 
             <If condition = { controller.stampInventory }>
 
-                <AssetCardView assetID = { controller.stampAsset.assetID } inventory = { controller.stampInventory }/>
+                <div style = {{ width: '100%', textAlign: 'center' }}>
+                    <div style = {{ display: 'inline-block' }}>
+                        <AssetCardView assetID = { controller.stampAsset.assetID } inventory = { controller.stampInventory }/>
+
+                        <UI.Header.Subheader as = 'h3' style = {{ paddingBottom: 10 }}>
+                            { `Price per Asset: ${ vol.format ( controller.stamp.price )}` }
+                        </UI.Header.Subheader>
+                    </div>
+                </div>
 
                 <Choose>
                     <When condition = { controller.filteredInventory }>
@@ -131,7 +97,7 @@ export const StampAssetsForm = observer (({ controller }) => {
                 
                 <If condition = { controller.selectedAssetIDs.length > 0 }>
 
-                    <StampAssetSelectionField assets = { controller.assetSelection }/>
+                    <Fields.AssetSelectionField assets = { controller.assetSelection }/>
 
                     <StampAssetPreviewModal
                         controller      = { controller }
