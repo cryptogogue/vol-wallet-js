@@ -1,15 +1,15 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { AccountLogModal }          from './AccountLogModal';
 import { PasswordInputField }       from './PasswordInputField';
-import { TransactionHistoryModal }  from './TransactionHistoryModal';
 import React, { useState }          from 'react';
 import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';
 
 //================================================================//
-// TransactionHistoryLabel
+// AccountLogLabel
 //================================================================//
-export const TransactionHistoryLabel = observer (( props ) => {
+export const AccountLogLabel = observer (( props ) => {
 
     const { accountService } = props;
     const [ open, setOpen ] = useState ( false );
@@ -23,7 +23,7 @@ export const TransactionHistoryLabel = observer (( props ) => {
     return (
         <React.Fragment>
 
-            <TransactionHistoryModal
+            <AccountLogModal
                 accountService  = { accountService }
                 open            = { open }
                 onClose         = { onClose }
@@ -31,7 +31,7 @@ export const TransactionHistoryLabel = observer (( props ) => {
 
             <UI.Label color = { unread ? 'green' : 'grey' } onClick = {() => { accountService.transactionQueue.isLoaded && setOpen ( true )}}>
                 <UI.Icon name = 'book'/>
-                { unread ? unread : 'Tx' }
+                { unread ? unread : 'Log' }
             </UI.Label>
 
         </React.Fragment>

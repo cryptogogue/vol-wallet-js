@@ -1,19 +1,19 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TransactionHistoryView }   from './TransactionHistoryView';
+import { AccountLogView }           from './AccountLogView';
 import React, { useState }          from 'react';
 import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';
 
 //================================================================//
-// TransactionHistoryModal
+// AccountLogModal
 //================================================================//
-export const TransactionHistoryModal = observer (( props ) => {
+export const AccountLogModal = observer (( props ) => {
 
     const { accountService, open, onClose } = props;
 
     const transactionQueue  = accountService.transactionQueue;
-    const transactions      = transactionQueue.history;
+    const entries           = transactionQueue.history;
 
     const unread = accountService.transactionQueue.inboxUnread;
 
@@ -31,7 +31,7 @@ export const TransactionHistoryModal = observer (( props ) => {
             <UI.Modal.Header>Transaction History</UI.Modal.Header>
 
             <UI.Modal.Content>
-                <TransactionHistoryView key = { transactions.length } accountService = { accountService } transactions = { transactions }/>
+                <AccountLogView key = { entries.length } accountService = { accountService } entries = { entries }/>
             </UI.Modal.Content>
 
 

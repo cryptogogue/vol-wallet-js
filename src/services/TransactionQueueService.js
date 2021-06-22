@@ -45,7 +45,8 @@ export class TransactionQueueService {
     accountQueueHistory () {
 
         const transactions = [];
-        for ( let transaction of this.history ) {
+        for ( let entry of this.history ) {
+            const transaction = entry.transaction;
             if ( transaction.makerIndex === this.accountService.index ) {
                 transactions.push ( transaction );
             }
@@ -116,23 +117,31 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    async extendHistoryAsync ( transactions, totalTransactions ) {
+    async extendHistoryAsync ( entries ) {
 
-        if ( !transactions.length ) return;
+        if ( !entries.length ) return;
 
-        for ( let envelope of transactions ) {
+        for ( let entry of entries ) {
 
-            const body = JSON.parse ( envelope.body );
-            const transaction = Transaction.fromBody ( body );
+            let envelope = entry.transaction;
+
+            const body                  = JSON.parse ( envelope.body );
+            const transaction           = Transaction.fromBody ( body );
+
             transaction.setEnvelope ( envelope );
             transaction.setStatus ( TX_STATUS.HISTORY );
+            
             transaction.makerIndex      = envelope.makerIndex;
             transaction.details         = envelope.details;
 
-            this.history.push ( transaction );
+            this.history.push ({
+                time:               entry.time,
+                blockHeight:        entry.blockHeight,
+                transaction:        transaction,
+            });
         }
 
-        await this.db.transactionHistory.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: toJS ( this.history )});
+        await this.db.transactionHistory.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
     }
 
     //----------------------------------------------------------------//
@@ -146,17 +155,17 @@ export class TransactionQueueService {
             more = false;
 
             try {
-                const serviceURL    = consensusService.getServiceURL ( `/accounts/${ this.accountService.accountID }/history/transactions`, { base: this.history.length });
+                const serviceURL    = consensusService.getServiceURL ( `/accounts/${ this.accountService.accountID }/log`, { base: this.history.length });
                 const data          = await this.revocable.fetchJSON ( serviceURL );
 
-                if ( data && data.transactions ) {
+                if ( data && data.entries ) {
 
-                    if ( data.totalTransactions < this.history.length ) {
+                    if ( data.logSize < this.history.length ) {
                         await this.resetHistoryAsync ();
                         more = true;
                     }
-                    else if ( data.transactions.length ) {
-                        await this.extendHistoryAsync ( data.transactions );
+                    else if ( data.entries.length ) {
+                        await this.extendHistoryAsync ( data.entries );
                         more = true;
                     }
                 }
@@ -249,7 +258,7 @@ export class TransactionQueueService {
         let count = 0;
 
         for ( let i = inboxBase; i < this.history.length; ++i ) {
-            const tx = this.history [ i ];
+            const tx = this.history [ i ].transaction;
             if ( tx.makerIndex !== this.accountService.index ) count++;
         }
         return count;
@@ -271,9 +280,9 @@ export class TransactionQueueService {
                 this.queue [ i ] = Transaction.load ( this.queue [ i ]);
             }
 
-            this.history = historyRecord && historyRecord.transactions ? historyRecord.transactions : [];
+            this.history = historyRecord && historyRecord.entries ? historyRecord.entries : [];
             for ( let i in this.history ) {
-                this.history [ i ] = Transaction.load ( this.history [ i ]);
+                this.history [ i ].transaction = Transaction.load ( this.history [ i ].transaction );
             }
 
             this.status = TX_SERVICE_STATUS.LOADED;
@@ -459,7 +468,7 @@ export class TransactionQueueService {
     async resetHistoryAsync () {
 
         this.history = [];
-        await this.db.transactionHistory.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: toJS ( this.history )});
+        await this.db.transactionHistory.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
     }
 
     //----------------------------------------------------------------//

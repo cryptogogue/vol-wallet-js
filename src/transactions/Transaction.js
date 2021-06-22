@@ -77,6 +77,7 @@ export class Transaction {
 
     @computed get accountID         () { return this.maker.accountName; }
     @computed get cost              () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
+    @computed get friendlyName      () { return Transaction.friendlyNameForType ( this.body.type ); }
     @computed get isAccepted        () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
     @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
     @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }

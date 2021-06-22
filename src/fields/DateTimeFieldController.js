@@ -23,7 +23,7 @@ export class DateTimeFieldController extends FieldController {
     //----------------------------------------------------------------//
     @action
     setDate ( value ) {
-        const newDate       = DateTime.fromISO ( value ); 
+        const newDate       = DateTime.fromISO ( value );
         this.dateTime       = DateTime.local ( newDate.year, newDate.month, newDate.day, this.dateTime.hour, this.dateTime.minute );
         this.update ();
     }
