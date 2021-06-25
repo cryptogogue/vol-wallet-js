@@ -104,7 +104,7 @@ export class ConsensusService {
 
                 let result = await this.revocable.fetchJSON ( url.format ( confirmURL ));
 
-                if ( result.minerID && result.isMiner ) {
+                if ( result.minerID ) {
                     debugLog ( 'FOUND A MINER:', nodeURL );
                     if ( result.genesis === this.genesis ) {
                         this.affirmMiner ( result.minerID, nodeURL );
