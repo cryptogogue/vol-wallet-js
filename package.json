@@ -1,6 +1,6 @@
 {
     "name": "vol-wallet-js-app",
-    "version": "0.1.51",
+    "version": "0.1.52",
     "dependencies": {
         "@babel/core": "^7.12.10",
         "@babel/plugin-proposal-decorators": "^7.12.12",
