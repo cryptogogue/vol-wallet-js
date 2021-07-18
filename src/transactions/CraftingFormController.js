@@ -28,16 +28,20 @@ export class CraftingFormController extends TransactionFormController {
         const invocations = this.invocations.slice ( 0 );
         const assetsUtilized = _.cloneDeep ( this.assetsUtilized );
 
+        const isSubject = method.assetArgs [ paramName ].isSubject;
+
         for ( let assetID in selection ) {
 
             if ( assetsUtilized [ assetID ]) continue;
 
             const invocation = this.makeInvocation ( methodName );
             invocation.assetParams [ paramName ] = assetID;
-            invocation.assetsUtilized [ assetID ] = true;
-            invocations.push ( invocation );
             
-            assetsUtilized [ assetID ] = true;
+            if ( isSubject ) {
+                invocation.assetsUtilized [ assetID ] = true;
+                assetsUtilized [ assetID ] = true;
+            }
+            invocations.push ( invocation );
         }
 
         this.invocations = invocations;
@@ -215,17 +219,21 @@ export class CraftingFormController extends TransactionFormController {
         const prevValue = invocation.assetParams [ paramName ] || false;
         if ( prevValue === assetIDorFalse ) return;
 
-        if ( prevValue !== false ) {
-            delete this.assetsUtilized [ prevValue ];
-            delete invocation.assetsUtilized [ prevValue ];
+        // only mark asset as utilized if it is a subject
+        if ( invocation.method.assetArgs [ paramName ].isSubject ) {
+
+            if ( prevValue !== false ) {
+                delete this.assetsUtilized [ prevValue ];
+                delete invocation.assetsUtilized [ prevValue ];
+            }
+
+            if ( assetIDorFalse !== false ) {
+                this.assetsUtilized [ assetIDorFalse ] = true;
+                invocation.assetsUtilized [ assetIDorFalse ] = true;
+            }
         }
 
         invocation.assetParams [ paramName ] = assetIDorFalse;
-
-        if ( assetIDorFalse !== false ) {
-            this.assetsUtilized [ assetIDorFalse ] = true;
-            invocation.assetsUtilized [ assetIDorFalse ] = true;
-        }
         this.validate ();
     }
 
