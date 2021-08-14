@@ -232,7 +232,7 @@ export class AccountStateService {
     @action
     async serviceLoopAsync () {
 
-        debugLog ( 'SERVICE LOOP' );
+        debugLog ( 'SERVICE LOOP ASYNC' );
 
         let timeout = 5000;
 
@@ -250,6 +250,7 @@ export class AccountStateService {
             }
         }
         this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
+        debugLog ( 'FINISH SERVICE LOOP ASYNC' );
     }
 
     //----------------------------------------------------------------//

@@ -3,6 +3,7 @@
 /build
 /node_modules
 /public/meta.json
+/src/consts/consts.js
 
 # for now
 package-lock.json

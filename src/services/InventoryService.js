@@ -6,6 +6,8 @@ import { action, computed, extendObservable, observable, observe, reaction, runI
 import Dexie                        from 'dexie';
 import _                            from 'lodash';
 
+import InventoryWorker              from './InventoryWorker.worker';
+
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); }
 
@@ -54,12 +56,29 @@ export class InventoryService {
                 timestamp:      false,
             }
         });
+
+        this.worker = new InventoryWorker ();
+        this.loadAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    async expandAssetsAsync ( assets ) {
+
+        return new Promise (( resolve, reject ) => {
+            
+            this.worker.addEventListener ( 'message', ( event ) => {
+                console.log ( 'WORKER finished expandAssetsAsync' );
+                resolve ( event.data );
+            });
+            this.worker.postMessage ({ assets: assets });
+        });
     }
 
     //----------------------------------------------------------------//
     finalize () {
 
         this.revocable.finalize ();
+        this.worker.terminate ();
     }
 
     //----------------------------------------------------------------//
@@ -114,8 +133,10 @@ export class InventoryService {
     async loadAsync () {
 
         if ( this.isLoaded ) return;
-        
+
         this.progress.setLoading ( true );
+
+        await this.progress.onProgress ( 'Loading Inventory' );
 
         const version = await this.db.accounts.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
         if ( version ) {
@@ -150,11 +171,20 @@ export class InventoryService {
     async makeSchema ( schemaObj ) {
 
         const schema = new Schema ( schemaObj );
-        await schema.fetchFontsAsync ( schemaObj.fonts || {});
+        // await schema.fetchFontsAsync ( schemaObj.fonts || {});
         runInAction (() => {
             this.schema = schema;
         });
         this.inventory.setSchema ( schema );
+
+        return new Promise (( resolve, reject ) => {
+            
+            this.worker.addEventListener ( 'message', ( event ) => {
+                console.log ( 'WORKER finished makeSchema', event );
+                resolve ();
+            });
+            this.worker.postMessage ({ schemaObj: schemaObj });
+        });
     }
 
     //----------------------------------------------------------------//
@@ -197,8 +227,7 @@ export class InventoryService {
         let more = false;
 
         try {
-            await this.loadAsync ();
-            more = await this.updateAsync ();
+            more = this.isLoaded && await this.updateAsync ();
         }
         catch ( error ) {
             debugLog ( error );
@@ -213,10 +242,6 @@ export class InventoryService {
 
         let more = false;
 
-        this.progress.setLoading ( true );
-
-        await this.progress.onProgress ( 'Updating Inventory' );
-
         const data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory` ));
 
         debugLog ( 'STATUS FROM SERVER:', data );
@@ -226,7 +251,6 @@ export class InventoryService {
             await this.updateSchema ( data.schemaHash, data.schemaVersion );
             if ( this.schema ) {
 
-                await this.progress.onProgress ( 'Updating Inventory' );
                 more = await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
             }
         }
@@ -234,7 +258,6 @@ export class InventoryService {
             await this.reset ();
         }
 
-        this.progress.setLoading ( false );
         return more;
     }
 
@@ -256,8 +279,6 @@ export class InventoryService {
             currentNonce = 0;
         }
 
-        await this.progress.onProgress ( 'Fetching Inventory' );
-
         const count         = nextNonce - currentNonce;
         const serviceURL    = this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }`, { count: count });
         const data          = await this.revocable.fetchJSON ( serviceURL );
@@ -266,9 +287,11 @@ export class InventoryService {
 
         const assetsFiltered = _.clone ( this.accountService.account.assetsFiltered || {});
 
+        const assets = await this.expandAssetsAsync ( data.assets );
+
         runInAction (() => {
 
-            for ( let asset of data.assets ) {
+            for ( let asset of assets ) {
                 delete assetsFiltered [ asset.assetID ]; // just in case
                 debugLog ( 'ADDING ASSET', asset.assetID );
 
@@ -320,8 +343,6 @@ export class InventoryService {
         if ( !( schemaHash && schemaVersion )) return;
         let schemaKey = this.formatSchemaKey ( schemaHash, schemaVersion );
 
-        await this.progress.onProgress ( 'Fetching Schema' );
-
         if ( this.schema ) {
             const networkRecord = await this.db.networks.get ( this.networkID );
             if ( networkRecord && ( networkRecord.schemaKey === schemaKey )) return;
@@ -329,7 +350,7 @@ export class InventoryService {
 
         await this.db.schemas.where ({ networkID: this.networkID }).delete ();
 
-        const schemaInfo = ( await this.revocable.fetchJSON ( this.networkService.getServiceURL ( '/schema' )));
+        const schemaInfo = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( '/schema' ));
 
         schemaKey = this.formatSchemaKey ( schemaInfo.schemaHash, schemaInfo.schema.version );
         await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, schema: schemaInfo.schema });
