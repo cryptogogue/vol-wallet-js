@@ -28,10 +28,72 @@ export class InventoryService {
     @computed get nonce         () { return this.version.nonce; }
 
     //----------------------------------------------------------------//
+    async applyDeltaAsync () {
+
+        if ( !this.delta ) return false;
+
+        debugLog ( 'APPLY DELTA' );
+
+        const delta = this.delta;
+
+        // const assetsFiltered = _.clone ( this.accountService.account.assetsFiltered || {});
+
+        for ( let assetID of delta.deletions ) {
+            
+            delete assetsFiltered [ assetID ];
+            if ( delta.additions.includes ( assetID )) continue; // skip if removed then re-added
+            debugLog ( 'DELETING ASSET', assetID );
+            await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID }).delete ();
+
+            runInAction (() => {
+                delete this.assets [ assetID ];
+                this.inventory.deleteAsset ( assetID );
+            });
+        }
+
+        const assets = delta.assets;
+
+        for ( let asset of assets ) {
+
+            const prevAsset = this.assets [ asset.assetID ];
+            if ( prevAsset && ( prevAsset.inventoryNonce === asset.inventoryNonce )) continue;
+
+            // delete assetsFiltered [ asset.assetID ]; // just in case
+            debugLog ( 'ADDING ASSET', asset.assetID );
+
+            asset = await this.expandAssetAsync ( asset );
+
+            console.log ( 'EXPANDED ASSET:', asset );
+
+            await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID, asset: _.cloneDeep ( asset )});
+            await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID });
+
+            runInAction (() => {
+                this.inbox.push ( asset.assetID );
+                this.assets [ asset.assetID ] = asset;
+                this.inventory.setAsset ( asset );
+            });
+        }
+
+        runInAction (() => {
+            // this.accountService.account.assetsFiltered = assetsFiltered;
+            this.version.nonce          = delta.nextNonce;
+            this.version.timestamp      = delta.timestamp;
+        });
+
+        await this.db.accounts.put ( _.cloneDeep ( this.version ));
+        await this.db.inventoryDelta.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete ();
+
+        this.delta = false;
+
+        return true;
+    }
+
+    //----------------------------------------------------------------//
     @action
     async clearInbox () {
         this.inbox = [];
-        await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, inbox: []});
+        await this.db.inbox.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete ();
     }
 
     //----------------------------------------------------------------//
@@ -58,7 +120,19 @@ export class InventoryService {
         });
 
         this.worker = new InventoryWorker ();
-        this.loadAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    async expandAssetAsync ( asset ) {
+
+        return new Promise (( resolve, reject ) => {
+            
+            this.worker.addEventListener ( 'message', async ( event ) => {
+                console.log ( 'WORKER finished expandAssetAsync' );
+                resolve ( event.data.asset );
+            });
+            this.worker.postMessage ({ asset: asset });
+        });
     }
 
     //----------------------------------------------------------------//
@@ -66,7 +140,7 @@ export class InventoryService {
 
         return new Promise (( resolve, reject ) => {
             
-            this.worker.addEventListener ( 'message', ( event ) => {
+            this.worker.addEventListener ( 'message', async ( event ) => {
                 console.log ( 'WORKER finished expandAssetsAsync' );
                 resolve ( event.data );
             });
@@ -108,18 +182,20 @@ export class InventoryService {
         let assets  = {};
         let inbox   = [];
         
-        const assetsRecord = await this.db.assets.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
+        const assetRows = await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).toArray ();
         
-        if ( assetsRecord ) {
-            debugLog ( 'HAS CACHED ASSETS' );
-            assets = assetsRecord.assets;
+        for ( let row of assetRows ) {
+            assets [ row.assetID ] = row.asset;
         }
 
-        const inboxRecord = await this.db.inbox.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
-        
-        if ( inboxRecord ) {
-            inbox = inboxRecord.inbox || [];
+        const inboxRows = await this.db.inbox.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).toArray ();
+
+        for ( let row of inboxRows ) {
+            inbox.push ( row.assetID );
         }
+
+        debugLog ( 'loaded assets', assets );
+        debugLog ( 'loaded inbox', inbox );
 
         runInAction (() => {
             this.assets = assets;
@@ -127,6 +203,11 @@ export class InventoryService {
         });
 
         this.inventory.setAssets ( assets );
+
+        const deltaRow = await this.db.inventoryDelta.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
+        if ( deltaRow && deltaRow.delta ) {
+            this.delta = deltaRow.delta;
+        }
     }
 
     //----------------------------------------------------------------//
@@ -224,23 +305,21 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async serviceStep () {
 
-        let more = false;
+        if ( !this.isLoaded ) return;
+        if ( this.delta ) return;
 
         try {
-            more = this.isLoaded && await this.updateAsync ();
+            await this.updateAsync ();
         }
         catch ( error ) {
             debugLog ( error );
         }
-        return more;
     }
 
     //----------------------------------------------------------------//
     async updateAsync () {
 
         debugLog ( 'UPDATE INVENTORY' );
-
-        let more = false;
 
         const data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory` ));
 
@@ -250,15 +329,13 @@ export class InventoryService {
 
             await this.updateSchema ( data.schemaHash, data.schemaVersion );
             if ( this.schema ) {
-
-                more = await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
+                await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
             }
         }
         else {
             await this.reset ();
         }
 
-        return more;
     }
 
     //----------------------------------------------------------------//
@@ -283,56 +360,12 @@ export class InventoryService {
         const serviceURL    = this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }`, { count: count });
         const data          = await this.revocable.fetchJSON ( serviceURL );
 
-        if ( data.nextNonce <= currentNonce ) return false;
+        if ( data.nextNonce <= currentNonce ) return;
 
-        const assetsFiltered = _.clone ( this.accountService.account.assetsFiltered || {});
+        data.timestamp = timestamp; // store it here for later
 
-        const assets = await this.expandAssetsAsync ( data.assets );
-
-        runInAction (() => {
-
-            for ( let asset of assets ) {
-                delete assetsFiltered [ asset.assetID ]; // just in case
-                debugLog ( 'ADDING ASSET', asset.assetID );
-
-                if ( !this.inbox.includes ( asset.assetID )) {
-
-                    const prevAsset = this.assets [ asset.assetID ];
-
-                    if ( !( prevAsset && ( prevAsset.inventoryNonce === asset.inventoryNonce ))) {
-                        this.inbox.push ( asset.assetID );
-                    }
-                }
-
-                // update or overwrite with the latest version
-                this.assets [ asset.assetID ] = asset;
-                this.inventory.setAsset ( asset );
-            }
-
-            for ( let assetID of data.deletions ) {
-                delete assetsFiltered [ assetID ];
-                if ( data.additions.includes ( assetID )) continue; // skip if removed then re-added
-                debugLog ( 'DELETING ASSET', assetID );
-                delete this.assets [ assetID ];
-                this.inventory.deleteAsset ( assetID );
-            }
-
-            this.accountService.account.assetsFiltered = assetsFiltered;
-        });
-
-        // update the inventory db with the latest set of assets
-        await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assets: _.cloneDeep ( this.assets )});
-        await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, inbox: _.cloneDeep ( this.inbox )});
-
-        this.inventory.setAssets ( this.assets );
-
-        runInAction (() => {
-            this.version.nonce          = data.nextNonce;
-            this.version.timestamp      = timestamp;
-        });
-        await this.db.accounts.put ( _.cloneDeep ( this.version ));
-
-        return true;
+        await this.db.inventoryDelta.put ({ networkID: this.networkID, accountIndex: this.accountIndex, delta: data });
+        this.delta = data;
     }
 
     //----------------------------------------------------------------//

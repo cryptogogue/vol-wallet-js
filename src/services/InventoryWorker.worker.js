@@ -2,7 +2,7 @@ import { Schema }           from 'cardmotron-worker';
 
 /* eslint-disable no-restricted-globals */
 
-let schema = false;
+let schema      = false;
 
 async function handleMessage ( event ) {
 
@@ -26,6 +26,18 @@ async function handleMessage ( event ) {
             expandedAssets.push ( schema.expandAsset ( asset ));
         }
         this.postMessage ( expandedAssets );
+        return;
+    }
+
+    let asset = event.data.asset || false;
+
+    if ( asset ) {
+
+        await schema.affirmFontsAsync ();
+
+        console.log ( 'WORKER expanding asset:', asset.assetID );
+        asset = schema.expandAsset ( asset );
+        this.postMessage ({ asset: asset });
         return;
     }
 }

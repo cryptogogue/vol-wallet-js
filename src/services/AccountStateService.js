@@ -223,8 +223,15 @@ export class AccountStateService {
     @action
     async startServiceLoopAsync () {
 
-        debugLog ( 'START SERVICE LOOP' );
+        debugLog ( 'LOADED SUB-SERVICES' );
         await this.transactionQueue.loadAsync ();
+        await this.inventoryService.loadAsync ();
+
+        if ( this.inventoryService.delta ) {
+            await this.syncAccountInfoAsync ();
+        }
+
+        debugLog ( 'START SERVICE LOOP' );
         this.serviceLoopAsync ();
     }
 
@@ -236,19 +243,22 @@ export class AccountStateService {
 
         let timeout = 5000;
 
+        if ( this.inventoryService.delta ) {
+            await this.inventoryService.applyDeltaAsync ();
+        }
+
         await this.syncAccountInfoAsync ();
 
         await this.transactionQueue.tagLostTransactionsAsync ( this.nonce );
         await this.transactionQueue.processTransactionsAsync ();
 
         if ( this.transactionQueue.pendingTransactions.length === 0 ) {
-            debugLog ( 'UPDATE INVENTORY' );
-            const more = await this.inventoryService.serviceStep ();
-            if ( more ) {
-                debugLog ( 'SERVICE LOOP: MORE' );
+            await this.inventoryService.serviceStep ();
+            if ( this.inventoryService.delta ) {
                 timeout = 1;
             }
         }
+
         this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
         debugLog ( 'FINISH SERVICE LOOP ASYNC' );
     }

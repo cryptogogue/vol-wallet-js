@@ -1,13 +1,6 @@
 // Copyright (c) 2019 Cryptogogue, Inc. All Rights Reserved.
 
-import { Schema }                   from 'cardmotron';
-import { assert, ProgressController, RevocableContext, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
 import Dexie                        from 'dexie';
-import _                            from 'lodash';
-
-//const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); }
 
 //================================================================//
 // AppDB
@@ -15,7 +8,7 @@ const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); 
 export class AppDB {
 
     //----------------------------------------------------------------//
-    constructor ( accountService, inventoryController, progressController ) {
+    constructor () {
 
         // TODO: yes, this is gross for a lot of reasons, but it's expedient for now.
         // TODO: break this out into a better DB structure.
@@ -26,10 +19,11 @@ export class AppDB {
             networks:               'networkID',
             schemas:                '[networkID+key], networkID',
             accounts:               '[networkID+accountIndex], networkID',
-            assets:                 '[networkID+accountIndex], networkID',
+            assets:                 '[networkID+accountIndex+assetID], [networkID+accountIndex], networkID',
             transactionHistory:     '[networkID+accountIndex]',
             transactionQueue:       '[networkID+accountIndex]',
-            inbox:                  '[networkID+accountIndex]',
+            inbox:                  '[networkID+accountIndex+assetID], [networkID+accountIndex]',
+            inventoryDelta:         '[networkID+accountIndex]',
         });
         this.db.open ();
     }
