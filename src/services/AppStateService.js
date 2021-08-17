@@ -31,6 +31,8 @@ export const NODE_STATUS = {
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@APP STATE:', ...args ); }
 
+let gInstance = false;
+
 //================================================================//
 // AppStateService
 //================================================================//
@@ -139,18 +141,16 @@ export class AppStateService {
         this.storage.persist ( this, 'session',             STORE_SESSION,              this.makeSession ( false ));
         this.storage.persist ( this, 'networkIDs',          STORE_NETWORK_IDS,          []);
 
-        console.log ( 'NETWORK IDS:', JSON.stringify ( this.networkIDs ));
-
         if ( AppStateService.needsReset ()) return;
 
         try {
 
             for ( let networkID of this.networkIDs ) {
-                debugLog ( 'loading network', networkID );
                 this.affirmNetwork ( networkID );
             }
         }
         catch ( error ) {
+            debugLog ( error );
         }
     }
 
@@ -188,6 +188,12 @@ export class AppStateService {
         this.appDB.finalize ();
         this.storage.finalize ();
         this.revocable.finalize ();
+    }
+
+    //----------------------------------------------------------------//
+    static get () {
+        gInstance = gInstance || new AppStateService ();
+        return gInstance;
     }
 
     //----------------------------------------------------------------//
@@ -256,3 +262,4 @@ export class AppStateService {
         }
     }
 }
+

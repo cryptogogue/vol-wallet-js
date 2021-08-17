@@ -14,6 +14,8 @@ import * as UI                              from 'semantic-ui-react';
 
 import { AccountNavigationBar, ACCOUNT_TABS } from './AccountNavigationBar';
 
+const appState = AppStateService.get ();
+
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( 'ACCOUNT SCREEN:', ...args ); }
 
@@ -132,7 +134,6 @@ export const AccountScreen = observer (( props ) => {
     const networkID = util.getMatch ( props, 'networkID' );
     const accountID = util.getMatch ( props, 'accountID' );
 
-    const appState          = hooks.useFinalizable (() => new AppStateService ());
     const accountService    = appState.assertAccountService ( networkID, accountID );
 
     return (

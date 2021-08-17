@@ -41,7 +41,6 @@ export class TransactionUtilController extends Fields.FormController {
 //================================================================//
 export const KeyUtilScreen = observer (( props ) => {
 
-    const appState                  = hooks.useFinalizable (() => new AppStateService ());
     const keyFieldController        = hooks.useFinalizable (() => new Fields.CryptoKeyFieldController ( 'key', '' ));
 
     const [ json, setJSON ]         = useState ( '' );

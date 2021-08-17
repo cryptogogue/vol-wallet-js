@@ -12,12 +12,12 @@ import JSONTree                                             from 'react-json-tre
 import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 //================================================================//
 // SchemaUtilScreen
 //================================================================//
 export const SchemaUtilScreen = observer (( props ) => {
-
-    const appState = hooks.useFinalizable (() => new AppStateService ());
 
     const [ scanner, setScanner ]   = useState ( false );
     const [ schema, setSchema ]     = useState ( false );

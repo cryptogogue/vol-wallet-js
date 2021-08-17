@@ -15,6 +15,8 @@ import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 //================================================================//
 // ConsensusScreen
 //================================================================//
@@ -23,7 +25,6 @@ export const ConsensusScreen = observer (( props ) => {
     if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
-    const appState                  = hooks.useFinalizable (() => new AppStateService ());
     const networkService            = appState.assertNetworkService ( networkIDFromEndpoint );
     const consensusService          = networkService.consensusService;
 

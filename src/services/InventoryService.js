@@ -16,11 +16,11 @@ const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); 
 //================================================================//
 export class InventoryService {
 
-    @observable assets          = {};
+    @observable.shallow assets  = {};
     @observable inbox           = [];
     @observable version         = false;
     @observable isLoaded        = false;
-    @observable schema          = false;
+    @observable.ref schema      = false;
 
     @computed get accountID     () { return this.accountService.accountID; }
     @computed get accountIndex  () { return this.accountService.index; }
@@ -36,11 +36,8 @@ export class InventoryService {
 
         const delta = this.delta;
 
-        // const assetsFiltered = _.clone ( this.accountService.account.assetsFiltered || {});
-
         for ( let assetID of delta.deletions ) {
             
-            delete assetsFiltered [ assetID ];
             if ( delta.additions.includes ( assetID )) continue; // skip if removed then re-added
             debugLog ( 'DELETING ASSET', assetID );
             await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID }).delete ();
@@ -58,7 +55,6 @@ export class InventoryService {
             const prevAsset = this.assets [ asset.assetID ];
             if ( prevAsset && ( prevAsset.inventoryNonce === asset.inventoryNonce )) continue;
 
-            // delete assetsFiltered [ asset.assetID ]; // just in case
             debugLog ( 'ADDING ASSET', asset.assetID );
 
             asset = await this.expandAssetAsync ( asset );
@@ -76,7 +72,6 @@ export class InventoryService {
         }
 
         runInAction (() => {
-            // this.accountService.account.assetsFiltered = assetsFiltered;
             this.version.nonce          = delta.nextNonce;
             this.version.timestamp      = delta.timestamp;
         });
@@ -193,9 +188,6 @@ export class InventoryService {
         for ( let row of inboxRows ) {
             inbox.push ( row.assetID );
         }
-
-        debugLog ( 'loaded assets', assets );
-        debugLog ( 'loaded inbox', inbox );
 
         runInAction (() => {
             this.assets = assets;

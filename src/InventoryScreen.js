@@ -21,6 +21,8 @@ import { Redirect }                                         from 'react-router';
 import { Link }                                             from 'react-router-dom';
 import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 //================================================================//
 // InventoryScreenBody
 //================================================================//
@@ -35,7 +37,6 @@ export const InventoryScreen = observer (( props ) => {
     const networkID                 = util.getMatch ( props, 'networkID' );
     const accountID                 = util.getMatch ( props, 'accountID' );
 
-    const appState                  = hooks.useFinalizable (() => new AppStateService ());
     const accountService            = appState.assertAccountService ( networkID, accountID );
     const networkService            = accountService.networkService;
 

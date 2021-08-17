@@ -74,7 +74,6 @@ export class MinerInfoFormController extends Fields.FormController {
 //================================================================//
 export const MinerInfoUtilScreen = observer (( props ) => {
 
-    const appState                  = hooks.useFinalizable (() => new AppStateService ());
     const formController            = hooks.useFinalizable (() => new MinerInfoFormController ( appState ));
 
     const [ json, setJSON ]         = useState ( '' );

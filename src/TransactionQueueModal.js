@@ -13,8 +13,8 @@ export const TransactionQueueModal = observer (( props ) => {
 
     const { accountService, open, onClose } = props;
 
-    const appState      = accountService.appState;
-    const transactionQueue         = accountService.transactionQueue;
+    const appState              = accountService.appState;
+    const transactionQueue      = accountService.transactionQueue;
 
     const [ count, setCount ]           = useState ( 0 );
     const [ busy, setBusy ]             = useState ( false );

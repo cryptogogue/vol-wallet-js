@@ -13,6 +13,8 @@ import { Redirect }                                         from 'react-router';
 import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 //================================================================//
 // KeysScreen
 //================================================================//
@@ -23,7 +25,6 @@ export const KeysScreen = observer (( props ) => {
     const networkID         = util.getMatch ( props, 'networkID' );
     const accountID         = util.getMatch ( props, 'accountID' );
 
-    const appState          = hooks.useFinalizable (() => new AppStateService ());
     const accountService    = appState.assertAccountService ( networkID, accountID );
 
     const keys = [];

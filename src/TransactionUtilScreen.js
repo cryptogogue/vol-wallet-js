@@ -16,6 +16,8 @@ import JSONTree                                             from 'react-json-tre
 import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 //================================================================//
 // TransactionContext
 //================================================================//
@@ -87,7 +89,6 @@ export class TransactionUtilController extends Fields.FormController {
 //================================================================//
 export const TransactionUtilScreen = observer (( props ) => {
 
-    const appState                  = hooks.useFinalizable (() => new AppStateService ());
     const transactionContext        = hooks.useFinalizable (() => new TransactionContext ());
     const formController            = hooks.useFinalizable (() => new TransactionUtilController ( appState ));
 

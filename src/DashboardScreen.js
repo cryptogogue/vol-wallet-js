@@ -16,6 +16,8 @@ import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 const NETWORK_DELETE_WARNING_0 = `
     Deleting a network will also delete all locally stored accounts and
     private keys. Be sure you have a backup or your private keys
@@ -144,8 +146,6 @@ export const DashboardActionsSegment = observer (( props ) => {
 export const DashboardScreen = observer (( props ) => {
 
     if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
-
-    const appState      = hooks.useFinalizable (() => new AppStateService ());
 
     return (
         <SingleColumnContainerView>
