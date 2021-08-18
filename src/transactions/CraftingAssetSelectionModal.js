@@ -54,7 +54,13 @@ export const CraftingAssetSelectionModal = observer (( props ) => {
     const craftingFormController = props.controller;
     const { paramModalState, setParamModalState } = props;
 
-    const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ( craftingFormController.inventory, false ));
+    const inventoryService = craftingFormController.accountService.inventoryService;
+
+    const renderAsync = async ( schema, asset ) => {
+        return await inventoryService.getAssetSVGAsync ( asset.assetID );
+    }
+
+    const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ( craftingFormController.inventory, false, false, renderAsync ));
     const controller                = hooks.useFinalizable (() => new CraftingAssetSelectionModalController ());
 
     if ( paramModalState === false ) {

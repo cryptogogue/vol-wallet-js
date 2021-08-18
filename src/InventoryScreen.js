@@ -58,8 +58,12 @@ export const InventoryScreen = observer (( props ) => {
         return false;
     }
 
-    const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ( new InventoryWithFilter ( inventory, viewFilter ), undefined, true ));
-    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( inventoryViewController ));
+    const renderAsync = async ( schema, asset ) => {
+        return await inventoryService.getAssetSVGAsync ( asset.assetID );
+    }
+
+    const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ( new InventoryWithFilter ( inventory, viewFilter ), undefined, true, renderAsync ));
+    const printController           = hooks.useFinalizable (() => new InventoryPrintController ( inventoryViewController, renderAsync ));
 
     const upgradesFilter = ( assetID ) => {
         return inventoryViewController.inventory.isVisible ( assetID ) && !inventoryViewController.inventory.isDisabled ( assetID ) && ( inventoryViewController.hasSelection ? inventoryViewController.isSelected ( assetID ) : true );
@@ -102,16 +106,16 @@ export const InventoryScreen = observer (( props ) => {
             <div className = 'no-print'>
                 <SingleColumnContainerView>
                     <AccountNavigationBar
-                        accountService          = { accountService }
-                        tab                     = { ACCOUNT_TABS.INVENTORY }
+                        accountService              = { accountService }
+                        tab                         = { ACCOUNT_TABS.INVENTORY }
                     />
                     <InventoryMenu
-                        accountService          = { accountService }
-                        controller              = { inventoryViewController }
-                        printController         = { printController }
-                        craftingFormController  = { craftingFormController }
-                        upgradesFormController  = { upgradesFormController }
-                        tags                    = { tags }
+                        accountService              = { accountService }
+                        controller                  = { inventoryViewController }
+                        printController             = { printController }
+                        craftingFormController      = { craftingFormController }
+                        upgradesFormController      = { upgradesFormController }
+                        tags                        = { tags }
                     />
                 </SingleColumnContainerView>
             </div>
@@ -128,35 +132,35 @@ export const InventoryScreen = observer (( props ) => {
                         </When>
                         <Otherwise>
                             <KeyboardEventHandler
-                                handleKeys      = {[ 'shift', 'alt' ]}
-                                handleEventType = 'keydown'
-                                onKeyEvent      = {( key, e ) => {
+                                handleKeys          = {[ 'shift', 'alt' ]}
+                                handleEventType     = 'keydown'
+                                onKeyEvent          = {( key, e ) => {
                                     console.log ( 'DOWN' );
                                     setBatchSelect ( true );
                                 }}
                             />
                             <KeyboardEventHandler
-                                handleKeys      = {[ 'shift', 'alt' ]}
-                                handleEventType = 'keyup'
-                                onKeyEvent      = {( key, e ) => {
+                                handleKeys          = {[ 'shift', 'alt' ]}
+                                handleEventType     = 'keyup'
+                                onKeyEvent          = {( key, e ) => {
                                     console.log ( 'UP' );
                                     setBatchSelect ( false );
                                 }}
                             />
                             <div style = {{ flex: 1 }}>
                                 <InventoryView
-                                    key         = { `${ inventoryService.nonce }.${ inventoryViewController.sortMode }.${ inventoryViewController.zoom }` }
-                                    controller  = { inventoryViewController }
-                                    onSelect    = { onAssetSelect }
-                                    onMagnify   = { batchSelect ? undefined : onAssetMagnify }
-                                    onDeselect  = { onDeselect }
+                                    key             = { `${ inventoryService.nonce }.${ inventoryViewController.sortMode }.${ inventoryViewController.zoom }` }
+                                    controller      = { inventoryViewController }
+                                    onSelect        = { onAssetSelect }
+                                    onMagnify       = { batchSelect ? undefined : onAssetMagnify }
+                                    onDeselect      = { onDeselect }
                                 />
                             </div>
                             <AssetModal
-                                controller      = { inventoryViewController }
-                                assetID         = { zoomedAssetID }
-                                formatAssetID   = { assetIDtoAnchor }
-                                onClose         = {() => { setZoomedAssetID ( false )}}
+                                controller          = { inventoryViewController }
+                                assetID             = { zoomedAssetID }
+                                formatAssetID       = { assetIDtoAnchor }
+                                onClose             = {() => { setZoomedAssetID ( false )}}
                             />
                         </Otherwise>
                     </Choose>

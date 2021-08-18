@@ -92,7 +92,6 @@ export class StampAssetsFormController extends TransactionFormController {
         this.previewInventory = new Inventory ();
         this.previewInventory.setSchema ( this.inventory.schema );
 
-
         for ( let assetID in this.assetSelection ) {
 
             const asset = _.cloneDeep ( this.assetSelection [ assetID ]);

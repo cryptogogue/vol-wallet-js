@@ -14,21 +14,6 @@ async function handleMessage ( event ) {
         return;
     }
 
-    const assets = event.data.assets || false;
-
-    if ( assets ) {
-
-        await schema.affirmFontsAsync ();
-
-        const expandedAssets = [];
-        for ( let asset of assets ) {
-            console.log ( 'WORKER expanding asset:', asset.assetID );
-            expandedAssets.push ( schema.expandAsset ( asset ));
-        }
-        this.postMessage ( expandedAssets );
-        return;
-    }
-
     let asset = event.data.asset || false;
 
     if ( asset ) {
@@ -36,8 +21,9 @@ async function handleMessage ( event ) {
         await schema.affirmFontsAsync ();
 
         console.log ( 'WORKER expanding asset:', asset.assetID );
-        asset = schema.expandAsset ( asset );
-        this.postMessage ({ asset: asset });
+        asset       = schema.expandAsset ( asset );
+        const svg   = schema.renderAssetSVG ( asset );
+        this.postMessage ({ asset: asset, svg: svg });
         return;
     }
 }

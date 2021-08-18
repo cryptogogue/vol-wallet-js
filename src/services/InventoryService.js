@@ -48,7 +48,7 @@ export class InventoryService {
             });
         }
 
-        const assets = delta.assets;
+        const assets =_.cloneDeep ( delta.assets );
 
         for ( let asset of assets ) {
 
@@ -57,19 +57,30 @@ export class InventoryService {
 
             debugLog ( 'ADDING ASSET', asset.assetID );
 
-            asset = await this.expandAssetAsync ( asset );
+            const assetAndSVG = await this.expandAssetAsync ( asset );
 
-            console.log ( 'EXPANDED ASSET:', asset );
+            asset = assetAndSVG.asset;
+            const svg = assetAndSVG.svg;
 
-            await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID, asset: _.cloneDeep ( asset )});
-            await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID });
+            await this.db.transaction ( 'rw', this.db.assets, this.db.assetSVGs, this.db.inbox, async () => {
 
-            runInAction (() => {
-                this.inbox.push ( asset.assetID );
+                await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID, asset: asset });
+                await this.db.assetSVGs.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID, svg: svg });
+                await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID });
+            });
+
+            assets [ asset.assetID ] = asset;
+        }
+
+        runInAction (() => {
+            for ( let asset of assets ) {
+                if ( !this.inbox.includes ( asset.assetID )) {
+                    this.inbox.push ( asset.assetID );
+                }
                 this.assets [ asset.assetID ] = asset;
                 this.inventory.setAsset ( asset );
-            });
-        }
+            }
+        });
 
         runInAction (() => {
             this.version.nonce          = delta.nextNonce;
@@ -122,24 +133,13 @@ export class InventoryService {
 
         return new Promise (( resolve, reject ) => {
             
-            this.worker.addEventListener ( 'message', async ( event ) => {
+            const handler = async ( event ) => {
+                this.worker.removeEventListener ( 'message', handler );
                 console.log ( 'WORKER finished expandAssetAsync' );
-                resolve ( event.data.asset );
-            });
-            this.worker.postMessage ({ asset: asset });
-        });
-    }
-
-    //----------------------------------------------------------------//
-    async expandAssetsAsync ( assets ) {
-
-        return new Promise (( resolve, reject ) => {
-            
-            this.worker.addEventListener ( 'message', async ( event ) => {
-                console.log ( 'WORKER finished expandAssetsAsync' );
                 resolve ( event.data );
-            });
-            this.worker.postMessage ({ assets: assets });
+            }
+            this.worker.addEventListener ( 'message', handler );
+            this.worker.postMessage ({ asset: asset });
         });
     }
 
@@ -154,6 +154,13 @@ export class InventoryService {
     formatSchemaKey ( schemaHash, version ) {
 
         return `${ version.release } - ${ version.major }.${ version.minor }.${ version.revision } (${ schemaHash })`;
+    }
+
+    //----------------------------------------------------------------//
+    async getAssetSVGAsync ( assetID ) {
+
+        const row = await this.db.assetSVGs.get ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
+        return row && row.svg || false;
     }
 
     //----------------------------------------------------------------//
@@ -244,7 +251,8 @@ export class InventoryService {
     async makeSchema ( schemaObj ) {
 
         const schema = new Schema ( schemaObj );
-        // await schema.fetchFontsAsync ( schemaObj.fonts || {});
+        await schema.affirmFontsAsync ();
+
         runInAction (() => {
             this.schema = schema;
         });
@@ -252,10 +260,12 @@ export class InventoryService {
 
         return new Promise (( resolve, reject ) => {
             
-            this.worker.addEventListener ( 'message', ( event ) => {
+            const handler = async ( event ) => {
+                this.worker.removeEventListener ( 'message', handler );
                 console.log ( 'WORKER finished makeSchema', event );
                 resolve ();
-            });
+            }
+            this.worker.addEventListener ( 'message', handler );
             this.worker.postMessage ({ schemaObj: schemaObj });
         });
     }

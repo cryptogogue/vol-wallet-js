@@ -31,7 +31,11 @@ export const InboxModal = observer (( props ) => {
         return inventoryService.isNew ( assetID );
     }
 
-    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( new InventoryWithFilter ( inventory, filter ), false ));
+    const renderAsync = async ( schema, asset ) => {
+        return await inventoryService.getAssetSVGAsync ( asset.assetID );
+    }
+
+    const inventoryViewController = hooks.useFinalizable (() => new InventoryViewController ( new InventoryWithFilter ( inventory, filter ), false, false, renderAsync ));
 
     const tagNames = tags.tagNames.slice ( 0 );
     tagNames.push ( dateTag );
