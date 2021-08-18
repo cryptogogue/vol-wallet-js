@@ -1,12 +1,15 @@
 // Copyright (c) 2019 Cryptogogue, Inc. All Rights Reserved.
 
-import { Schema }                   from 'cardmotron';
+import { InventoryDownloadController, Schema, renderSVGAsync }   from 'cardmotron';
 import { assert, ProgressController, RevocableContext, util } from 'fgc';
 import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
 import Dexie                        from 'dexie';
 import _                            from 'lodash';
+import ReactDomServer               from 'react-dom/server';
 
 import InventoryWorker              from './InventoryWorker.worker';
+
+const MAX_ASSET_SVG_CACHE_SIZE = 32;
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@INVENTORY:', ...args ); }
@@ -126,6 +129,9 @@ export class InventoryService {
         });
 
         this.worker = new InventoryWorker ();
+
+        this.assetSVGCache          = {};
+        this.assetSVGCacheQueue     = [];
     }
 
     //----------------------------------------------------------------//
@@ -159,8 +165,20 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async getAssetSVGAsync ( assetID ) {
 
+        if ( _.has ( this.assetSVGCache, assetID )) return this.assetSVGCache [ assetID ];
+
         const row = await this.db.assetSVGs.get ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
-        return row && row.svg || false;
+        const svg = row && row.svg || false;
+
+        if ( svg ) {
+            if (( this.assetSVGCacheQueue.length + 1 ) > MAX_ASSET_SVG_CACHE_SIZE ) {
+                const removeID = this.assetSVGCacheQueue.shift ();
+                delete this.assetSVGCacheQueue [ removeID ];
+            }
+            this.assetSVGCache [ assetID ] = svg;
+            this.assetSVGCacheQueue.push ( assetID );
+        }
+        return svg
     }
 
     //----------------------------------------------------------------//

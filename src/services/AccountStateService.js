@@ -107,7 +107,7 @@ export class AccountStateService {
         this.inventoryProgress      = new ProgressController ();
         this.inventory              = new Inventory ( this.inventoryProgress );
         this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
-        this.inventoryTags          = new InventoryTagsController ();
+        this.inventoryTags          = new InventoryTagsController ( networkService.networkID );
         this.transactionQueue       = new TransactionQueueService ( this );
 
         this.startServiceLoopAsync ();

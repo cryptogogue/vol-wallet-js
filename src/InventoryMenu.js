@@ -23,18 +23,18 @@ import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-re
 //================================================================//
 export const InventoryMenu = observer (( props ) => {
 
-    const { accountService, controller, printController, craftingFormController, upgradesFormController, tags } = props;
+    const { accountService, inventoryViewController, printController, craftingFormController, upgradesFormController, tags } = props;
     const [ transactionController, setTransactionController ] = useState ( false );
     const [ downloadOptions, setDownloadOptions ] = useState ( false );
     const binding = craftingFormController.binding;
 
     const onClickDownloadAssets = () => {
         
-        const assets = controller.hasSelection ? Object.values ( controller.selection ) : controller.getSortedAssets ( false );
+        const assets = inventoryViewController.hasSelection ? Object.values ( inventoryViewController.selection ) : inventoryViewController.getSortedAssets ( false );
         if ( assets && ( assets.length > 0 )) {
             setDownloadOptions ({
                 assets:     assets,
-                inventory:  controller.inventory,
+                inventory:  inventoryViewController.inventory,
             });
         }
     }
@@ -51,7 +51,7 @@ export const InventoryMenu = observer (( props ) => {
         setTransactionController (
             new OfferAssetsFormController (
                 accountService,
-                controller.selection
+                inventoryViewController.selection
             )
         );
     }
@@ -60,7 +60,7 @@ export const InventoryMenu = observer (( props ) => {
         setTransactionController (
             new SendAssetsFormController (
                 accountService,
-                controller.selection
+                inventoryViewController.selection
             )
         );
     }
@@ -75,8 +75,8 @@ export const InventoryMenu = observer (( props ) => {
 
     const onClickCraftingMethod = ( methodName ) => {
 
-        if ( controller.hasSelection ) {
-            craftingFormController.addBatchInvocation ( methodName, controller.selection );
+        if ( inventoryViewController.hasSelection ) {
+            craftingFormController.addBatchInvocation ( methodName, inventoryViewController.selection );
         }
         else {
             craftingFormController.addInvocation ( methodName );
@@ -92,7 +92,7 @@ export const InventoryMenu = observer (( props ) => {
 
     const onCloseTransactionModal = () => {
         setTransactionController ( false );
-        controller.clearSelection ();
+        inventoryViewController.clearSelection ();
         craftingFormController.reset ();
     }
 
@@ -104,14 +104,14 @@ export const InventoryMenu = observer (( props ) => {
         const method = binding.methodsByName [ methodName ];
         let disabled = !binding.methodIsValid ( methodName );
         
-        if ( controller.hasSelection && !disabled ) {
+        if ( inventoryViewController.hasSelection && !disabled ) {
 
             const method = binding.methodsByName [ methodName ];
 
             if (( method.totalAssetsArgs === 1 ) && ( method.constraints.length === 0 )) {
                 disabled = false;
 
-                for ( let assetID in controller.selection ) {
+                for ( let assetID in inventoryViewController.selection ) {
                     if ( !binding.methodIsValid ( methodName, assetID )) {
                         disabled = true;
                         break;
@@ -133,20 +133,20 @@ export const InventoryMenu = observer (( props ) => {
         hasValidMethods = hasValidMethods || !disabled;
     }
 
-    const isPrintLayout = controller.isPrintLayout;
-    const hideCollapse = isPrintLayout || !controller.hasDuplicates;
+    const isPrintLayout = inventoryViewController.isPrintLayout;
+    const hideCollapse = isPrintLayout || !inventoryViewController.hasDuplicates;
 
     return (
         <React.Fragment>
 
             <Menu attached = 'top'>
-                <inventoryMenuItems.SortModeFragment controller = { controller }/>
+                <inventoryMenuItems.SortModeFragment controller = { inventoryViewController }/>
                 <Menu.Item
-                    icon        = { hideCollapse ? 'circle outline' : ( controller.hideDuplicates ? 'plus square' : 'minus square' )}
+                    icon        = { hideCollapse ? 'circle outline' : ( inventoryViewController.hideDuplicates ? 'plus square' : 'minus square' )}
                     disabled    = { hideCollapse }
-                    onClick     = {() => { controller.setHideDuplicates ( !controller.hideDuplicates )}}
+                    onClick     = {() => { inventoryViewController.setHideDuplicates ( !inventoryViewController.hideDuplicates )}}
                 />
-                <inventoryMenuItems.LayoutOptionsDropdown controller = { controller }/>
+                <inventoryMenuItems.LayoutOptionsDropdown controller = { inventoryViewController }/>
                 
                 <Choose>
                     <When condition = { isPrintLayout }>
@@ -167,11 +167,11 @@ export const InventoryMenu = observer (( props ) => {
                     </When>
 
                     <Otherwise>
-                        <inventoryMenuItems.ZoomOptionsDropdown controller = { controller }/>
+                        <inventoryMenuItems.ZoomOptionsDropdown controller = { inventoryViewController }/>
                         <Menu.Item
                             name        = 'Download'
                             onClick     = { onClickDownloadAssets }
-                            disabled    = { controller.sortedAssets.length === 0 }
+                            disabled    = { inventoryViewController.sortedAssets.length === 0 }
                         >
                             <Icon name = 'download'/>
                         </Menu.Item>
@@ -180,18 +180,18 @@ export const InventoryMenu = observer (( props ) => {
             </Menu>
 
             <Menu borderless attached = 'bottom'>
-                <InventoryTagsDropdown controller = { controller } tags = { tags }/>
+                <InventoryTagsDropdown controller = { inventoryViewController } tags = { tags }/>
                 <InventoryFilterDropdown tags = { tags }/>
 
                 <Menu.Menu position = 'right'>
                     <Menu.Item
                         icon        = 'dolly'
-                        disabled    = { isPrintLayout || !controller.hasSelection }
+                        disabled    = { isPrintLayout || !inventoryViewController.hasSelection }
                         onClick     = {() => { onClickOfferAssets ()}}
                     />
                     <Menu.Item
                         icon        = 'share'
-                        disabled    = { isPrintLayout || !controller.hasSelection }
+                        disabled    = { isPrintLayout || !inventoryViewController.hasSelection }
                         onClick     = {() => { onClickSendAssets ()}}
                     />
                     <Menu.Item

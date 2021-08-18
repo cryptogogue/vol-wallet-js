@@ -9,21 +9,16 @@ import { Button, Checkbox, Dropdown, Grid, Icon, Input, List, Menu, Modal, Loade
 import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 
 //================================================================//
-// InventoryTagsDropdown
+// InventoryTagsDropdownItems
 //================================================================//
-export const InventoryTagsDropdown = observer (( props ) => {
+export const InventoryTagsDropdownList = observer (( props ) => {
 
     const [ tagInput, setTagInput ]     = useState ( '' );
     const [ isOpen, setIsOpen ]         = useState ( false );
 
     const { controller, tags } = props;
 
-    const onTagInputKey = ( key ) => {
-        if ( key === 'Enter' ) {
-            tags.affirmTag ( tagInput );
-            setTagInput ( '' );
-        }
-    }
+    if ( !tags ) return;
 
     const tagNames          = tags.tagNames;
     const selectionSize     = controller.selectionSize;
@@ -31,12 +26,13 @@ export const InventoryTagsDropdown = observer (( props ) => {
     let tagList = [];
     for ( let tagName of tagNames ) {
 
+        const tagSize           = tags.countAssetsByTag ( tagName );
         const withTag           = tags.countSelectedAssetsWithTag ( controller.selection, tagName );
-        const allTagged         = (( withTag > 0 ) && ( withTag === selectionSize ));
-        const noneTagged        = (( withTag > 0 ) && ( withTag === 0 ));
-        const indeterminate     = (( withTag > 0 ) && !( allTagged || noneTagged ));
 
-        // console.log ( 'TAGS', tagName, selectionSize, withTag, allTagged, noneTagged, indeterminate );
+        const allTagged         = (( withTag > 0 ) && ( selectionSize <= tagSize ));
+        const indeterminate     = (( withTag > 0 ) && ( selectionSize > tagSize ));
+
+        console.log ( 'TAGS', tagName, selectionSize, withTag, allTagged, indeterminate );
 
         tagList.push (
             <div
@@ -44,7 +40,7 @@ export const InventoryTagsDropdown = observer (( props ) => {
                 style = {{ marginBottom: '12px' }}
             >
                 <Checkbox
-                    label           = { tagName + ' (' + tags.countAssetsByTag ( tagName ) + ')' }
+                    label           = { tagName + ' (' + tagSize + ')' }
                     checked         = { allTagged }
                     indeterminate   = { indeterminate }
                     disabled        = { selectionSize === 0 }
@@ -65,34 +61,61 @@ export const InventoryTagsDropdown = observer (( props ) => {
     }
 
     return (
+        <div>
+            { tagList }
+        </div>
+    );
+});
+
+//================================================================//
+// InventoryTagsDropdown
+//================================================================//
+export const InventoryTagsDropdown = observer (( props ) => {
+
+    const [ tagInput, setTagInput ]     = useState ( '' );
+    const [ isOpen, setIsOpen ]         = useState ( false );
+
+    const { controller, tags } = props;
+
+    const onTagInputKey = ( key ) => {
+        if ( key === 'Enter' ) {
+            tags.affirmTag ( tagInput );
+            tags.tagSelection ( controller.selection, tagInput, true );
+            setTagInput ( '' );
+        }
+    }
+
+    return (
         <Menu.Item
             onClick = {() => { setIsOpen ( true )}}
         >
             <Icon name = 'tags'/>
-            <Modal
-                style = {{ height : 'auto' }}
-                size = 'mini'
-                open = { isOpen }
-                onClose = {() => {
-                    controller.clearSelection ();
-                    setIsOpen ( false )
-                }}
-            >
-                <Modal.Content>
-                    <div>
-                        { tagList }
-                        <Input
-                            fluid
-                            maxLength = '20'
-                            placeholder = 'New Tag...'
-                            style = {{ marginTop: '6px' }}
-                            value = { tagInput }
-                            onChange = {( event ) => { setTagInput ( event.target.value )}}
-                            onKeyPress = {( event ) => { onTagInputKey ( event.key )}}
-                        />
-                    </div>
-                </Modal.Content>
-            </Modal>
+                <Modal
+                    style = {{ height : 'auto' }}
+                    open = { isOpen }
+                    onClose = {() => {
+                        setIsOpen ( false );
+                        controller.clearSelection ();
+                    }}
+                >
+                    <Modal.Content>
+                        <div>
+                            <InventoryTagsDropdownList
+                                controller      = { controller }
+                                tags            = { tags }
+                            />
+                            <Input
+                                fluid
+                                maxLength = '20'
+                                placeholder = 'New Tag...'
+                                style = {{ marginTop: '6px' }}
+                                value = { tagInput }
+                                onChange = {( event ) => { setTagInput ( event.target.value )}}
+                                onKeyPress = {( event ) => { onTagInputKey ( event.key )}}
+                            />
+                        </div>
+                    </Modal.Content>
+                </Modal>
         </Menu.Item>
     );
 });

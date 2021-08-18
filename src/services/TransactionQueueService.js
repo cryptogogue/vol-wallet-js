@@ -3,7 +3,6 @@
 import * as entitlements                from '../util/entitlements';
 import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
-import { InventoryTagsController }      from './InventoryTagsController';
 import { Transaction, TX_STATUS }       from '../transactions/Transaction';
 import { Inventory }                    from 'cardmotron';
 import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';

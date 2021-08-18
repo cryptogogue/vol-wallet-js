@@ -1,12 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import _                                                    from 'lodash';
-import { action, computed, extendObservable, observable }   from "mobx";
+import { action, computed, extendObservable, observable, runInAction, toJS } from "mobx";
 import { observer }                                         from 'mobx-react';
-import { assert, StorageContext }                           from 'fgc';
-
-const STORE_TAGS                = '.vol_tags';
-const STORE_ASSET_TAGS          = '.vol_asset_tags';
+import { assert, storage }                                  from 'fgc';
 
 //================================================================//
 // InventoryTagsController
@@ -14,50 +11,43 @@ const STORE_ASSET_TAGS          = '.vol_asset_tags';
 export class InventoryTagsController {
 
     @observable filter              = '';
+    @observable tags                = {};
 
     //----------------------------------------------------------------//
     @action
-    affirmTag ( tag ) {
+    affirmTag ( tagName ) {
     
-        if (( tag.length > 0 ) && ( !_.has ( this.tags, tag ))) {
-            this.tags [ tag ] = false;
+        if (( tagName.length > 0 ) && ( !_.has ( this.tags, tagName ))) {
+            this.tags [ tagName ] = {};
+            this.saveTags ();
         }
     }
 
     //----------------------------------------------------------------//
-    constructor () {
+    constructor ( networkID ) {
 
-        const storageContext = new StorageContext ();
+        this.storageKey = `.vol.NETWORK.${ networkID }.TAGS`;
 
-        storageContext.persist ( this, 'tags',          STORE_TAGS,            {});
-        storageContext.persist ( this, 'assetTags',     STORE_ASSET_TAGS,       {});
-
-        this.storage = storageContext;
+        runInAction (() => {
+            this.tags           = storage.getItem ( this.storageKey, {});
+        });
     }
 
     //----------------------------------------------------------------//
     countAssetsByTag ( tagName ) {
 
-        let count = 0;
-
-        for ( let assetID in this.assetTags ) {
-            let tagsForAsset = this.assetTags [ assetID ];
-            if ( tagsForAsset && ( tagsForAsset [ tagName ] === true )) {
-                count++;
-            }
-        }
-        return count;
+        const tag = this.tags [ tagName ] || {};
+        return _.size ( tag );
     }
-
 
     //----------------------------------------------------------------//
     countSelectedAssetsWithTag ( selection, tagName ) {
 
-        let count = 0;
+        const tag = this.tags [ tagName ] || {};
 
+        let count = 0;
         for ( let assetID in selection ) {
-            let tagsForAsset = this.assetTags [ assetID ];
-            if ( tagsForAsset && ( tagsForAsset [ tagName ] === true )) {
+            if ( assetID in tag ) {
                 count++;
             }
         }
@@ -66,28 +56,14 @@ export class InventoryTagsController {
 
     //----------------------------------------------------------------//
     @action
-    deleteTag ( tag ) {
+    deleteTag ( tagName ) {
     
-        delete this.tags [ tag ];
-
-        const assetTags = _.cloneDeep ( this.assetTags );
-
-        for ( let assetID in assetTags ) {
-            const tagsForAsset = assetTags [ assetID ];
-            delete tagsForAsset [ tag ];
-        }
-
-        this.assetTags = assetTags;
-
-        if ( this.filter === tag ) {
-            this.filter = '';
-        }
+        delete this.tags [ tagName ];
+        this.saveTags ();
     }
 
     //----------------------------------------------------------------//
     finalize () {
-
-        this.storage.finalize ();
     }
 
     //----------------------------------------------------------------//
@@ -108,16 +84,14 @@ export class InventoryTagsController {
 
         if ( this.filter.length === 0 ) return true;
 
-        const tagsForAsset = this.assetTags [ assetID ];
-        if ( tagsForAsset && ( tagsForAsset [ this.filter ] === true )) {
-            return true;
-        }
-        return false;
+        const tag = this.tags [ this.filter ] || {};
+        return ( assetID in tag );
     }
 
     //----------------------------------------------------------------//
-    isTagActive ( tagName ) {
-        return this.tags [ tagName ] || false;
+    saveTags () {
+
+        storage.setItem ( this.storageKey, this.tags );
     }
 
     //----------------------------------------------------------------//
@@ -131,27 +105,20 @@ export class InventoryTagsController {
     @action
     tagSelection ( selection, tagName, value ) {
 
-        if ( !( tagName && ( tagName.length > 0 ))) return;
-        this.affirmTag ( tagName );
-        value = value || false;
-
-        const assetTags = _.cloneDeep ( this.assetTags );
-
-        for ( let assetID in selection ) {
-            if ( !_.has ( assetTags, assetID )) {
-                assetTags [ assetID ] = {};
+        const tag = _.cloneDeep ( this.tags [ tagName ]) || {};
+        
+        if ( value ) {
+            for ( let assetID in selection ) {
+                tag [ assetID ] = true;
             }
-            assetTags [ assetID ][ tagName ] = value;
         }
-        this.assetTags = assetTags;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    toggleTag ( tagName ) {
-
-        if ( _.has ( this.tags, tagName )) {
-            this.tags [ tagName ] = !this.tags [ tagName ];
+        else {
+            for ( let assetID in selection ) {
+                delete tag [ assetID ];
+            }
         }
+
+        this.tags [ tagName ] = tag;
+        this.saveTags ();
     }
 }

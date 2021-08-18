@@ -17,7 +17,7 @@ export class DebugStripeScreen extends Component {
     constructor ( props ) {
         super ( props );
 
-        const settings = storage.getItem ( STRIPE_SETTINGS );
+        const settings = storage.getItem ( STRIPE_SETTINGS, null );
 
         let state = {
             stripeURL:          ( settings && settings.stripeURL ) || '',

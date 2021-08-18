@@ -111,7 +111,7 @@ export const InventoryScreen = observer (( props ) => {
                     />
                     <InventoryMenu
                         accountService              = { accountService }
-                        controller                  = { inventoryViewController }
+                        inventoryViewController     = { inventoryViewController }
                         printController             = { printController }
                         craftingFormController      = { craftingFormController }
                         upgradesFormController      = { upgradesFormController }
