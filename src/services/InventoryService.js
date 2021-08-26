@@ -1,11 +1,10 @@
 // Copyright (c) 2019 Cryptogogue, Inc. All Rights Reserved.
 
-import { InventoryDownloadController, Schema, renderSVGAsync }   from 'cardmotron';
-import { assert, ProgressController, RevocableContext, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
-import Dexie                        from 'dexie';
+import * as AppDB                   from './AppDB';
+import { Schema }                   from 'cardmotron';
+import { ProgressController, RevocableContext } from 'fgc';
+import { action, computed, observable, runInAction } from 'mobx';
 import _                            from 'lodash';
-import ReactDomServer               from 'react-dom/server';
 
 import InventoryWorker              from './InventoryWorker.worker';
 
@@ -43,7 +42,7 @@ export class InventoryService {
             
             if ( delta.additions.includes ( assetID )) continue; // skip if removed then re-added
             debugLog ( 'DELETING ASSET', assetID );
-            await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID }).delete ();
+            await AppDB.deleteWhereAsync ( 'assets', { networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
 
             runInAction (() => {
                 delete this.assets [ assetID ];
@@ -52,36 +51,45 @@ export class InventoryService {
         }
 
         const assets =_.cloneDeep ( delta.assets );
+        const inbox = [];
 
         for ( let asset of assets ) {
 
-            const prevAsset = this.assets [ asset.assetID ];
+            const prevAsset = this.assets [ asset.assetID ] || false;
             if ( prevAsset && ( prevAsset.inventoryNonce === asset.inventoryNonce )) continue;
 
             debugLog ( 'ADDING ASSET', asset.assetID );
 
-            const assetAndSVG = await this.expandAssetAsync ( asset );
+            let svg = false;
 
-            asset = assetAndSVG.asset;
-            const svg = assetAndSVG.svg;
+            if (( prevAsset === false ) || !_.isEqual ( prevAsset.fields, asset.fields )) {
 
-            await this.db.transaction ( 'rw', this.db.assets, this.db.assetSVGs, this.db.inbox, async () => {
+                const assetAndSVG = await this.expandAssetAsync ( asset );
 
-                await this.db.assets.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID, asset: asset });
-                await this.db.assetSVGs.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID, svg: svg });
-                await this.db.inbox.put ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: asset.assetID });
-            });
+                asset = assetAndSVG.asset;
+                svg = assetAndSVG.svg;
+            }
+
+            await AppDB.putAssetAsync ( this.networkID, this.accountIndex, asset, svg );
 
             assets [ asset.assetID ] = asset;
+
+            if ( svg ) {
+                inbox.push ( asset.assetID );
+            }
         }
 
         runInAction (() => {
+
             for ( let asset of assets ) {
-                if ( !this.inbox.includes ( asset.assetID )) {
-                    this.inbox.push ( asset.assetID );
-                }
                 this.assets [ asset.assetID ] = asset;
                 this.inventory.setAsset ( asset );
+            }
+
+            for ( let assetID of inbox ) {
+                if ( !this.inbox.includes ( assetID )) {
+                    this.inbox.push ( assetID );
+                }
             }
         });
 
@@ -90,8 +98,8 @@ export class InventoryService {
             this.version.timestamp      = delta.timestamp;
         });
 
-        await this.db.accounts.put ( _.cloneDeep ( this.version ));
-        await this.db.inventoryDelta.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete ();
+        await AppDB.putAsync ( 'accounts', _.cloneDeep ( this.version ));
+        await AppDB.deleteWhereAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex });
 
         this.delta = false;
 
@@ -102,7 +110,7 @@ export class InventoryService {
     @action
     async clearInbox () {
         this.inbox = [];
-        await this.db.inbox.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete ();
+        await AppDB.deleteWhereAsync ( 'inbox', { networkID: this.networkID, accountIndex: this.accountIndex });
     }
 
     //----------------------------------------------------------------//
@@ -115,9 +123,6 @@ export class InventoryService {
         this.accountService     = accountService;
         this.networkService     = accountService.networkService;
         this.inventory          = inventoryController;
-
-        this.appDB              = this.appState.appDB;
-        this.db                 = this.appDB.db;
 
         runInAction (() => {
             this.version = {
@@ -167,7 +172,7 @@ export class InventoryService {
 
         if ( _.has ( this.assetSVGCache, assetID )) return this.assetSVGCache [ assetID ];
 
-        const row = await this.db.assetSVGs.get ({ networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
+        const row = await AppDB.getAsync ( 'assetSVGs', { networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
         const svg = row && row.svg || false;
 
         if ( svg ) {
@@ -202,13 +207,13 @@ export class InventoryService {
         let assets  = {};
         let inbox   = [];
         
-        const assetRows = await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).toArray ();
+        const assetRows = await AppDB.queryAsync ( 'assets', { networkID: this.networkID, accountIndex: this.accountIndex });
         
         for ( let row of assetRows ) {
             assets [ row.assetID ] = row.asset;
         }
 
-        const inboxRows = await this.db.inbox.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).toArray ();
+        const inboxRows = await AppDB.queryAsync ( 'inbox', { networkID: this.networkID, accountIndex: this.accountIndex });
 
         for ( let row of inboxRows ) {
             inbox.push ( row.assetID );
@@ -221,7 +226,7 @@ export class InventoryService {
 
         this.inventory.setAssets ( assets );
 
-        const deltaRow = await this.db.inventoryDelta.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
+        const deltaRow = await AppDB.getAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex });
         if ( deltaRow && deltaRow.delta ) {
             this.delta = deltaRow.delta;
         }
@@ -236,12 +241,12 @@ export class InventoryService {
 
         await this.progress.onProgress ( 'Loading Inventory' );
 
-        const version = await this.db.accounts.get ({ networkID: this.networkID, accountIndex: this.accountIndex });
+        const version = await AppDB.getAsync ( 'accounts', { networkID: this.networkID, accountIndex: this.accountIndex });
         if ( version ) {
 
             debugLog ( 'LOADING SCHEMA AND INVENTORY FROM DB' );
 
-            const schemaRecord = await this.db.schemas.get ({ networkID: this.networkID });
+            const schemaRecord = await AppDB.getAsync ( 'schemas', { networkID: this.networkID });
             if ( schemaRecord ) {
 
                 debugLog ( 'HAS SCHEMA RECORD' );
@@ -313,13 +318,13 @@ export class InventoryService {
             this.assets = {};
             this.inbox = [];
             this.inventory.setAssets ({});
-            await this.db.assets.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete (); // deleted the assets *and* the inbox
-            await this.db.inbox.where ({ networkID: this.networkID, accountIndex: this.accountIndex }).delete (); // deleted the assets *and* the inbox
+            await AppDB.deleteWhereAsync ( 'assets', { networkID: this.networkID, accountIndex: this.accountIndex });
+            await AppDB.deleteWhereAsync ( 'inbox', { networkID: this.networkID, accountIndex: this.accountIndex });
         }
 
         debugLog ( 'PUTTING VERSION:', JSON.stringify ( this.version, null, 4 ));
 
-        await this.db.accounts.put ( _.cloneDeep ( this.version ));
+        await AppDB.putAsync ( 'accounts', _.cloneDeep ( this.version ));
     }
 
     //----------------------------------------------------------------//
@@ -384,7 +389,7 @@ export class InventoryService {
 
         data.timestamp = timestamp; // store it here for later
 
-        await this.db.inventoryDelta.put ({ networkID: this.networkID, accountIndex: this.accountIndex, delta: data });
+        await AppDB.putAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex, delta: data });
         this.delta = data;
     }
 
@@ -397,17 +402,17 @@ export class InventoryService {
         let schemaKey = this.formatSchemaKey ( schemaHash, schemaVersion );
 
         if ( this.schema ) {
-            const networkRecord = await this.db.networks.get ( this.networkID );
+            const networkRecord = await AppDB.getAsync ( 'networks', this.networkID );
             if ( networkRecord && ( networkRecord.schemaKey === schemaKey )) return;
         }
 
-        await this.db.schemas.where ({ networkID: this.networkID }).delete ();
+        await AppDB.deleteWhereAsync ( 'schemas', { networkID: this.networkID });
 
         const schemaInfo = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( '/schema' ));
 
         schemaKey = this.formatSchemaKey ( schemaInfo.schemaHash, schemaInfo.schema.version );
-        await this.db.schemas.put ({ networkID: this.networkID, key: schemaKey, schema: schemaInfo.schema });
-        await this.db.networks.put ({ networkID: this.networkID, schemaKey: schemaKey });
+        await AppDB.putAsync ( 'schemas', { networkID: this.networkID, key: schemaKey, schema: schemaInfo.schema });
+        await AppDB.putAsync ( 'networks', { networkID: this.networkID, schemaKey: schemaKey });
 
         await this.makeSchema ( schemaInfo.schema );
     }

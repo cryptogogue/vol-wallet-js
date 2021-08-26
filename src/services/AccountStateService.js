@@ -1,17 +1,15 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import * as AppDB                       from './AppDB';
 import * as entitlements                from '../util/entitlements';
-import { NetworkStateService }          from './NetworkStateService';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
 import { TransactionQueueService }      from './TransactionQueueService';
 import * as bitcoin                     from 'bitcoinjs-lib';
 import { Inventory }                    from 'cardmotron';
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
-import * as bcrypt                      from 'bcryptjs';
+import { assert, crypto, ProgressController, RevocableContext, StorageContext } from 'fgc';
 import _                                from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
-import React                            from 'react';
+import { action, computed, observable, runInAction } from 'mobx';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@ACCOUNT STATE:', ...args ); }
@@ -58,11 +56,7 @@ export class AccountStateService {
     @computed get
     assetsFiltered () {
 
-        const assetsFiltered = this.account.assetsFiltered ? _.cloneDeep ( this.account.assetsFiltered ) : {};
-        for ( let assetID in this.transactionQueue.assetsFiltered ) {
-            assetsFiltered [ assetID ] = this.transactionQueue.assetsFiltered [ assetID ];
-        }
-        return assetsFiltered;
+        return this.transactionQueue.assetsFiltered;
     }
 
     //----------------------------------------------------------------//
@@ -117,7 +111,7 @@ export class AccountStateService {
     deleteAccount () {
 
         this.storage.remove ( this, 'account' );
-        this.appState.appDB.deleteAccountAsync ( this.networkID, this.index );
+        AppDB.deleteAccountAsync ( this.networkID, this.index );
         this.finalize ();
     }
 
@@ -223,44 +217,42 @@ export class AccountStateService {
     @action
     async startServiceLoopAsync () {
 
-        debugLog ( 'LOADED SUB-SERVICES' );
-        await this.transactionQueue.loadAsync ();
-        await this.inventoryService.loadAsync ();
+        try {
 
-        if ( this.inventoryService.delta ) {
+            debugLog ( 'LOADED SUB-SERVICES' );
+
             await this.syncAccountInfoAsync ();
-        }
 
-        debugLog ( 'START SERVICE LOOP' );
-        this.serviceLoopAsync ();
+            await this.transactionQueue.loadAsync ();
+            await this.inventoryService.loadAsync ();
+
+            debugLog ( 'START SERVICE LOOP' );
+            this.serviceLoopAsync ();
+        }
+        catch ( error ) {
+            debugLog ( error );
+        }   
     }
 
     //----------------------------------------------------------------//
     @action
     async serviceLoopAsync () {
 
-        debugLog ( 'SERVICE LOOP ASYNC' );
+        try {
 
-        let timeout = 5000;
+            await this.syncAccountInfoAsync ();
 
-        if ( this.inventoryService.delta ) {
-            await this.inventoryService.applyDeltaAsync ();
-        }
-
-        await this.syncAccountInfoAsync ();
-
-        await this.transactionQueue.tagLostTransactionsAsync ( this.nonce );
-        await this.transactionQueue.processTransactionsAsync ();
-
-        if ( this.transactionQueue.pendingTransactions.length === 0 ) {
             await this.inventoryService.serviceStep ();
-            if ( this.inventoryService.delta ) {
-                timeout = 1;
-            }
-        }
+            await this.inventoryService.applyDeltaAsync ();
 
-        this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
-        debugLog ( 'FINISH SERVICE LOOP ASYNC' );
+            await this.transactionQueue.tagLostTransactionsAsync ( this.nonce );
+            await this.transactionQueue.processTransactionsAsync ();
+
+            this.revocable.timeout (() => { this.serviceLoopAsync ()}, 5000 );
+        }
+        catch ( error ) {
+            debugLog ( error );
+        }
     }
 
     //----------------------------------------------------------------//

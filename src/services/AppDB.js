@@ -1,63 +1,103 @@
 // Copyright (c) 2019 Cryptogogue, Inc. All Rights Reserved.
 
-import Dexie                        from 'dexie';
+import AppDBWorker                  from './AppDBWorker.worker';
 
 //const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@APP DB:', ...args ); }
+const debugLog = function ( ...args ) { console.log ( '@DB:', ...args ); }
 
-const db = new Dexie ( 'volwal' );
+debugLog ( 'EXECUTING APP DB' );
 
-db.version ( 1 ).stores ({
-    networks:               'networkID',
-    schemas:                '[networkID+key], networkID',
-    accounts:               '[networkID+accountIndex], networkID',
-    assets:                 '[networkID+accountIndex+assetID], [networkID+accountIndex], networkID',
-    assetSVGs:              '[networkID+accountIndex+assetID], [networkID+accountIndex], networkID',
-    transactionHistory:     '[networkID+accountIndex]',
-    transactionQueue:       '[networkID+accountIndex]',
-    inbox:                  '[networkID+accountIndex+assetID], [networkID+accountIndex]',
-    inventoryDelta:         '[networkID+accountIndex]',
-});
-db.open ();
+let worker      = false;
+let isLoaded    = false;
 
-debugLog ( 'OPENING APP DB CONNECTION' );
+// TODO: find a better way
+let unique = 0;
 
-//================================================================//
-// AppDB
-//================================================================//
-export class AppDB {
+//----------------------------------------------------------------//
+async function loadWorker () {
 
-    //----------------------------------------------------------------//
-    constructor () {
+    if ( isLoaded ) return worker; 
 
-        // TODO: yes, this is gross for a lot of reasons, but it's expedient for now.
-        // TODO: break this out into a better DB structure.
-        // TODO: distribute ownership of this to the appropriate services.
+    return new Promise (( resolve, reject ) => {
+        
+        const handler = async ( event ) => {
+            debugLog ( 'got worker loaded message' );
+            worker.removeEventListener ( 'message', handler );
+            isLoaded = true;
+            resolve ();
+        }
+        worker = worker || new AppDBWorker ();
+        worker.addEventListener ( 'message', handler );
+        debugLog ( 'added load listener' );
+    });
+};
 
-        this.db = db;
-    }
+//----------------------------------------------------------------//
+async function callWorkerMethodAsync ( command, ...params ) {
 
-    //----------------------------------------------------------------//
-    async deleteAccountAsync ( networkID, accountIndex ) {
+    await loadWorker ();
 
-        await this.db.accounts.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
-        await this.db.assets.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
-        await this.db.assetSVGs.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
-        await this.db.transactionHistory.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
-        await this.db.transactionQueue.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
-    }
+    let id = unique++;
 
-    //----------------------------------------------------------------//
-    async deleteNetworkAsync ( networkID ) {
+    debugLog ( 'call worker method', command, id, params );
 
-        await this.db.networks.where ({ networkID: networkID }).delete ();
-        await this.db.schemas.where ({ networkID: networkID }).delete ();
-        await this.db.accounts.where ({ networkID: networkID }).delete ();
-        await this.db.assets.where ({ networkID: networkID }).delete ();
-        await this.db.assetSVGs.where ({ networkID: networkID }).delete ();
-    }
+    return new Promise (( resolve, reject ) => {
+        
+        const handler = async ( event ) => {
 
-    //----------------------------------------------------------------//
-    finalize () {
-    }
+            if ( event.data.id === id ) {
+
+                debugLog ( 'done call worker method', command, id, event.data.result );
+
+                worker.removeEventListener ( 'message', handler );
+                resolve ( event.data.result );
+            }
+        }
+        worker.addEventListener ( 'message', handler );
+        worker.postMessage ({ id: id, command: command, params: params });
+        debugLog ( 'call worker method posted...' );
+    });
+};
+
+//----------------------------------------------------------------//
+export async function deleteAccountAsync ( networkID, accountIndex ) {
+
+    await callWorkerMethodAsync ( 'DELETE_ACCOUNT', networkID, accountIndex );
+}
+
+//----------------------------------------------------------------//
+export async function deleteNetworkAsync ( networkID ) {
+
+    await callWorkerMethodAsync ( 'DELETE_NETWORK', networkID );
+}
+
+//----------------------------------------------------------------//
+export async function deleteWhereAsync ( tableName, key ) {
+
+    await callWorkerMethodAsync ( 'DELETE_WHERE', tableName, key );
+}
+
+//----------------------------------------------------------------//
+export async function getAsync ( tableName, key ) {
+
+    return await callWorkerMethodAsync ( 'GET', tableName, key );
+}
+
+//----------------------------------------------------------------//
+// hack this in for now; too tedious to generically wrap dexie transaction
+export async function putAssetAsync ( networkID, accountIndex, asset, svg ) {
+
+    await callWorkerMethodAsync ( 'PUT_ASSET', networkID, accountIndex, asset, svg );
+}
+
+//----------------------------------------------------------------//
+export async function putAsync ( tableName, row ) {
+
+    await callWorkerMethodAsync ( 'PUT', tableName, row );
+}
+
+//----------------------------------------------------------------//
+export async function queryAsync ( tableName, key ) {
+
+    return await callWorkerMethodAsync ( 'QUERY', tableName, key );
 }

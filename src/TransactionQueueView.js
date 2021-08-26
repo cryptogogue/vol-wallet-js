@@ -7,8 +7,7 @@ import * as vol             from './util/vol';
 import _                    from 'lodash';
 import JSONTree             from 'react-json-tree';
 import React, { useState }  from 'react';
-import { assert, hooks, InfiniteScrollView, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
+import { hooks }            from 'fgc';
 import { observer }         from 'mobx-react';
 import * as UI              from 'semantic-ui-react';
 
@@ -24,10 +23,25 @@ const ROW_STATUS = {
 //================================================================//
 export const TransactionQueueView = observer (( props ) => {
     
-    const { transactions }      = props;
-    const error                 = props.error || false;
+    const { transactionQueue }      = props;
+    const error                     = props.error || false;
 
-    const pagingController      = hooks.useFinalizable (() => new PagingController ( transactions.length ));
+    const transactions              = transactionQueue.queue;
+
+    const pagingController          = hooks.useFinalizable (() => new PagingController ( transactions.length ));
+
+    const [ txUUID, setTxUUID ]     = useState ( false );
+    const [ txBody, setTxBody ]     = useState ( false );
+
+    const loadBody = async ( uuid ) => {
+        setTxUUID ( uuid );
+        setTxBody ( await transactionQueue.getTransactionBodyAsync ( uuid ));
+    }
+
+    const onCloseModal = async ( uuid ) => {
+        setTxUUID ( false );
+        setTxBody ( false );
+    }
 
     const getStatusView = ( transaction ) => {
 
@@ -85,15 +99,6 @@ export const TransactionQueueView = observer (( props ) => {
         const transaction = transactions [ transactions.length - i - 1 ];
         let friendlyName = Transaction.friendlyNameForType ( transaction.type );
 
-        let json = {};
-        if ( transaction.envelope ) {
-            json = _.cloneDeep ( transaction.envelope );
-            json.body = JSON.parse ( transaction.envelope.body );
-        }
-        else {
-            json = transaction.body;
-        }
-
         const rowStatus = getRowStatus ( transaction );
 
         transactionList.push (
@@ -104,26 +109,15 @@ export const TransactionQueueView = observer (( props ) => {
                 error       = { rowStatus === ROW_STATUS.ERROR ? true : undefined }
             >
                 <UI.Table.Cell collapsing>
-                    <UI.Modal
-                        header      = 'Transaction Body'
-                        trigger     = {
-                            <UI.Header
-                                as = 'h5'
-                                style = {{ cursor: 'pointer' }}
-                            >
-                                { friendlyName }
-                            </UI.Header>
-                        }
-                        content     = {
-                            <JSONTree
-                                hideRoot
-                                data = { json }
-                                theme = 'bright'
-                                shouldExpandNode = {() => { return true; }}
-                            />
-                        }
-                    />
+                    <UI.Header
+                        as          = 'h5'
+                        style       = {{ cursor: 'pointer' }}
+                        onClick     = {() => { loadBody ( transaction.uuid )}}
+                    >
+                        { friendlyName }
+                    </UI.Header>
                 </UI.Table.Cell>
+
                 <UI.Table.Cell collapsing>{ vol.format ( transaction.cost )}</UI.Table.Cell>
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
@@ -149,34 +143,52 @@ export const TransactionQueueView = observer (( props ) => {
         );
     }
 
+    // TODO: the JSONTree below leaks DOM nodes like crazy
+
     return (
-        <UI.Table unstackable>
-            
-            <UI.Table.Header>
-                <UI.Table.Row>
-                    <UI.Table.HeaderCell>Type</UI.Table.HeaderCell>
-                    <UI.Table.HeaderCell>Cost</UI.Table.HeaderCell>
-                    <UI.Table.HeaderCell>UUID</UI.Table.HeaderCell>
-                    <UI.Table.HeaderCell>Status</UI.Table.HeaderCell>
-                    <UI.Table.HeaderCell>Nonce</UI.Table.HeaderCell>
-                    <UI.Table.HeaderCell>Miners</UI.Table.HeaderCell>
-                </UI.Table.Row>
-            </UI.Table.Header>
+        <React.Fragment>
 
-            <UI.Table.Body>
-                { transactionList }
-            </UI.Table.Body>
-
-            <If condition = { pagingController.pageCount > 1 }>
-                <UI.Table.Footer>
+            <UI.Table unstackable>
+                
+                <UI.Table.Header>
                     <UI.Table.Row>
-                        <UI.Table.HeaderCell colSpan = '6'>
-                            <PagingMenu controller = { pagingController }/>
-                    </UI.Table.HeaderCell>
+                        <UI.Table.HeaderCell>Type</UI.Table.HeaderCell>
+                        <UI.Table.HeaderCell>Cost</UI.Table.HeaderCell>
+                        <UI.Table.HeaderCell>UUID</UI.Table.HeaderCell>
+                        <UI.Table.HeaderCell>Status</UI.Table.HeaderCell>
+                        <UI.Table.HeaderCell>Nonce</UI.Table.HeaderCell>
+                        <UI.Table.HeaderCell>Miners</UI.Table.HeaderCell>
                     </UI.Table.Row>
-                </UI.Table.Footer>
-            </If>
+                </UI.Table.Header>
 
-        </UI.Table>
+                <UI.Table.Body>
+                    { transactionList }
+                </UI.Table.Body>
+
+                <If condition = { pagingController.pageCount > 1 }>
+                    <UI.Table.Footer>
+                        <UI.Table.Row>
+                            <UI.Table.HeaderCell colSpan = '6'>
+                                <PagingMenu controller = { pagingController }/>
+                        </UI.Table.HeaderCell>
+                        </UI.Table.Row>
+                    </UI.Table.Footer>
+                </If>
+            </UI.Table>
+
+            <UI.Modal
+                open        = { txUUID !== false }
+                onClose     = {() => { onCloseModal ()}}
+                header      = 'Transaction Body'
+                content     = {
+                    <JSONTree
+                        hideRoot
+                        data = { txBody ? txBody : {}}
+                        theme = 'bright'
+                        shouldExpandNode = {() => { return true; }}
+                    />
+                }
+            />
+        </React.Fragment>
     );
 });

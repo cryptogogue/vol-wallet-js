@@ -2,24 +2,16 @@
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { CraftingFormController }                           from './transactions/CraftingFormController';
-import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryMenu }                                    from './InventoryMenu';
-import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
-import { AccountStateService }                              from './services/AccountStateService';
 import { AppStateService }                                  from './services/AppStateService';
-import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
-import { TransactionModal }                                 from './transactions/TransactionModal';
 import { UpgradeAssetsFormController }                      from './transactions/UpgradeAssetsFormController';
-import { AssetModal, AssetTagsModal, InventoryWithFilter, INVENTORY_FILTER_STATUS, inventoryMenuItems, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
-import { assert, hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
+import { AssetModal, InventoryWithFilter, INVENTORY_FILTER_STATUS, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
-import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
 import KeyboardEventHandler                                 from 'react-keyboard-event-handler';
 import { Redirect }                                         from 'react-router';
-import { Link }                                             from 'react-router-dom';
-import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-react';
 
 const appState = AppStateService.get ();
 
@@ -79,10 +71,6 @@ export const InventoryScreen = observer (( props ) => {
     const onAssetMagnify = ( asset ) => {
         setZoomedAssetID ( asset.assetID );
     }
-
-    // const onAssetEllipsis = ( asset ) => {
-    //     console.log ( 'ELLIPSIS!' );
-    // }
 
     const onDeselect = () => {
         if ( !batchSelect ) {

@@ -1,12 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AppDB }                        from './AppDB';
 import { NetworkStateService }          from './NetworkStateService';
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SharedStorage, SingleColumnContainerView, storage, StorageContext, util } from 'fgc';
+import { assert, crypto, RevocableContext, storage, StorageContext } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
-import React                            from 'react';
+import { action, computed, observable } from 'mobx';
 
 export const HARD_RESET_VERSION = 1;
 
@@ -128,7 +126,6 @@ export class AppStateService {
 
         this.revocable          = new RevocableContext ();
         this.storage            = new StorageContext ();
-        this.appDB              = new AppDB ();
 
         const flags = {
             promptFirstNetwork:         true,
@@ -185,7 +182,6 @@ export class AppStateService {
             this.networksByID [ networkID ].finalize ();
         }
 
-        this.appDB.finalize ();
         this.storage.finalize ();
         this.revocable.finalize ();
     }

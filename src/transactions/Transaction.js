@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { assert, util }                 from 'fgc';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
+import { assert, util }                     from 'fgc';
+import { action, computed, observable }     from 'mobx';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
@@ -65,31 +65,27 @@ export const TX_QUEUE_STATUS = {
 };
 
 //================================================================//
-// Transaction
+// TransactionStatus
 //================================================================//
-export class Transaction {
+export class TransactionStatus {
 
     @observable status              = TX_STATUS.STAGED;
+    @observable accountName         = '';
     @observable assetsFiltered      = {};
+    @observable cost                = 0;
     @observable miners              = [];
-    @observable envelope            = false;
     @observable acceptedCount       = 0;
+    @observable uuid                = '';
+    @observable type                = '';
+    @observable nonce               = -1;
 
-    @computed get accountID         () { return this.maker.accountName; }
-    @computed get cost              () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
-    @computed get friendlyName      () { return Transaction.friendlyNameForType ( this.body.type ); }
+    @computed get friendlyName      () { return Transaction.friendlyNameForType ( this.type ); }
     @computed get isAccepted        () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
     @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
     @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
     @computed get isRestored        () { return ( this.queueStatus === TX_QUEUE_STATUS.RESTORED ); }
     @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING )); }
-    @computed get maker             () { return this.body.maker; }
-    @computed get nonce             () { return this.maker.nonce; }
     @computed get queueStatus       () { return this.getQueueStatus (); }
-    @computed get type              () { return this.body.type; }
-    @computed get uuid              () { return this.body.uuid || ''; }
-    @computed get vol               () { return this.virtual_getSendVOL ? this.virtual_getSendVOL () : 0; }
-    @computed get weight            () { return this.virtual_getWeight ? this.virtual_getWeight () : 1; }
 
     //----------------------------------------------------------------//
     @action
@@ -108,11 +104,117 @@ export class Transaction {
     }
 
     //----------------------------------------------------------------//
+    constructor () {
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    static fromTransaction ( transaction ) {
+
+        const self = new TransactionStatus ();
+
+        self.accountName        = transaction.body.maker.accountName;
+        self.assetsFiltered     = _.cloneDeep ( transaction.assetsFiltered );
+        self.cost               = transaction.cost;
+        self.uuid               = transaction.uuid;
+        self.type               = transaction.type;
+
+        return self;
+    }
+
+    //----------------------------------------------------------------//
+    getQueueStatus () {
+
+        switch ( this.status ) {
+
+            // STAGED
+            case TX_STATUS.STAGED:    // isUnsent
+                return TX_QUEUE_STATUS.STAGED;
+
+            // PENDING
+            case TX_STATUS.PENDING:
+            case TX_STATUS.SENT:
+            case TX_STATUS.MIXED:
+                return TX_QUEUE_STATUS.PENDING;
+
+            // BLOCKED
+            case TX_STATUS.REJECTED:  // isUnsent
+            case TX_STATUS.BLOCKED:   // isUnsent
+                return TX_QUEUE_STATUS.BLOCKED;
+
+            // ACCEPTED
+            case TX_STATUS.ACCEPTED:
+            case TX_STATUS.RESTORED:
+                return TX_QUEUE_STATUS.ACCEPTED;
+
+            // LOST
+            case TX_STATUS.LOST:      // isUnsent
+                return TX_QUEUE_STATUS.LOST;
+        }
+        assert ( false );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    static load ( transaction ) {
+
+        const loadedTransaction             = new TransactionStatus ();
+
+        loadedTransaction.status            = transaction.status;
+        loadedTransaction.accountName       = transaction.accountName;
+        loadedTransaction.assetsFiltered    = transaction.assetsFiltered || {};
+        loadedTransaction.cost              = transaction.cost;
+        loadedTransaction.miners            = transaction.miners;
+        loadedTransaction.acceptedCount     = transaction.acceptedCount;
+        loadedTransaction.uuid              = transaction.uuid;
+        loadedTransaction.type              = transaction.type;
+        loadedTransaction.nonce             = transaction.nonce;
+
+        return loadedTransaction;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setAcceptedCount ( acceptedCount ) {
+
+        this.acceptedCount  = acceptedCount;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setNonce ( nonce ) {
+
+        this.nonce          = nonce;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setStatus ( status ) {
+
+        this.status         = status;
+    }
+};
+
+//================================================================//
+// Transaction
+//================================================================//
+export class Transaction {
+
+    get accountID           () { return this.maker.accountName; }
+    get cost                () { return ( this.body.maker.gratuity || 0 ) + ( this.body.maker.transferTax || 0 ) + this.vol; }
+    get friendlyName        () { return Transaction.friendlyNameForType ( this.body.type ); }
+    get maker               () { return this.body.maker; }
+    get nonce               () { return this.maker.nonce; }
+    get type                () { return this.body.type; }
+    get uuid                () { return this.body.uuid || ''; }
+    get vol                 () { return this.virtual_getSendVOL ? this.virtual_getSendVOL () : 0; }
+    get weight              () { return this.virtual_getWeight ? this.virtual_getWeight () : 1; }
+
+    //----------------------------------------------------------------//
     constructor ( body ) {
-        
-        extendObservable ( this, {
-            body:       body,
-        });
+
+        this.assetsFiltered         = {};
+        this.body                   = body;
     }
 
     //----------------------------------------------------------------//
@@ -159,59 +261,10 @@ export class Transaction {
     }
 
     //----------------------------------------------------------------//
-    getQueueStatus () {
-
-        switch ( this.status ) {
-
-            // STAGED
-            case TX_STATUS.STAGED:    // isUnsent
-                return TX_QUEUE_STATUS.STAGED;
-
-            // PENDING
-            case TX_STATUS.PENDING:
-            case TX_STATUS.SENT:
-            case TX_STATUS.MIXED:
-                return TX_QUEUE_STATUS.PENDING;
-
-            // BLOCKED
-            case TX_STATUS.REJECTED:  // isUnsent
-            case TX_STATUS.BLOCKED:   // isUnsent
-                return TX_QUEUE_STATUS.BLOCKED;
-
-            // ACCEPTED
-            case TX_STATUS.ACCEPTED:
-            case TX_STATUS.RESTORED:
-                return TX_QUEUE_STATUS.ACCEPTED;
-
-            // LOST
-            case TX_STATUS.LOST:      // isUnsent
-                return TX_QUEUE_STATUS.LOST;
-        }
-        assert ( false );
-    }
-
-    //----------------------------------------------------------------//
     @action
     static load ( transaction ) {
 
-        const loadedTransaction = Transaction.fromBody ( transaction.body );
-
-        loadedTransaction.status            = transaction.status;
-        loadedTransaction.assetsFiltered    = transaction.assetsFiltered || {};
-        loadedTransaction.miners            = transaction.miners;
-        loadedTransaction.envelope          = transaction.envelope;
-    
-        loadedTransaction.makerIndex        = transaction.makerIndex;
-        loadedTransaction.details           = transaction.details;
-
-        return loadedTransaction;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setAcceptedCount ( acceptedCount ) {
-
-        this.acceptedCount              = acceptedCount;
+        return Transaction.fromBody ( transaction.body );
     }
 
     //----------------------------------------------------------------//
@@ -229,13 +282,6 @@ export class Transaction {
     setBody ( body ) {
 
         this.body = body;
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setEnvelope ( envelope ) {
-
-        this.envelope = envelope || false;
     }
 
     //----------------------------------------------------------------//
@@ -258,20 +304,6 @@ export class Transaction {
                 maker.transferTax      = calculate ( this.vol, feeProfile.transferTax );
             }
         }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setNote ( note ) {
-
-        this.note = note || '';
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setStatus ( status ) {
-
-        this.status         = status;
     }
 
     //----------------------------------------------------------------//

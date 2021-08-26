@@ -78,7 +78,11 @@ export const TransactionQueueModal = observer (( props ) => {
                     />
                 </If>
 
-                <TransactionQueueView key = { transactions.length } transactions = { transactions } error = { transactionQueue.transactionError }/>
+                <TransactionQueueView
+                    key                 = { transactions.length }
+                    transactionQueue    = { transactionQueue }
+                    error               = { transactionQueue.transactionError }
+                />
 
                 <If condition = { error }>
                     <UI.Message

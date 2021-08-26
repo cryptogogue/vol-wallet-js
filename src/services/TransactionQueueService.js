@@ -1,15 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as entitlements                from '../util/entitlements';
-import { NetworkStateService }          from './NetworkStateService';
-import { InventoryService }             from './InventoryService';
-import { Transaction, TX_STATUS }       from '../transactions/Transaction';
-import { Inventory }                    from 'cardmotron';
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, StorageContext, util } from 'fgc';
-import * as bcrypt                      from 'bcryptjs';
+import * as AppDB                       from './AppDB';
+import { Transaction, TransactionStatus, TX_STATUS, TRANSACTION_TYPE } from '../transactions/Transaction';
+import * as vol                         from '../util/vol';
+import { assert, crypto, RevocableContext } from 'fgc';
 import _                                from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction, toJS } from 'mobx';
-import React                            from 'react';
+import { action, computed, observable, runInAction, toJS } from 'mobx';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
@@ -45,9 +41,8 @@ export class TransactionQueueService {
 
         const transactions = [];
         for ( let entry of this.history ) {
-            const transaction = entry.transaction;
-            if ( transaction.makerIndex === this.accountService.index ) {
-                transactions.push ( transaction );
+            if ( entry.makerIndex === this.accountService.index ) {
+                transactions.push ( entry.transaction );
             }
         }
         return transactions;
@@ -91,9 +86,6 @@ export class TransactionQueueService {
         this.accountService     = accountService;
         this.networkService     = accountService.networkService;
         this.appState           = accountService.appState;
-
-        this.appDB              = this.appState.appDB;
-        this.db                 = this.appDB.db;
     }
 
     //----------------------------------------------------------------//
@@ -122,31 +114,38 @@ export class TransactionQueueService {
 
         for ( let entry of entries ) {
 
-            let envelope = entry.transaction;
+            const makerIndex    = entry.transaction.makerIndex;
+            const details       = entry.transaction.details;
+            const body          = JSON.parse ( entry.transaction.body );
 
-            const body                  = JSON.parse ( envelope.body );
-            const transaction           = Transaction.fromBody ( body );
+            const txObject      = Transaction.fromBody ( body );
+            const transaction   = TransactionStatus.fromTransaction ( txObject );
 
-            transaction.setEnvelope ( envelope );
             transaction.setStatus ( TX_STATUS.HISTORY );
-            
-            transaction.makerIndex      = envelope.makerIndex;
-            transaction.details         = envelope.details;
+            transaction.setNonce ( body.maker.nonce );
 
-            this.history.push ({
-                time:               entry.time,
-                blockHeight:        entry.blockHeight,
-                transaction:        transaction,
+            runInAction (() => {
+                this.history.push ({
+                    time:               entry.time,
+                    blockHeight:        entry.blockHeight,
+                    makerIndex:         makerIndex,
+                    type:               body.type,
+                    explanation:        this.getExplanation ( makerIndex, body, details ),
+                    transaction:        transaction,
+                });
             });
+
+            await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: body.uuid, envelope: entry.transaction });
         }
 
-        await this.db.transactionHistory.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
+        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
     }
 
     //----------------------------------------------------------------//
     async fetchHistoryAsync () {
 
         const consensusService = this.networkService.consensusService;
+        if ( !consensusService.isOnline ) return;
 
         let more = true;
         while ( more ) {
@@ -154,6 +153,7 @@ export class TransactionQueueService {
             more = false;
 
             try {
+
                 const serviceURL    = consensusService.getServiceURL ( `/accounts/${ this.accountService.accountID }/log`, { base: this.history.length });
                 const data          = await this.revocable.fetchJSON ( serviceURL );
 
@@ -188,6 +188,7 @@ export class TransactionQueueService {
         debugLog ( 'findNonceAsync' );
 
         const consensusService = this.networkService.consensusService;
+        if ( !consensusService.isOnline ) return false;
 
         const findNonceInner = async () => {
 
@@ -238,6 +239,64 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
+    getExplanation ( makerIndex, body, details ) {    
+        
+        const isMaker       = this.accountService.index === makerIndex;
+
+        const formatAssetList = ( assets ) => {
+
+            if ( !assets.length ) return 'no assets';
+
+            if ( assets.length === 1 ) {
+                return `an asset (${ assets [ 0 ].assetID })`;
+            }
+
+            const assetIDs = [];
+            for ( let asset of assets ) {
+                assetIDs.push ( asset.assetID );
+            }
+
+            return `${ assets.length } assets (${ assetIDs.join ( ', ' )})`;
+        }
+
+        switch ( body.type ) {
+            
+            case TRANSACTION_TYPE.PUBLISH_SCHEMA:
+            case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET: {
+
+                const version = body.schema.version;
+                return `You published '${ version.release } - ${ version.major }.${ version.minor }.${ version.revision }'.`;
+            }
+
+            case TRANSACTION_TYPE.SEND_ASSETS: {
+
+                const accountName = body.accountName;
+                const assetList = formatAssetList ( details.assets );
+
+                if ( isMaker ) return `You sent ${ assetList } to ${ accountName }.`;
+                return `${ accountName } sent you ${ assetList }.`;
+            }
+
+            case TRANSACTION_TYPE.SEND_VOL: {
+
+                const accountName = body.accountName;
+                const amount = vol.format ( body.amount );
+
+                if ( isMaker ) return `You sent ${ accountName } ${ amount } VOL.`;
+                return `${ accountName } sent you ${ amount } VOL.`;
+            }
+        }
+        return '--';
+    }
+
+    //----------------------------------------------------------------//
+    async getTransactionBodyAsync ( uuid ) {
+
+        const transactionRow = await AppDB.getAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: uuid });
+        return transactionRow && (( transactionRow.envelope && JSON.parse ( transactionRow.envelope.body )) || transactionRow.body ) || {};
+    }
+
+    //----------------------------------------------------------------//
     @computed get
     hasLostTransactions () {
         return this.lostTransactions.length > 0;
@@ -257,8 +316,8 @@ export class TransactionQueueService {
         let count = 0;
 
         for ( let i = inboxBase; i < this.history.length; ++i ) {
-            const tx = this.history [ i ].transaction;
-            if ( tx.makerIndex !== this.accountService.index ) count++;
+            const entry = this.history [ i ];
+            if ( entry.makerIndex !== this.accountService.index ) count++;
         }
         return count;
     }
@@ -269,23 +328,27 @@ export class TransactionQueueService {
 
         if ( this.status !== TX_SERVICE_STATUS.UNLOADED ) return;
 
-        const queueRecord       = await this.db.transactionQueue.get ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index });
-        const historyRecord     = await this.db.transactionHistory.get ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index });
+        debugLog ( 'TX QUEUE LOAD ASYNC' );
+
+        const queueRecord       = await AppDB.getAsync ( 'transactionQueue', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
+        const historyRecord     = await AppDB.getAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
 
         runInAction (() => {
             
             this.queue = queueRecord && queueRecord.transactions ? queueRecord.transactions : [];
             for ( let i in this.queue ) {
-                this.queue [ i ] = Transaction.load ( this.queue [ i ]);
+                this.queue [ i ] = TransactionStatus.load ( this.queue [ i ]);
             }
 
             this.history = historyRecord && historyRecord.entries ? historyRecord.entries : [];
             for ( let i in this.history ) {
-                this.history [ i ].transaction = Transaction.load ( this.history [ i ].transaction );
+                this.history [ i ].transaction = TransactionStatus.load ( this.history [ i ].transaction );
             }
 
             this.status = TX_SERVICE_STATUS.LOADED;
         });
+
+        debugLog ( 'TX QUEUE LOADED' );
     }
 
     //----------------------------------------------------------------//
@@ -315,8 +378,10 @@ export class TransactionQueueService {
 
         const account           = this.account;
         const consensusService  = this.networkService.consensusService;
-        const accountName       = transaction.body.maker.accountName;
+        const accountName       = transaction.accountName;
         
+        if ( !consensusService.isOnline ) return;
+
         let responseCount = 0;
         let acceptedCount = 0;
         let rejectedCount = 0;
@@ -327,13 +392,23 @@ export class TransactionQueueService {
             transaction.setStatus ( TX_STATUS.SENT );
         }
 
+        let envelope = false;
+        const loadEnvelope = async () => {
+            if ( envelope === false ) {
+                const transactionRow = await AppDB.getAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid });
+                envelope = transactionRow.envelope;
+                assert ( envelope );
+            }
+            return envelope;
+        }
+
         const checkTransactionStatus = async ( minerURL ) => {
 
             const serviceURL = consensusService.formatServiceURL ( minerURL, `/accounts/${ accountName }/transactions/${ transaction.uuid }` );
 
             if ( !transaction.miners.includes ( minerURL )) {
                 debugLog ( 'submitting tx to:', minerURL );
-                if ( await this.putTransactionAsync ( serviceURL, transaction )) {
+                if ( await this.putTransactionAsync ( serviceURL, await loadEnvelope ())) {
                     transaction.affirmMiner ( minerURL );
                 }
                 return;
@@ -361,7 +436,7 @@ export class TransactionQueueService {
 
                     case 'UNKNOWN':
                         // re-send the transaction if not recognized.
-                        await this.putTransactionAsync ( serviceURL, transaction );
+                        await this.putTransactionAsync ( serviceURL, await loadEnvelope ());
                         break;
 
                     default:
@@ -394,19 +469,8 @@ export class TransactionQueueService {
 
             // if *all* nodes have accepted the transaction, remove it from the queue and advance.
             if ( transaction.nonce < this.accountService.nonce ) {
-
-                runInAction (() => {
-
-                    const assetsFiltered = _.clone ( account.assetsFiltered || {});
-                    for ( let assetID in transaction.assetsFiltered ) {
-                        assetsFiltered [ assetID ] = transaction.assetsFiltered [ assetID ];
-                    }
-
-                    transaction.setStatus ( TX_STATUS.ACCEPTED );
-                    transaction.clearMiners ();
-
-                    account.assetsFiltered = assetsFiltered;
-                });
+                transaction.setStatus ( TX_STATUS.ACCEPTED );
+                transaction.clearMiners ();
             }
 
             // if *all* nodes have rejected the transaction, stop and report.
@@ -441,9 +505,9 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    async putTransactionAsync ( serviceURL, transaction ) {
+    async putTransactionAsync ( serviceURL, envelope ) {
 
-        debugLog ( 'putTransactionsAsync', transaction );
+        debugLog ( 'putTransactionsAsync', envelope );
 
         let result = false;
 
@@ -451,7 +515,7 @@ export class TransactionQueueService {
             result = await this.revocable.fetchJSON ( serviceURL, {
                 method :    'PUT',
                 headers :   { 'content-type': 'application/json' },
-                body :      JSON.stringify ( transaction.envelope, null, 4 ),
+                body :      JSON.stringify ( envelope, null, 4 ),
             });
         }
         catch ( error ) {
@@ -467,20 +531,21 @@ export class TransactionQueueService {
     async resetHistoryAsync () {
 
         this.history = [];
-        await this.db.transactionHistory.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
+        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
     }
 
     //----------------------------------------------------------------//
     @action
     async restoreTransactionsAsync () {
 
-        const history = this.accountQueueHistory;
-        const length = history.length < this.queue.length ? this.queue.length : history.length;
+        const queue     = this.queue;
+        const history   = this.accountQueueHistory;
+        const length    = history.length < queue.length ? queue.length : history.length;
 
         for ( let i = 0; i < length; ++i ) {
 
-            const txFromQueue       = this.queue [ i ];
-            const txFromHistory     = history [ i ];
+            const txFromQueue       = ( i < queue.length ) ? queue [ i ] : false;
+            const txFromHistory     = ( i < history.length ) ? history [ i ] : false;
 
             assert ( txFromQueue || txFromHistory );
 
@@ -490,8 +555,10 @@ export class TransactionQueueService {
             // tx from history; overwrite
             if ( txFromHistory ) {
 
+                debugLog ( 'restoring transaction', txFromHistory.type );
+
                 const transaction = _.cloneDeep ( txFromHistory );
-                assert ( transaction instanceof Transaction );
+                assert ( transaction instanceof TransactionStatus );
 
                 transaction.setStatus ( TX_STATUS.RESTORED );
                 this.queue [ i ] = transaction;
@@ -504,7 +571,7 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     async saveAsync () {
         assert ( this.status === TX_SERVICE_STATUS.LOADED );
-        await this.db.transactionQueue.put ({ networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: toJS ( this.queue )});
+        await AppDB.putAsync ( 'transactionQueue', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: toJS ( this.queue )});
     }
 
     //----------------------------------------------------------------//
@@ -515,14 +582,18 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    async stageTransactionAsync ( transaction ) {
+    async stageTransactionAsync ( txObject ) {
 
-        debugLog ( 'stageTransactionAsync', transaction );
+        debugLog ( 'stageTransactionAsync', txObject );
 
         await ( this.loadAsync ());
 
-        transaction.setUUID ();
-        transaction.setStatus ( TX_STATUS.STAGED );
+        txObject.setUUID ();
+        const body = _.cloneDeep ( txObject.body );
+
+        const transaction = TransactionStatus.fromTransaction ( txObject );
+
+        await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid, body: body });
 
         runInAction (() => {
             this.queue.push ( transaction );
@@ -549,37 +620,36 @@ export class TransactionQueueService {
 
         for ( let transaction of this.unsentTransactions ) {
 
-            const hexKey            = this.account.keys [ transaction.body.maker.keyName ];
-            const privateKeyHex     = crypto.aesCipherToPlain ( hexKey.privateKeyHexAES, password );
-            const key               = await crypto.keyFromPrivateHex ( privateKeyHex );
+            const body                  = await this.getTransactionBodyAsync ( transaction.uuid );
 
-            this.submitTransactionsWithKeyAndNonce ( transaction, key, recordBy, nonce++ );
+            body.maxHeight              = 0; // don't use for now
+            body.recordBy               = recordBy.toISOString ();
+            body.maker.nonce            = nonce++;
+
+            let envelope = {
+                body: JSON.stringify ( body ),
+            };
+
+            const hexKey                = this.account.keys [ body.maker.keyName ];
+            const privateKeyHex         = crypto.aesCipherToPlain ( hexKey.privateKeyHexAES, password );
+            const key                   = await crypto.keyFromPrivateHex ( privateKeyHex );
+
+            envelope.signature = {
+                hashAlgorithm:  'SHA256',
+                signature:      key.sign ( envelope.body ),
+            };
+
+            // replace the transaction body with an envelope
+            await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid, envelope: envelope });
+
+            runInAction (() => {
+                transaction.status      = TX_STATUS.PENDING;
+                transaction.miners      = [];
+                transaction.nonce       = body.maker.nonce;
+            });
         }
 
         await this.saveAsync ();
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    submitTransactionsWithKeyAndNonce ( transaction, key, recordBy, nonce ) {
-
-        let body                = transaction.body;
-        body.maxHeight          = 0; // don't use for now
-        body.recordBy           = recordBy.toISOString ();
-        body.maker.nonce        = nonce;
-
-        let envelope = {
-            body: JSON.stringify ( body ),
-        };
-
-        envelope.signature = {
-            hashAlgorithm:  'SHA256',
-            signature:      key.sign ( envelope.body ),
-        };
-
-        transaction.envelope    = envelope;
-        transaction.status      = TX_STATUS.PENDING;
-        transaction.miners      = [];
     }
 
     //----------------------------------------------------------------//

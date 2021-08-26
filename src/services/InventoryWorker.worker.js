@@ -4,13 +4,14 @@ import { Schema }           from 'cardmotron-worker';
 
 let schema      = false;
 
+//----------------------------------------------------------------//
 async function handleMessage ( event ) {
 
     const schemaObj = event.data.schemaObj || false;
 
     if ( schemaObj ) {
         schema = new Schema ( schemaObj );
-        this.postMessage ( '' );
+        postMessage ( '' );
         return;
     }
 
@@ -23,7 +24,7 @@ async function handleMessage ( event ) {
         console.log ( 'WORKER expanding asset:', asset.assetID );
         asset       = schema.expandAsset ( asset );
         const svg   = schema.renderAssetSVG ( asset );
-        this.postMessage ({ asset: asset, svg: svg });
+        postMessage ({ asset: asset, svg: svg });
         return;
     }
 }

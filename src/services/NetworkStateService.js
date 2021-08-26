@@ -1,15 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountStateService }          from './AccountStateService';
-import { AppStateService }              from './AppStateService';
+import * as AppDB                       from './AppDB';
 import { ConsensusService }             from './ConsensusService';
-import { Inventory }                    from 'cardmotron';
-import { assert, crypto, excel, ProgressController, randomBytes, RevocableContext, SingleColumnContainerView, storage, StorageContext, util } from 'fgc';
-import * as bcrypt                      from 'bcryptjs';
+import { assert, crypto, randomBytes, RevocableContext, storage, StorageContext } from 'fgc';
 import _                                from 'lodash';
-import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
-import React                            from 'react';
-import url                              from 'url';
+import { action, computed, observable, runInAction } from 'mobx';
 import { vol }                          from 'vol';
 
 //const debugLog = function () {}
@@ -176,7 +172,7 @@ export class NetworkStateService {
             }
 
             this.storage.remove ( this, 'network' );
-            this.appState.appDB.deleteNetworkAsync ( this.networkID );
+            AppDB.deleteNetworkAsync ( this.networkID );
             this.networkID = false;
 
             this.finalize ();
