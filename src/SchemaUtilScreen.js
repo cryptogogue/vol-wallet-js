@@ -4,12 +4,10 @@ import { NavigationBar }                                    from './NavigationBa
 import { AppStateService }                                  from './services/AppStateService';
 import { ScannerReportModal, SchemaScannerXLSX }            from 'cardmotron';
 import _                                                    from 'lodash';
-import { assert, ClipboardMenuItem, excel, FilePickerMenuItem, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable }   from "mobx";
+import { ClipboardMenuItem, excel, FilePickerMenuItem, SingleColumnContainerView } from 'fgc';
 import { observer }                                         from 'mobx-react';
-import React, { Fragment, useState, useRef }                from 'react';
+import React, { useState }                                  from 'react';
 import JSONTree                                             from 'react-json-tree';
-import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
 const appState = AppStateService.get ();

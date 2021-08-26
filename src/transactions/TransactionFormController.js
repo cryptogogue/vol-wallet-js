@@ -1,11 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as Fields                          from '../fields/fields'
-import { Transaction, TRANSACTION_TYPE }    from './Transaction';
-import { assert, excel, hooks, randomBytes, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { Transaction }                      from './Transaction';
+import { assert, RevocableContext }         from 'fgc';
 import _                                    from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
-import { observer }                         from 'mobx-react';
+import { action, computed, extendObservable, observable } from 'mobx';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@TX FORM:', ...args ); }

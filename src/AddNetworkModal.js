@@ -1,10 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { ConsensusService }         from './services/ConsensusService';
-import { NetworkStateService }      from './services/NetworkStateService';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { hooks }                    from 'fgc';
 import React, { useState }          from 'react';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
+import { runInAction }              from 'mobx';
 import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';
 import url                          from 'url';

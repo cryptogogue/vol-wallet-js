@@ -5,10 +5,10 @@ import { InboxLabel }                       from './InboxLabel';
 import { NavigationBar }                    from './NavigationBar';
 import { TransactionQueueLabel }            from './TransactionQueueLabel';
 import { observer }                         from 'mobx-react';
-import React, { useState }                  from 'react';
+import React                                from 'react';
 import { Redirect }                         from 'react-router';
 import { Link, useParams }                  from 'react-router-dom';
-import { Button, Dropdown, Header, Icon, Label, Menu } from 'semantic-ui-react';
+import { Dropdown, Menu }                   from 'semantic-ui-react';
 
 export const ACCOUNT_TABS = {
     ACCOUNT:        'ACCOUNT',

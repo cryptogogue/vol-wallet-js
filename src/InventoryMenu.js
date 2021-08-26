@@ -1,22 +1,16 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
-import { AppStateService }                                  from './services/AppStateService';
 import { OfferAssetsFormController }                        from './transactions/OfferAssetsFormController';
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { StampAssetsFormController }                        from './transactions/StampAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
-import { AssetModal, AssetTagsModal, inventoryMenuItems, InventoryDownloadModal } from 'cardmotron';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { inventoryMenuItems, InventoryDownloadModal }       from 'cardmotron';
 import _                                                    from 'lodash';
-import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
-import { Redirect }                                         from 'react-router';
-import { Link }                                             from 'react-router-dom';
-import { Dropdown, Grid, Icon, List, Menu, Loader }         from 'semantic-ui-react';
+import { Dropdown, Icon, Menu }                             from 'semantic-ui-react';
 
 //================================================================//
 // InventoryMenu

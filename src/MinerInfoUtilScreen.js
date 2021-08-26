@@ -2,18 +2,11 @@
 
 import * as Fields                                          from './fields/fields'
 import { NavigationBar }                                    from './NavigationBar';
-import { AppStateService }                                  from './services/AppStateService';
-import { Transaction, TRANSACTION_TYPE }                    from './transactions/Transaction';
-import { TransactionDropdown }                              from './transactions/TransactionDropdown';
-import { TransactionForm }                                  from './transactions/TransactionForm';
-import * as controllers                                     from './transactions/TransactionFormController';
 import _                                                    from 'lodash';
-import { assert, ClipboardMenuItem, excel, FilePickerMenuItem, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable }   from "mobx";
+import { ClipboardMenuItem, hooks, SingleColumnContainerView } from 'fgc';
+import { action, observable }                               from 'mobx';
 import { observer }                                         from 'mobx-react';
-import React, { Fragment, useState, useRef }                from 'react';
-import JSONTree                                             from 'react-json-tree';
-import { Link }                                             from 'react-router-dom';
+import React, { useState }                                  from 'react';
 import * as UI                                              from 'semantic-ui-react';
 
 //================================================================//

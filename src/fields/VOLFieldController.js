@@ -2,7 +2,6 @@
 
 import { InputFieldController }             from './InputFieldController'
 import * as vol                             from '../util/vol';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 
 //================================================================//
 // VOLFieldController

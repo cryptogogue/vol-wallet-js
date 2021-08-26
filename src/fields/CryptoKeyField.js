@@ -1,9 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { ScannerReportMessages, SchemaScannerXLSX } from 'cardmotron';
-import { assert, crypto, excel, hooks, FilePickerMenuItem, util } from 'fgc';
-import JSONTree                             from 'react-json-tree';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
+import { FilePickerMenuItem }               from 'fgc';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';

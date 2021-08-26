@@ -3,21 +3,15 @@
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
 import { ControlCommandModal }                              from './control-commands/ControlCommandModal';
 import { ImportMinerControlKeyModal }                       from './ImportMinerControlKeyModal';
-import { NetworkStateService }                              from './services/NetworkStateService';
 import { AppStateService }                                  from './services/AppStateService';
 import { MINER_TRANSACTIONS_MENU }                          from './transactions/TransactionDropdown';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import { WarnAndDeleteModal }                               from './WarnAndDeleteModal';
-import { ScannerReportModal, SchemaScannerXLSX }            from 'cardmotron';
 import _                                                    from 'lodash';
-import { assert, ClipboardMenuItem, excel, FilePickerMenuItem, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { css }                                              from 'glamor';
-import { action, computed, extendObservable, observable }   from "mobx";
+import { SingleColumnContainerView, util }                  from 'fgc';
 import { observer }                                         from 'mobx-react';
-import React, { Fragment, useState, useRef }                from 'react';
-import JSONTree                                             from 'react-json-tree';
+import React, { useState }                                  from 'react';
 import { Redirect }                                         from 'react-router';
-import { Link }                                             from 'react-router-dom';
 import * as UI                                              from 'semantic-ui-react';
 
 const appState = AppStateService.get ();

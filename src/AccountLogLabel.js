@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountLogModal }          from './AccountLogModal';
-import { PasswordInputField }       from './PasswordInputField';
 import React, { useState }          from 'react';
 import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';

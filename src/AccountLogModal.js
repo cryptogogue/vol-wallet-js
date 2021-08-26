@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountLogView }           from './AccountLogView';
-import React, { useState }          from 'react';
+import React                        from 'react';
 import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';
 

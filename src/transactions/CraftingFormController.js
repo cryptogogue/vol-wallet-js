@@ -1,12 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { Transaction, TRANSACTION_TYPE }    from './Transaction';
+import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { Binding, MethodBinding, INVENTORY_FILTER_STATUS, InventoryWithFilter } from 'cardmotron';
-import { assert, randomBytes, util }        from 'fgc';
 import _                                    from 'lodash';
-import { action, computed, extendObservable, observable, observe, reaction, runInAction } from 'mobx';
-import { observer }                         from 'mobx-react';
+import { action, computed, extendObservable, observable, reaction } from 'mobx';
 
 //================================================================//
 // CraftingFormController

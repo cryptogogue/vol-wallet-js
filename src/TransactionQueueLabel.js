@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { PasswordInputField }       from './PasswordInputField';
 import { TransactionQueueModal }    from './TransactionQueueModal';
 import React, { useState }          from 'react';
 import { observer }                 from 'mobx-react';

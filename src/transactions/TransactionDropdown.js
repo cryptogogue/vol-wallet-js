@@ -13,10 +13,8 @@ import { RenameAccountFormController }                      from './RenameAccoun
 import { ReserveAccountNameFormController }                 from './ReserveAccountNameFormController';
 import { SendVOLFormController }                            from './SendVOLFormController';
 import { UpdateMinerInfoFormController }                    from './UpdateMinerInfoFormController';
-import { assert, hooks, util }                              from 'fgc';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                                         from 'mobx-react';
-import React, { useState }                                  from 'react';
+import React                                                from 'react';
 import * as UI                                              from 'semantic-ui-react';
 
 //----------------------------------------------------------------//

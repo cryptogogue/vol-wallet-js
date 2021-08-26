@@ -1,13 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { ConfirmPasswordInputField }        from './ConfirmPasswordInputField';
-import { AppStateService }                  from './services/AppStateService';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
-import { Redirect }                         from 'react-router';
-import { Button, Divider, Dropdown, Form, Header, Icon, Modal, Segment }  from 'semantic-ui-react';
+import { Button, Form, Header, Segment }    from 'semantic-ui-react';
 
 import * as bcrypt              from 'bcryptjs';
     

@@ -3,14 +3,11 @@
 import './PollingList.css';
 
 import { PollingService, POLLING_STATUS }   from './PollingService';
-import { AppStateService }                  from './services/AppStateService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import { hooks }                            from 'fgc';
 import _                                    from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
-import React, { useState, useRef }          from 'react';
-import { Link }                             from 'react-router-dom';
+import React                                from 'react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//

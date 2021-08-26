@@ -2,10 +2,10 @@
 
 import { NavigationBar }                    from './NavigationBar';
 import { observer }                         from 'mobx-react';
-import React, { useState }                  from 'react';
+import React                                from 'react';
 import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
-import { Dropdown, Icon, Label, Menu }      from 'semantic-ui-react';
+import { Dropdown, Menu }                   from 'semantic-ui-react';
 
 export const NETWORK_TABS = {
     NETWORK:            'NETWORK',

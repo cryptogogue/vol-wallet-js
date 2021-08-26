@@ -2,11 +2,8 @@
 
 import { ConfirmPasswordInputField }        from './ConfirmPasswordInputField';
 import { PasswordInputField }               from './PasswordInputField';
-import { assert, crypto, excel, FilePickerMenuItem, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
-import { Redirect }                         from 'react-router';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//

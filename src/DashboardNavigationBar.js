@@ -5,9 +5,8 @@ import { NavigationBar }                    from './NavigationBar';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
-import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
-import { Dropdown, Icon, Label, Menu }      from 'semantic-ui-react';
+import { Dropdown, Menu }                   from 'semantic-ui-react';
 
 const STORAGE_DELETE_WARNING_0 = `
     Deleting local storage will delete all private

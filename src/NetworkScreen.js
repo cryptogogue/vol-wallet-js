@@ -6,13 +6,10 @@ import { NetworkNavigationBar, NETWORK_TABS } from './NetworkNavigationBar';
 import { PendingAccountList }               from './PendingAccountList';
 import { RequestAccountModal }              from './RequestAccountModal';
 import { AppStateService }                  from './services/AppStateService';
-import { NetworkStateService }              from './services/NetworkStateService';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe } from 'mobx';
+import { SingleColumnContainerView, util }  from 'fgc';
 import { observer }                         from 'mobx-react';
 import React, { useState, useRef }          from 'react';
 import { Redirect }                         from 'react-router';
-import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
 const appState = AppStateService.get ();

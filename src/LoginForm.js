@@ -1,10 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PasswordInputField }               from './PasswordInputField';
-import { AppStateService }                  from './services/AppStateService';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
-import { assert, hooks }                    from 'fgc';
-import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';

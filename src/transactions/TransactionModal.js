@@ -1,12 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PasswordInputField }                   from '../PasswordInputField';
-import { Transaction, TRANSACTION_TYPE }        from './Transaction';
 import { TransactionForm }                      from './TransactionForm';
-import * as controllers                         from './TransactionFormController';
 import { TransactionDropdown }                  from './TransactionDropdown';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                             from 'mobx-react';
 import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';

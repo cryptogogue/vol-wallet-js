@@ -22,10 +22,8 @@ import { StampAssetsForm }                      from './StampAssetsForm';
 import { TRANSACTION_TYPE }                     from './Transaction';
 import { UpgradeAssetsForm }                    from './UpgradeAssetsForm';
 import { UpdateMinerInfoForm }                  from './UpdateMinerInfoForm';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
 import { observer }                             from 'mobx-react';
-import React, { useState }                      from 'react';
+import React                                    from 'react';
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//

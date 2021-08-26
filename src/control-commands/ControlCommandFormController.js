@@ -1,10 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { COMMAND_TYPE }                      from './ControlCommand';
-import { assert, crypto, randomBytes, RevocableContext, StorageContext, util } from 'fgc';
+import { crypto }                           from 'fgc';
 import _                                    from 'lodash';
-import { action, computed, extendObservable, observable, observe, runInAction } from 'mobx';
-import { observer }                         from 'mobx-react';
+import { action, computed, extendObservable } from 'mobx';
 
 // TODO: factor common functionality out into the fields module 
 

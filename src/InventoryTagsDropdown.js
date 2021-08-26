@@ -1,12 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import _                                                    from 'lodash';
-import { action, computed, extendObservable, observable }   from "mobx";
 import { observer }                                         from 'mobx-react';
-import React, { Fragment, useState }                        from 'react';
-import { Link }                                             from 'react-router-dom';
-import { Button, Checkbox, Dropdown, Grid, Icon, Input, List, Menu, Modal, Loader } from 'semantic-ui-react';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import React, { useState }                                  from 'react';
+import { Button, Checkbox, Icon, Input, Menu, Modal }       from 'semantic-ui-react';
 
 //================================================================//
 // InventoryTagsDropdownItems

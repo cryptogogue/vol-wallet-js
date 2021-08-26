@@ -1,9 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import _                                                    from 'lodash';
-import { action, computed, extendObservable, observable, runInAction, toJS } from "mobx";
-import { observer }                                         from 'mobx-react';
-import { assert, storage }                                  from 'fgc';
+import { action, computed, observable, runInAction }        from 'mobx';
+import { storage }                                          from 'fgc';
 
 //================================================================//
 // InventoryTagsController

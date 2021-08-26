@@ -3,11 +3,9 @@
 import { PollingList }                      from './PollingList';
 import * as vol                             from './util/vol';
 import * as bitcoin                         from 'bitcoinjs-lib';
-import { assert, excel, hooks, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                    from 'lodash';
-import { action, computed, extendObservable, observable, observe } from 'mobx';
 import { observer }                         from 'mobx-react';
-import React, { useState, useRef }          from 'react';
+import React                                from 'react';
 import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
