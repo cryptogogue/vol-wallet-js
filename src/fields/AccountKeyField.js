@@ -30,7 +30,7 @@ export const AccountKeyField = observer (( props ) => {
     }
 
     const onChange = ( event, data ) => {
-        field.inputString = data.value;
+        field.setInputString ( data.value );
     };
 
     return (

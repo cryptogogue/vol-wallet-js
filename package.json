@@ -1,6 +1,6 @@
 {
     "name": "vol-wallet-js-app",
-    "version": "0.1.64",
+    "version": "0.1.65",
     "dependencies": {
         "bcryptjs": "^2.4.3",
         "bip39": "^2.6.0",

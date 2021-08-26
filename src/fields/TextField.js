@@ -15,7 +15,7 @@ export const TextField = observer (( props ) => {
     const hasError          = ( errorMsg.length > 0 );
 
     const onChange = ( event ) => {
-        field.inputValue = event.target.value;
+        field.setInputString ( event.target.value );
     };
 
     return (
