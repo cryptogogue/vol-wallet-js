@@ -6,6 +6,9 @@ import { Binding, MethodBinding, INVENTORY_FILTER_STATUS, InventoryWithFilter } 
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, reaction } from 'mobx';
 
+//const debugLog = function () {}
+const debugLog = function ( ...args ) { console.log ( '@CRAFTING:', ...args ); }
+
 //================================================================//
 // CraftingFormController
 //================================================================//
@@ -80,12 +83,15 @@ export class CraftingFormController extends TransactionFormController {
         this.inventory = new InventoryWithFilter ( inventory, inventoryFilter );
         this.initialize ( accountService, TRANSACTION_TYPE.RUN_SCRIPT );
 
+        this.refreshBinding ();
+
         extendObservable ( this, {
             singleInvocation: singleInvocation || false,
         });
 
         this.cancelBindingReaction = reaction (
             () => {
+                debugLog ( 'OBSERVING' );
                 return {
                     assets: this.inventory.assets,
                     assetsUtilized: _.cloneDeep ( this.assetsUtilized ), // _cloneDeep necessary because of use in callback
@@ -175,6 +181,8 @@ export class CraftingFormController extends TransactionFormController {
     //----------------------------------------------------------------//
     @action
     refreshBinding () {
+
+        debugLog ( 'REFRESH BINDING' );
 
         this.binding.rebuild (
             this.inventory.schema,
