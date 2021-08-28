@@ -76,6 +76,10 @@ export class InventoryService {
 
             if ( svg ) {
                 inbox.push ( asset.assetID );
+
+                if ( _.has ( this.assetSVGCache, asset.assetID )) {
+                    this.assetSVGCache [ asset.assetID ] = svg;
+                }
             }
         }
 
