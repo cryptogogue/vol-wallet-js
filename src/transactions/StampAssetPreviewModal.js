@@ -17,8 +17,8 @@ const StampAssetPreviewModalBody = observer (( props ) => {
     return (
         <UI.Modal
             closeIcon
-            onClose = { onClose }
-            open = { open }
+            onClose     = { onClose }
+            open        = { open }
         >
             <UI.Modal.Header>{ `Preview` }</UI.Modal.Header>
             

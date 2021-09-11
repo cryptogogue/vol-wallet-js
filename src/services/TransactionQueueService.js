@@ -271,7 +271,7 @@ export class TransactionQueueService {
             case TRANSACTION_TYPE.SEND_ASSETS: {
 
                 const accountName = body.accountName;
-                const assetList = formatAssetList ( details.assets );
+                const assetList = details ? formatAssetList ( details.assets ) : '[deleted assets]';
 
                 if ( isMaker ) return `You sent ${ assetList } to ${ accountName }.`;
                 return `${ accountName } sent you ${ assetList }.`;

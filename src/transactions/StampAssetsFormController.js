@@ -2,7 +2,7 @@
 
 import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
-import { Inventory, INVENTORY_FILTER_STATUS, InventoryWithFilter } from 'cardmotron';
+import { Inventory, INVENTORY_FILTER_STATUS, InventoryWithFilter, makeSquap } from 'cardmotron';
 import _                                    from 'lodash';
 import { action, computed, observable }     from 'mobx';
 
@@ -91,9 +91,12 @@ export class StampAssetsFormController extends TransactionFormController {
         for ( let assetID in this.assetSelection ) {
 
             const asset = _.cloneDeep ( this.assetSelection [ assetID ]);
+            delete asset.svg;
+
             for ( let fieldName in this.stamp.fields ) {
                 asset.fields [ fieldName ] = _.cloneDeep ( this.stamp.fields [ fieldName ]);
             }
+            debugLog ( 'PREVIEW ASSET', asset );
             this.previewInventory.setAsset ( asset );
         }
 
@@ -120,14 +123,14 @@ export class StampAssetsFormController extends TransactionFormController {
 
         let qualifier = false;
         if ( stamp.qualifier ) {
-            const template = JSON.parse ( stamp.qualifier );
-            qualifier = squap.makeSquap ( template );
+            qualifier = makeSquap ( stamp.qualifier );
         }
         
         const availableAssets = {};
         
         for ( let assetID in this.inventory.assets ) {
-            const asset = this.inventory [ assetID ];
+            const asset = this.inventory.assets [ assetID ];
+
             if ( !qualifier || qualifier.eval ({[ '' ]: asset })) {
                 availableAssets [ assetID ] = true;
             }
