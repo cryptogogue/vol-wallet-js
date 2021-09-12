@@ -28,6 +28,7 @@ export const TRANSACTION_TYPE = {
     SEND_VOL:                   'SEND_VOL',
     STAMP_ASSETS:               'STAMP_ASSETS',
     SET_MINIMUM_GRATUITY:       'SET_MINIMUM_GRATUITY',
+    SET_TERMS_OF_SERVICE:       'SET_TERMS_OF_SERVICE',
     UPGRADE_ASSETS:             'UPGRADE_ASSETS',
     UPDATE_MINER_INFO:          'UPDATE_MINER_INFO',
 };
@@ -241,6 +242,7 @@ export class Transaction {
             case TRANSACTION_TYPE.SEND_VOL:                     return 'Send VOL';
             case TRANSACTION_TYPE.STAMP_ASSETS:                 return 'Stamp Assets';
             case TRANSACTION_TYPE.SET_MINIMUM_GRATUITY:         return 'Set Minimum Gratuity';
+            case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return 'Set Terms of Service';
             case TRANSACTION_TYPE.UPGRADE_ASSETS:               return 'Upgrade Assets';
             case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return 'Update Miner Info';
         }

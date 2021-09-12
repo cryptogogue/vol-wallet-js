@@ -62,6 +62,12 @@ export class OpenAccountFormController extends TransactionFormController {
             key:        request && request.key || false,
             grant:      this.fields.grant.value,
         };
+
+
+        if ( request.signature ) {
+            body.signature = request.signature;
+        }
+
         return body;
     }
 

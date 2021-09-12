@@ -378,7 +378,7 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
-    setAccountRequest ( password, phraseOrKey, keyID, privateKeyHex, publicKeyHex ) {
+    setAccountRequest ( password, phraseOrKey, keyID, privateKeyHex, publicKeyHex, signature ) {
 
         this.appState.assertPassword ( password );
 
@@ -395,7 +395,7 @@ export class NetworkStateService {
             requestID = `vol_${ randomBytes ( 6 ).toString ( 'hex' )}`;
         } while ( _.has ( this.pendingAccounts, requestID ));
 
-        const encoded = vol.encodeAccountRequest ( this.genesis, publicKeyHex );
+        const encoded = vol.encodeAccountRequest ( this.genesis, publicKeyHex, signature );
 
         const pendingAccount = {
             requestID:              requestID,

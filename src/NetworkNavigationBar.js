@@ -11,6 +11,7 @@ export const NETWORK_TABS = {
     NETWORK:            'NETWORK',
     CHAIN:              'CHAIN',
     CONSENSUS:          'CONSENSUS',
+    TERMS_OF_SERVICE:   'TERMS_OF_SERVICE',
 };
 
 //----------------------------------------------------------------//
@@ -20,6 +21,7 @@ function getAccountTabTitle ( tab ) {
         case NETWORK_TABS.NETWORK:              return 'Accounts';
         case NETWORK_TABS.CHAIN:                return 'Chain';
         case NETWORK_TABS.CONSENSUS:            return 'Consensus';
+        case NETWORK_TABS.TERMS_OF_SERVICE:     return 'Terms of Service';
     }
     return '';
 };
@@ -31,6 +33,7 @@ function getNetworkTabURL ( tab ) {
         case NETWORK_TABS.NETWORK:              return '';
         case NETWORK_TABS.CHAIN:                return '/chain';
         case NETWORK_TABS.CONSENSUS:            return '/consensus';
+        case NETWORK_TABS.TERMS_OF_SERVICE:     return '/terms';
     }
     return '/';
 };
@@ -45,6 +48,7 @@ export const NetworkNavigationBar = observer (( props ) => {
     const chainURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
     const networkURL        = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
     const consensusURL      = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CONSENSUS )}`;
+    const termsURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.TERMS_OF_SERVICE )}`;
 
     const networkTab            = getNetworkTabURL ( tab );
 
@@ -68,6 +72,7 @@ export const NetworkNavigationBar = observer (( props ) => {
 
                         <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.NETWORK )} as = { Link } to = { networkURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CONSENSUS )} as = { Link } to = { consensusURL }/>
+                        <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )} as = { Link } to = { termsURL }/>
 
                         <If condition = { false }>
                             <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CHAIN )} as = { Link } to = { chainURL }/>
