@@ -1,12 +1,12 @@
 // Copyright (c) 2019 Cryptogogue, Inc. All Rights Reserved.
 
-import * as AppDB                   from './AppDB';
-import { Schema }                   from 'cardmotron';
+import * as AppDB                       from './AppDB';
+import { Schema, verifyImagesAsync }    from 'cardmotron';
 import { ProgressController, RevocableContext } from 'fgc';
 import { action, computed, observable, runInAction } from 'mobx';
-import _                            from 'lodash';
+import _                                from 'lodash';
 
-import InventoryWorker              from './InventoryWorker.worker';
+import InventoryWorker                  from './InventoryWorker.worker';
 
 const MAX_ASSET_SVG_CACHE_SIZE = 32;
 
@@ -176,10 +176,13 @@ export class InventoryService {
 
         if ( _.has ( this.assetSVGCache, assetID )) return this.assetSVGCache [ assetID ];
 
-        const row = await AppDB.getAsync ( 'assetSVGs', { networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
-        const svg = row && row.svg || false;
+        const row   = await AppDB.getAsync ( 'assetSVGs', { networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
+        let svg     = row && row.svg || false;
 
         if ( svg ) {
+
+            svg = await verifyImagesAsync ( svg );
+
             if (( this.assetSVGCacheQueue.length + 1 ) > MAX_ASSET_SVG_CACHE_SIZE ) {
                 const removeID = this.assetSVGCacheQueue.shift ();
                 delete this.assetSVGCacheQueue [ removeID ];
@@ -187,7 +190,7 @@ export class InventoryService {
             this.assetSVGCache [ assetID ] = svg;
             this.assetSVGCacheQueue.push ( assetID );
         }
-        return svg
+        return svg;
     }
 
     //----------------------------------------------------------------//

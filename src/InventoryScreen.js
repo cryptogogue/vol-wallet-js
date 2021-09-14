@@ -149,6 +149,7 @@ export const InventoryScreen = observer (( props ) => {
                                 assetID             = { zoomedAssetID }
                                 formatAssetID       = { assetIDtoAnchor }
                                 onClose             = {() => { setZoomedAssetID ( false )}}
+                                renderAsync         = { renderAsync }
                             />
                         </Otherwise>
                     </Choose>

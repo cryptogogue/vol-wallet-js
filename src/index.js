@@ -64,6 +64,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
                 <Route exact path = "/util/diagnostic"          component = { DiagnosticAndRecoveryScreen }/>
+                <Route exact path = "/util/hash"                component = { cardmotron.HashUtilScreen }/>
                 <Route exact path = "/util/key"                 component = { KeyUtilScreen }/>
                 <Route exact path = "/util/miner"               component = { MinerInfoUtilScreen }/>
                 <Route exact path = "/util/reset"               component = { WalletResetScreen }/>
