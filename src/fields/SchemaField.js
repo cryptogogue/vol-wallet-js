@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { ScannerReportMessages, SchemaScannerXLSX } from 'cardmotron';
+import { ScannerReportMessages, scanXLSXSchemaAsync } from 'cardmotron';
 import { excel, FilePickerMenuItem }        from 'fgc';
 import JSONTree                             from 'react-json-tree';
 import { observer }                         from 'mobx-react';
@@ -80,7 +80,7 @@ export const SchemaField = observer (( props ) => {
 
             let scanner = false;
             try {
-                scanner = new SchemaScannerXLSX ( book );
+                scanner = await scanXLSXSchemaAsync ( book );
             }
             catch ( error ) {
                 console.log ( error );

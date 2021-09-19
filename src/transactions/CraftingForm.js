@@ -242,11 +242,13 @@ const InvocationField = observer (( props ) => {
                 </If>
             </UI.Menu>
 
-            <UI.Table attached = 'bottom' celled unstackable>
+            <UI.Segment attached = 'bottom'>
+            <UI.Table celled unstackable>
                 <UI.Table.Body>
                     { paramList }
                 </UI.Table.Body>
             </UI.Table>
+            </UI.Segment>
 
         </React.Fragment>
     );

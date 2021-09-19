@@ -2,7 +2,7 @@
 
 import { NavigationBar }                                    from './NavigationBar';
 import { AppStateService }                                  from './services/AppStateService';
-import { ScannerReportModal, SchemaScannerXLSX }            from 'cardmotron';
+import { ScannerReportModal, scanXLSXSchemaAsync }          from 'cardmotron';
 import _                                                    from 'lodash';
 import { ClipboardMenuItem, excel, FilePickerMenuItem, SingleColumnContainerView } from 'fgc';
 import { observer }                                         from 'mobx-react';
@@ -19,19 +19,27 @@ export const SchemaUtilScreen = observer (( props ) => {
 
     const [ scanner, setScanner ]   = useState ( false );
     const [ schema, setSchema ]     = useState ( false );
+    const [ loading, setLoading ]   = useState ( false );
 
-    const loadFile = ( binary ) => {
+    const loadFile = async ( binary ) => {
 
         setSchema ( false );
+        setLoading ( true );
 
         const book = new excel.Workbook ( binary, { type: 'binary' });
         if ( book ) {
-            const scanner = new SchemaScannerXLSX ( book );
+            const scanner = await scanXLSXSchemaAsync ( book );
             setSchema ( scanner.schema );
             if ( scanner.hasMessages ()) {
                 setScanner ( scanner );
             }
         }
+        setLoading ( false );
+    }
+
+    const onReportClose = () => {
+        setScanner ( false );
+        setSchema ( false );
     }
 
     return (
@@ -41,24 +49,25 @@ export const SchemaUtilScreen = observer (( props ) => {
 
             <UI.Menu borderless attached = 'bottom'>
                 <FilePickerMenuItem
-                    loadFile = { loadFile }
-                    format = 'binary'
-                    accept = { '.xls, .xlsx' }
+                    loadFile    = { loadFile }
+                    loading     = { loading }
+                    format      = 'binary'
+                    accept      = { '.xls, .xlsx' }
                 />
                 <UI.Menu.Menu position = "right">
                     <ClipboardMenuItem
-                        value = { schema ? JSON.stringify ( schema, null, 4 ) : false }
+                        value   = { schema ? JSON.stringify ( schema, null, 4 ) : false }
                     />
                 </UI.Menu.Menu>
             </UI.Menu>
 
-            <If condition = { schema }>
+            <If condition       = { schema }>
                 <JSONTree hideRoot data = { schema } theme = 'bright'/>
             </If>
 
             <ScannerReportModal
-                scanner = { scanner }
-                setScanner = { setSchema }
+                scanner         = { scanner }
+                onClose         = { onReportClose }
             />
 
         </SingleColumnContainerView>
