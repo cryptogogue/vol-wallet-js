@@ -16,7 +16,7 @@ export class VOLFieldController extends InputFieldController {
     //----------------------------------------------------------------//
     virtual_fromString ( value ) {
         value = parseFloat ( value );
-        return isNaN ( value ) ? undefined : value * 1000;
+        return isNaN ( value ) ? undefined : Math.floor ( value * 1000 );
     }
 
     //----------------------------------------------------------------//

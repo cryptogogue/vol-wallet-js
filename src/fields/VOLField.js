@@ -24,6 +24,12 @@ export const VOLField = observer (( props ) => {
         setInputString ( field.inputString );
     };
 
+    const onKeyPress = ( event ) => {
+        if ( event.key === 'Enter' ) {
+            event.target.blur ();
+        }
+    }
+
     return (
          <UI.Form.Input
             fluid
@@ -33,6 +39,7 @@ export const VOLField = observer (( props ) => {
             name            = { field.fieldName }
             value           = { inputString }
             onChange        = { onChange }
+            onKeyPress      = { onKeyPress }
             onBlur          = { onBlur }
             error           = { hasError ? errorMsg : false }
         />
