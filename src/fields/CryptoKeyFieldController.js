@@ -1,7 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { FieldController } from './FieldController'
-import { action, observable, runInAction } from 'mobx';
+import { FieldController }                  from './FieldController'
+import { crypto }                           from 'fgc';
+import { action, observable, runInAction }  from 'mobx';
 
 //================================================================//
 // CryptoKeyFieldController
@@ -36,6 +37,10 @@ export class CryptoKeyFieldController extends FieldController {
             }
         }
         this.update ();
+    }
+
+    //----------------------------------------------------------------//
+    finalize () {
     }
 
     //----------------------------------------------------------------//

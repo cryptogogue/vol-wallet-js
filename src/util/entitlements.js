@@ -10,7 +10,7 @@ export function check ( entitlements, path, value ) {
     path = path.split ( '.' );
     for ( let i in path ) {
         const name = path [ i ];
-        if ( !( entitlements.children && _.has ( entitlements.children, name ))) return true;
+        if ( !( entitlements.children && _.has ( entitlements.children, name ))) return false;
         entitlements = entitlements.children [ name ];
     }
 

@@ -79,31 +79,21 @@ export const TransactionDropdown = observer (( props ) => {
     }
 
     let options = [];
-    const disabledOptions = [];
 
     for ( let transactionType of menu ) {
 
         if ( controller && ( controller.type === transactionType )) continue;
-
-        const disabled = !accountService.checkTransactionEntitlements ( transactionType );
+        if ( !accountService.checkTransactionEntitlements ( transactionType )) continue;
 
         const item = (
             <UI.Dropdown.Item
                 key         = { transactionType }
                 text        = { Transaction.friendlyNameForType ( transactionType )}
                 onClick     = {() => { onSelection ( transactionType )}}
-                disabled    = { disabled }
             />
         );
-
-        if ( disabled ) {
-            disabledOptions.push ( item );
-        }
-        else {
-            options.push ( item );
-        }
+        options.push ( item );
     }
-    options = options.concat ( disabledOptions );
 
     return (
         <UI.Menu>
