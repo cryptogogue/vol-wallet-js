@@ -1,6 +1,6 @@
 {
     "name": "vol-wallet-js-app",
-    "version": "0.1.69",
+    "version": "0.1.70",
     "dependencies": {
         "@mattkrick/sanitize-svg": "^0.3.1",
         "bcryptjs": "^2.4.3",
