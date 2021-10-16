@@ -187,6 +187,10 @@ export class TransactionQueueService {
 
         debugLog ( 'findNonceAsync' );
 
+        if ( this.pendingTransactions.length > 0 ) {
+            return this.pendingTransactions [ this.pendingTransactions.length - 1 ].nonce + 1;
+        }
+
         const consensusService = this.networkService.consensusService;
         if ( !consensusService.isOnline ) return false;
 
