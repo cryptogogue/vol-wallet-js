@@ -124,7 +124,7 @@ export const MinerControlScreen = observer (( props ) => {
 
                     </UI.Menu>
 
-                    <UI.Segment style = {{ wordWrap: 'break-word' }} attached = 'bottom' >
+                    <UI.Segment style = {{ wordBreak: 'break-all', wordWrap: 'break-word', overflowWrap: 'break-word' }} attached = 'bottom' >
                         { controlKey.publicKeyHex }
                     </UI.Segment>
 

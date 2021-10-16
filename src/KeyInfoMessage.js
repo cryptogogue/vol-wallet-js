@@ -43,7 +43,7 @@ const KeyInfoModalBody = observer (( props ) => {
                 <UI.Modal.Content>
 
                     <UI.Header sub>Hexadecimal</UI.Header>
-                    <UI.Segment style = {{ wordWrap: 'break-word' }}>{ key.publicKeyHex }</UI.Segment>
+                    <UI.Segment style = {{ wordBreak: 'break-all', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{ key.publicKeyHex }</UI.Segment>
 
                     <UI.Form>
                         <PasswordInputField
@@ -79,9 +79,9 @@ const KeyInfoModalBody = observer (( props ) => {
                 <UI.Modal.Header>Private Key</UI.Modal.Header>
                 <UI.Modal.Content>
                     <UI.Header sub>Hexadecimal</UI.Header>
-                    <UI.Segment style = {{ wordWrap: 'break-word' }}>{ privateKeyInfo.privateKeyHex }</UI.Segment>
+                    <UI.Segment style = {{ wordBreak: 'break-all', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{ privateKeyInfo.privateKeyHex }</UI.Segment>
                     <UI.Header sub>Phrase or Key</UI.Header>
-                    <UI.Segment style = {{ wordWrap: 'break-word' }}>{ privateKeyInfo.phraseOrKey }</UI.Segment>
+                    <UI.Segment style = {{ wordBreak: 'break-all', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{ privateKeyInfo.phraseOrKey }</UI.Segment>
                 </UI.Modal.Content>
             </UI.Modal>
 

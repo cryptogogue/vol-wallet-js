@@ -83,7 +83,9 @@ export const UpdateMinerInfoForm = observer (({ controller }) => {
                             <UI.Segment
                                 raised
                                 style = {{
+                                    wordBreak: 'break-all',
                                     wordWrap: 'break-word',
+                                    overflowWrap: 'break-word',
                                     fontFamily: 'monospace',
                                 }}
                             >
