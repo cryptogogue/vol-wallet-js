@@ -4,6 +4,8 @@ import { MINER_INFO_STATE }               		from './UpdateMinerInfoFormControlle
 import { observer }                             from 'mobx-react';
 import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
+import url                                      from 'url';
+import validator                                from 'validator';
 
 const COMPLIMENTS = [
     'You have a lovely visage!',                        // 0
@@ -36,15 +38,38 @@ function chooseCompliment ( visage ) {
 //================================================================//
 export const UpdateMinerInfoForm = observer (({ controller }) => {
 
-	const [ motto, setMotto ]          = useState ( '' );
+	const [ motto, setMotto ]       = useState ( '' );
+    const [ nodeURL, setNodeURL ]   = useState ( '' );
+    const [ testURL, setTestURL ]   = useState ( '' );
+
+    let onChangeMotto = ( inputMotto ) => {
+
+        controller.clearMotto ();
+        setMotto ( inputMotto );
+    }
 
     let onCheckMotto = () => {
         controller.setMottoAsync ( motto );
     }
 
-    const isBusy 			= controller.state === MINER_INFO_STATE.BUSY;
-    const nodeURLError 		= controller.state === MINER_INFO_STATE.ERROR && 'Error fetching node info.';
-    const testEnabled 		= Boolean ( motto );
+    let onChangeNodeURL = ( inputURL ) => {
+
+        controller.clearMinerURL ();
+        setNodeURL ( inputURL );
+
+        if ( validator.isURL ( inputURL, { protocols: [ 'http', 'https' ], require_protocol: true, require_tld: false })) {
+            inputURL = url.format ( url.parse ( inputURL ));
+            setTestURL ( inputURL );
+        }
+    }
+
+    let onCheckNodeURL = async () => {
+        controller.setMinerURLAsync ( testURL );
+    }
+
+    const isBusy 			= controller.isBusy;
+    const testMottoEnabled  =  Boolean ( motto ) && !Boolean ( controller.motto );
+    const testURLEnabled    =  Boolean ( testURL ) && !Boolean ( controller.minerURL );
 
     const visage            = controller.visage ? controller.visage.signature : false;
 
@@ -58,8 +83,8 @@ export const UpdateMinerInfoForm = observer (({ controller }) => {
                         <If condition = { !isBusy }>
                             <UI.Button
                                 icon = 'sync alternate'
-                                color = { testEnabled ? 'green' : 'grey' }
-                                disabled = { !testEnabled }
+                                color = { testMottoEnabled ? 'green' : 'grey' }
+                                disabled = { !testMottoEnabled }
                                 onClick = { onCheckMotto }
                             />
                         </If>
@@ -68,42 +93,49 @@ export const UpdateMinerInfoForm = observer (({ controller }) => {
                     name            = "motto"
                     type            = "string"
                     value           = { motto }
-                    onChange        = {( event ) => { setMotto ( event.target.value )}}
+                    onChange        = {( event ) => { onChangeMotto ( event.target.value )}}
                 />
-                { nodeURLError && <UI.Label pointing prompt>{ nodeURLError }</UI.Label> }
+                { controller.mottoError && <UI.Label pointing prompt>{ controller.mottoError }</UI.Label> }
             </UI.Form.Field>
 
-            <If condition = { controller.isComplete }>
+            <UI.Form.Field>
+                <UI.Input
+                    fluid
+                    loading = { isBusy }
+                    action = {
+                        <If condition = { !isBusy }>
+                            <UI.Button
+                                icon = 'sync alternate'
+                                color = { testURLEnabled ? 'green' : 'grey' }
+                                disabled = { !testURLEnabled }
+                                onClick = { onCheckNodeURL }
+                            />
+                        </If>
+                    }
+                    placeholder     = "Node URL"
+                    name            = "nodeURL"
+                    type            = "url"
+                    value           = { nodeURL }
+                    onChange        = {( event ) => { onChangeNodeURL ( event.target.value )}}
+                />
+                { controller.minerURLError && <UI.Label pointing prompt>{ controller.minerURLError }</UI.Label> }
+            </UI.Form.Field>
 
-	            <Choose>
-
-	                <When condition = { visage }>
-                        <UI.Segment>
-                            <UI.Header as='h4'>{ chooseCompliment ( visage )}</UI.Header>
-                            <UI.Segment
-                                raised
-                                style = {{
-                                    wordBreak: 'break-all',
-                                    wordWrap: 'break-word',
-                                    overflowWrap: 'break-word',
-                                    fontFamily: 'monospace',
-                                }}
-                            >
-                                { visage }
-                            </UI.Segment>
-                        </UI.Segment>
-	                </When>
-
-	                <Otherwise>
-	                    <UI.Message
-	                        negative
-	                        icon = 'question circle'
-	                        header = 'Not found.'
-	                        content = 'Not a mining node.'
-	                    />
-	                </Otherwise>
-
-	            </Choose>
+            <If condition = { controller.isComplete && visage }>
+                <UI.Segment>
+                    <UI.Header as='h4'>{ chooseCompliment ( visage )}</UI.Header>
+                    <UI.Segment
+                        raised
+                        style = {{
+                            wordBreak: 'break-all',
+                            wordWrap: 'break-word',
+                            overflowWrap: 'break-word',
+                            fontFamily: 'monospace',
+                        }}
+                    >
+                        { visage }
+                    </UI.Segment>
+                </UI.Segment>
 	        </If>
 
         </React.Fragment>
