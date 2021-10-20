@@ -32,7 +32,7 @@ export class TermsOfServiceController {
         try {
 
             const accountID = this.accountID;            
-            let data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/tos` ));
+            let data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/tos`, false, true ));
 
             if ( data.contract ) {
                 runInAction (() => {
