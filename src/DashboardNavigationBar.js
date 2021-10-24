@@ -51,9 +51,12 @@ export const DashboardNavigationBar = observer (( props ) => {
                         icon = "settings"
                     >
                         <Dropdown.Menu>
-                            <Dropdown.Item icon = "wrench"          text = 'Hash Util'              as = { Link } to = { `/util/hash` }/>
+                            <Dropdown.Item icon = "wrench"          text = 'JSON Key Util'          as = { Link } to = { `/util/key` }/>
+                            <Dropdown.Item icon = "wrench"          text = 'Miner Info Util'        as = { Link } to = { `/util/miner` }/>
                             <Dropdown.Item icon = "wrench"          text = 'Schema Util'            as = { Link } to = { `/util/schema` }/>
-                            <Dropdown.Item icon = "wrench"          text = 'Transaction Util'       as = { Link } to = { `/util/transaction` }/>
+                            <If condition = { false }>
+                                <Dropdown.Item icon = "wrench"          text = 'Transaction Util'       as = { Link } to = { `/util/transaction` }/>
+                            </If>
                             <Dropdown.Item icon = "lock"            text = 'Change Password'        onClick = {() => { setChangePasswordModalOpen ( true )}}/>
                             { deleteStorageModal }
                             <Dropdown.Divider />

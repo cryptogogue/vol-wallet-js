@@ -9,6 +9,8 @@ import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
 import * as UI                                              from 'semantic-ui-react';
 
+const appState = AppStateService.get ();
+
 //================================================================//
 // KeyUtilScreen
 //================================================================//
@@ -32,6 +34,8 @@ export const KeyUtilScreen = observer (( props ) => {
 
     return (
         <SingleColumnContainerView>
+
+            <NavigationBar appState = { appState }/>
 
             <UI.Segment attached = 'bottom'>
                 <UI.Form>

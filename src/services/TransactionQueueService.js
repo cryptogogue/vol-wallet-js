@@ -274,20 +274,18 @@ export class TransactionQueueService {
 
             case TRANSACTION_TYPE.SEND_ASSETS: {
 
-                const accountName = body.accountName;
                 const assetList = details ? formatAssetList ( details.assets ) : '[deleted assets]';
 
-                if ( isMaker ) return `You sent ${ assetList } to ${ accountName }.`;
-                return `${ accountName } sent you ${ assetList }.`;
+                if ( isMaker ) return `You sent ${ assetList } to ${ body.accountName }.`;
+                return `${ body.maker.accountName } sent you ${ assetList }.`;
             }
 
             case TRANSACTION_TYPE.SEND_VOL: {
 
-                const accountName = body.accountName;
                 const amount = vol.format ( body.amount );
 
-                if ( isMaker ) return `You sent ${ accountName } ${ amount } VOL.`;
-                return `${ accountName } sent you ${ amount } VOL.`;
+                if ( isMaker ) return `You sent ${ body.accountName } ${ amount } VOL.`;
+                return `${ body.maker.accountName } sent you ${ amount } VOL.`;
             }
         }
         return '--';

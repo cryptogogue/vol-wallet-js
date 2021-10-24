@@ -2,12 +2,15 @@
 
 import * as Fields                                          from './fields/fields'
 import { NavigationBar }                                    from './NavigationBar';
+import { AppStateService }                                  from './services/AppStateService';
 import _                                                    from 'lodash';
 import { ClipboardMenuItem, hooks, SingleColumnContainerView } from 'fgc';
 import { action, observable }                               from 'mobx';
 import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
 import * as UI                                              from 'semantic-ui-react';
+
+const appState = AppStateService.get ();
 
 //================================================================//
 // MinerInfoFormController
