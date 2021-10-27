@@ -379,7 +379,8 @@ class Transaction_StampAssets extends Transaction {
     //----------------------------------------------------------------//
     virtual_getSendVOL () {
 
-        return this.body.price * this.body.assetIdentifiers.length;
+        return 0;
+        //return this.body.price * this.body.assetIdentifiers.length;
     }
 };
 
