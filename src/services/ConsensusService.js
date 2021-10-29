@@ -102,6 +102,7 @@ export class ConsensusService {
                     debugLog ( 'FOUND A MINER:', nodeURL );
                     if ( result.genesis === this.genesis ) {
                         this.affirmMiner ( result.minerID, nodeURL );
+                        this.setMinerBuildInfo ( result.minerID, result.build, result.commit );
                     }
                 
                     confirmURL.pathname = `/miners`;
@@ -346,6 +347,16 @@ export class ConsensusService {
 
     //----------------------------------------------------------------//
     @action
+    setMinerBuildInfo ( minerID, build, commit ) {
+
+        const miner         = this.minersByID [ minerID ];
+
+        miner.build         = build;
+        miner.commit        = commit;
+    }
+
+    //----------------------------------------------------------------//
+    @action
     setMinerOffline ( minerID ) {
 
         const miner         = this.minersByID [ minerID ];
@@ -537,6 +548,16 @@ export class ConsensusService {
 
             try {
 
+                // TODO: get this from peek info, so we only have to do one call
+                const nodeInfo = await this.revocable.fetchJSON ( url.format ( miner.url ), undefined, this.timeout );
+                if ( !( nodeInfo && nodeInfo.minerID )) {
+                    debugLog ( 'NOT A MINER OR MINER IS OFFLINE:', nodeInfo );
+                    this.setMinerOffline ( miner.minerID );
+                    return;
+                }
+
+                this.setMinerBuildInfo ( miner.minerID, nodeInfo.build, nodeInfo.commit );
+
                 // "peek" at the headers of the current and next block; also get a random sample of up to 16 miners.
                 let peekURL         = url.parse ( miner.url );
                 peekURL.pathname    = `/consensus/peek`;
@@ -546,7 +567,7 @@ export class ConsensusService {
                 debugLog ( 'SYNC: PEEK:', peekURL );
 
                 let latency = ( new Date ()).getTime ();
-                const result = await this.revocable.fetchJSON ( url.format ( peekURL ), undefined, this.timeout );
+                const result = await this.revocable.fetchJSON ( peekURL, undefined, this.timeout );
                 latency = ( new Date ()).getTime () - latency;
 
                 debugLog ( 'SYNC: PEEK RESULT:', result );

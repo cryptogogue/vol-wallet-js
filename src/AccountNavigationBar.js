@@ -68,6 +68,8 @@ export const AccountNavigationBar = observer (( props ) => {
         return (<Redirect to = { `/net/${ accountService.networkService.networkID }/account/${ accountService.accountID }${ accountTab }` }/>);
     }
 
+    // <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )} as = { Link } to = { shopURL }/>
+
     return (
         <React.Fragment>
             <NavigationBar
@@ -84,7 +86,7 @@ export const AccountNavigationBar = observer (( props ) => {
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )} as = { Link } to = { accountsURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )} as = { Link } to = { keysURL }/>
                         <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )} as = { Link } to = { inventoryURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )} as = { Link } to = { shopURL }/>
+                        
 
                         <If condition = { accountService.isMiner }>
                             <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>

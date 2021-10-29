@@ -49,6 +49,8 @@ const App = () => {
         emptyCacheStorage ();
     }
 
+    // <Route exact path = "/net/:networkID/account/:accountID/shop"           component = { ShopScreen }/>
+
     return (
         <div>
             <Switch key = { location.pathname }>
@@ -60,7 +62,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/miner"          component = { MinerControlScreen }/>
-                <Route exact path = "/net/:networkID/account/:accountID/shop"           component = { ShopScreen }/>
+                
                 <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
 
                 <Route exact path = "/util/diagnostic"          component = { DiagnosticAndRecoveryScreen }/>

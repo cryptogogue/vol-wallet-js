@@ -105,6 +105,8 @@ class ShopScreenController {
     @action
     setAssets ( assets ) {
 
+        // debugLog ( 'SETTING ASSETS', assets );
+
         if ( assets && assets.length ) {
             this.inventory = new Inventory ();
             this.inventory.setSchema ( this.inventoryService.schema );
