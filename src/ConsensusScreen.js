@@ -31,6 +31,8 @@ export const ConsensusScreen = observer (( props ) => {
         const latency   = miner.latency / 1000;
         const ignored   = consensusService.isIgnored ( minerID );
 
+        const release   = ( miner.acceptedRelease === miner.nextRelease ) ? `${ miner.nextRelease }` : `${ miner.acceptedRelease }->${ miner.nextRelease }`;
+
         const onToggle = () => {
             consensusService.toggleIgnored ( minerID );
             networkService.saveConsensusState ();
@@ -51,9 +53,11 @@ export const ConsensusScreen = observer (( props ) => {
                         <UI.Table.Cell collapsing>{ miner.height }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.digest }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.commit ? miner.commit.substring ( 0, 7 ) : '' }</UI.Table.Cell>
+                        <UI.Table.Cell collapsing>{ release }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ latency.toFixed ( 2 )}</UI.Table.Cell>
                     </When>
                     <Otherwise>
+                        <UI.Table.Cell collapsing>--</UI.Table.Cell>
                         <UI.Table.Cell collapsing>--</UI.Table.Cell>
                         <UI.Table.Cell collapsing>--</UI.Table.Cell>
                         <UI.Table.Cell collapsing>--</UI.Table.Cell>
@@ -114,6 +118,7 @@ export const ConsensusScreen = observer (( props ) => {
                             <UI.Table.HeaderCell>Current</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Digest</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Commit</UI.Table.HeaderCell>
+                            <UI.Table.HeaderCell>Release</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Latency</UI.Table.HeaderCell>
                         </UI.Table.Row>
                     </UI.Table.Header>

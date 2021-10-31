@@ -208,13 +208,11 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     formatServiceURL ( base, path, query, mostCurrent ) {
-
         return this.consensusService.formatServiceURL ( base, path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
     getAccount ( accountID ) {
-
         return _.has ( this.accounts, accountID ) ? this.accounts [ accountID ] : false;
     }
 
@@ -225,22 +223,11 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     getServiceURL ( path, query, mostCurrent ) {
-
-        debugLog ( 'getServiceURL' );
-
-        const onlineURLs = this.consensusService.onlineURLs;
-
-        if (( onlineURLs.length === 0 ) || onlineURLs.includes ( this.network.nodeURL )) {
-            debugLog ( 'getServiceURL: all miners are offline OR primary node is online', onlineURLs.length );
-            return this.getPrimaryURL ( path, query, mostCurrent );
-        }
-        debugLog ( 'getServiceURL: picking at random' );
         return this.consensusService.getServiceURL ( path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
     getServiceURLs ( path, query, mostCurrent ) {
-
         return this.consensusService.getServiceURLs ( path, query, mostCurrent );
     }
 
@@ -324,9 +311,6 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     async startServiceLoopAsync () {
-
-        // await this.revocable.allFromMap ( this.accounts, account => account.startServiceLoopAsync ());
-
         this.serviceLoopAsync ();
     }
 

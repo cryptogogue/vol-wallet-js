@@ -84,6 +84,18 @@ export class ConsensusService {
     }
 
     //----------------------------------------------------------------//
+    @computed get
+    currentURLs () {
+
+        const currentURLs = [];
+
+        for ( let miner of this.currentMiners ) {
+            currentURLs.push ( miner.url );
+        }
+        return currentURLs;
+    }
+
+    //----------------------------------------------------------------//
     @action
     async discoverMinersAsync () {
 
@@ -102,7 +114,7 @@ export class ConsensusService {
                     debugLog ( 'FOUND A MINER:', nodeURL );
                     if ( result.genesis === this.genesis ) {
                         this.affirmMiner ( result.minerID, nodeURL );
-                        this.setMinerBuildInfo ( result.minerID, result.build, result.commit );
+                        this.setMinerBuildInfo ( result.minerID, result.build, result.commit, result.acceptedRelease, result.nextRelease );
                     }
                 
                     confirmURL.pathname = `/miners`;
@@ -174,9 +186,9 @@ export class ConsensusService {
     //----------------------------------------------------------------//
     getServiceURL ( path, query, mostCurrent ) {
 
-        const onlineURLs = this.onlineURLs;
-        const serviceURL = onlineURLs.length ? onlineURLs [ Math.floor ( Math.random () * onlineURLs.length )] : false;
-        return this.formatServiceURL ( serviceURL, path, query, mostCurrent );
+        const currentURLs = this.currentURLs;
+        const serviceURL = currentURLs.length ? currentURLs [ Math.floor ( Math.random () * currentURLs.length )] : false;
+        return serviceURL ? this.formatServiceURL ( serviceURL, path, query, mostCurrent ) : false;
     }
 
     //----------------------------------------------------------------//
@@ -184,7 +196,7 @@ export class ConsensusService {
 
         const urls = [];
 
-        for ( let minerID of this.onlineMiners ) {
+        for ( let minerID of this.currentMiners ) {
             urls.push ( this.formatServiceURL ( miner.url, path, query, mostCurrent ));
         }
         return urls;
@@ -310,7 +322,6 @@ export class ConsensusService {
         return onlineURLs;
     }
 
-
     //----------------------------------------------------------------//
     @action
     reset () {
@@ -347,24 +358,26 @@ export class ConsensusService {
 
     //----------------------------------------------------------------//
     @action
-    setMinerBuildInfo ( minerID, build, commit ) {
+    setMinerBuildInfo ( minerID, build, commit, acceptedRelease, nextRelease ) {
 
-        const miner         = this.minersByID [ minerID ];
+        const miner             = this.minersByID [ minerID ];
 
-        miner.build         = build;
-        miner.commit        = commit;
+        miner.build             = build;
+        miner.commit            = commit;
+        miner.acceptedRelease   = acceptedRelease || 0;
+        miner.nextRelease       = nextRelease || 0;
     }
 
     //----------------------------------------------------------------//
     @action
     setMinerOffline ( minerID ) {
 
-        const miner         = this.minersByID [ minerID ];
+        const miner             = this.minersByID [ minerID ];
 
         debugLog ( 'UPDATE MINER OFFLINE', minerID, );
 
-        miner.isBusy        = false;
-        miner.online        = false;
+        miner.isBusy            = false;
+        miner.online            = false;
     }
 
     //----------------------------------------------------------------//
@@ -556,7 +569,7 @@ export class ConsensusService {
                     return;
                 }
 
-                this.setMinerBuildInfo ( miner.minerID, nodeInfo.build, nodeInfo.commit );
+                this.setMinerBuildInfo ( miner.minerID, nodeInfo.build, nodeInfo.commit, nodeInfo.acceptedRelease, nodeInfo.nextRelease );
 
                 // "peek" at the headers of the current and next block; also get a random sample of up to 16 miners.
                 let peekURL         = url.parse ( miner.url );
