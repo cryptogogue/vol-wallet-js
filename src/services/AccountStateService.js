@@ -157,6 +157,16 @@ export class AccountStateService {
     }
 
     //----------------------------------------------------------------//
+    async getKeyPairAsync ( keyName, password ) {
+
+        const hexKey            = this.account.keys [ keyName];
+        const privateKeyHex     = crypto.aesCipherToPlain ( hexKey.privateKeyHexAES, password );
+        const key               = await crypto.keyFromPrivateHex ( privateKeyHex );
+
+        return key;
+    }
+
+    //----------------------------------------------------------------//
     getKeyNamesForTransaction ( transactionType ) {
 
         const keyNames = [];

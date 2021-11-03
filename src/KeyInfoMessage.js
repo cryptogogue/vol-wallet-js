@@ -1,20 +1,29 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { DecryptAndSignWithKeyModal }       from './DecryptAndSignWithKeyModal';
+import { EncryptWithKeyModal }              from './EncryptWithKeyModal';
 import { PasswordInputField }               from './PasswordInputField';
 import JSONTree                             from 'react-json-tree';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
 
-//================================================================//
-// KeyInfoModalBody
-//================================================================//
-const KeyInfoModalBody = observer (( props ) => {
+const MODALS = {
+    ENCRYPT:            'ENCRYPT',
+    DECRYPT_AND_SIGN:   'DECRYPT_AND_SIGN',
+    EXPORT:             'EXPORT',
+    ENTITLEMENTS:       'ENTITLEMENTS',
+};
 
-    const { accountService, keyName, open, onClose }          = props;
-    const [ password, setPassword ]                     = useState ( '' );
-    const [ passwordCount, setPasswordCount ]           = useState ( 0 );
-    const [ privateKeyInfo, setPrivateKeyInfo ]         = useState ( false );
+//================================================================//
+// ExportKeyModal
+//================================================================//
+const ExportKeyModal = observer (( props ) => {
+
+    const { accountService, keyName, onClose }      = props;
+    const [ password, setPassword ]                 = useState ( '' );
+    const [ passwordCount, setPasswordCount ]       = useState ( 0 );
+    const [ privateKeyInfo, setPrivateKeyInfo ]     = useState ( false );
 
     const appState      = accountService.appState;
     const key           = accountService.account.keys [ keyName ];
@@ -33,18 +42,16 @@ const KeyInfoModalBody = observer (( props ) => {
         <React.Fragment>
 
             <UI.Modal
-                size = 'small'
+                open
                 closeIcon
-                onClose = {() => { onClose ()}}
-                open = { open }
+                size        = 'small'
+                onClose     = {() => { onClose ()}}
             >
                 <UI.Modal.Header>Public Key</UI.Modal.Header>
                 
                 <UI.Modal.Content>
-
                     <UI.Header sub>Hexadecimal</UI.Header>
                     <UI.Segment style = {{ wordBreak: 'break-all', wordWrap: 'break-word', overflowWrap: 'break-word' }}>{ key.publicKeyHex }</UI.Segment>
-
                     <UI.Form>
                         <PasswordInputField
                             key             = { passwordCount }
@@ -52,27 +59,23 @@ const KeyInfoModalBody = observer (( props ) => {
                             setPassword     = { setPassword }
                         />
                     </UI.Form>
-
                 </UI.Modal.Content>
 
                 <UI.Modal.Actions>
-
                     <UI.Button
                         negative
-                        disabled = { !password }
-                        onClick = { onClickShowPrivate }
+                        disabled    = { !password }
+                        onClick     = { onClickShowPrivate }
                     >
                         Show Private Key
                     </UI.Button>
-
-                    
                 </UI.Modal.Actions>
 
             </UI.Modal>
 
             <UI.Modal
-                size        = 'small'
                 closeIcon
+                size        = 'small'
                 onClose     = { onClosePrivate }
                 open        = { privateKeyInfo !== false }
             >
@@ -90,60 +93,119 @@ const KeyInfoModalBody = observer (( props ) => {
 });
 
 //================================================================//
+// KeyEntitlementsModal
+//================================================================//
+const KeyEntitlementsModal = observer (( props ) => {
+
+    const { accountService, keyName, onClose } = props;
+    const key = accountService.account.keys [ keyName ];
+
+    return (
+        <UI.Modal
+            open
+            closeIcon
+            size        = 'small'
+            onClose     = {() => { onClose ()}}
+        >
+            <UI.Modal.Header>Entitlements</UI.Modal.Header>
+            <UI.Modal.Content>
+                <JSONTree
+                    hideRoot
+                    data                = { key.entitlements }
+                    theme               = 'bright'
+                    shouldExpandNode    = {() => { return true; }}
+                />
+            </UI.Modal.Content>
+        </UI.Modal>
+    );
+});
+
+//================================================================//
 // KeyInfoMessage
 //================================================================//
 export const KeyInfoMessage = observer (( props ) => {
 
-    const { accountService, keyName } = props;
-    const [ open, setOpen ] = useState ( false );
-    const [ counter, setCounter ] = useState ( 0 );
+    const { accountService, keyName }       = props;
+    const [ modal, setModal ]               = useState ( false );
 
     const key = accountService.account.keys [ keyName ];
 
     const onClose = () => {
-        setCounter ( counter + 1 );
-        setOpen ( false );
+        setModal ( false );
     }
 
     return (
-        <UI.Message
-            key = { keyName }
-            icon
-            positive
-        >
-            <UI.Icon name = 'key'/>
+        <React.Fragment>
 
-            <UI.Message.Content>
+            <Choose>
 
-                <UI.Modal
-                    header              = 'Entitlements'
-                    trigger             = {<UI.Message.Header style = {{ cursor: 'pointer' }}>{ keyName }</UI.Message.Header>}
-                    content             = {
-                        <JSONTree
-                            hideRoot
-                            data = { key.entitlements }
-                            theme = 'bright'
-                        />
-                    }
-                />
-                
-                <p
-                    style = {{ cursor: 'pointer' }}
-                    onClick = {() => { setOpen ( true )}}
+                <When condition = {( modal === MODALS.ENCRYPT )}>
+                    <EncryptWithKeyModal
+                        accountService      = { accountService }
+                        keyName             = { keyName }
+                        onClose             = { onClose }
+                    />
+                </When>
+
+                <When condition = {( modal === MODALS.DECRYPT_AND_SIGN )}>
+                    <DecryptAndSignWithKeyModal
+                        accountService      = { accountService }
+                        keyName             = { keyName }
+                        onClose             = { onClose }
+                    />
+                </When>
+
+                <When condition = {( modal === MODALS.EXPORT )}>
+                    <ExportKeyModal
+                        accountService      = { accountService }
+                        keyName             = { keyName }
+                        onClose             = { onClose }
+                    />
+                </When>
+
+                <When condition = {( modal === MODALS.ENTITLEMENTS )}>
+                    <KeyEntitlementsModal
+                        accountService      = { accountService }
+                        keyName             = { keyName }
+                        onClose             = { onClose }
+                    />
+                </When>
+            </Choose>
+
+            <UI.Message
+                key         = { keyName }
+                attached    = 'top'
+                icon
+                positive
+            >
+                <UI.Icon name = 'key'/>
+                <UI.Message.Content>
+                    <UI.Message.Header>{ keyName }</UI.Message.Header>
+                    <div style = {{
+                        wordBreak: 'break-all',
+                        wordWrap: 'break-word',
+                        overflowWrap: 'break-word',
+                    }}>
+                        { key.publicKeyHex }
+                    </div>
+                </UI.Message.Content>
+            </UI.Message>
+
+            <UI.Segment attached = 'bottom'>
+                <UI.Dropdown
+                    fluid
+                    selection
+                    text            = 'Tools'
                 >
-                    { key.publicKeyHex.substr ( 0, 30 ) + "..." }
-                </p>
+                    <UI.Dropdown.Menu>
+                        <UI.Dropdown.Item icon = 'envelope'     text = 'Encrypt'            onClick = {() => { setModal ( MODALS.ENCRYPT ); }}/>
+                        <UI.Dropdown.Item icon = 'signup'       text = 'Decrypt & Sign'     onClick = {() => { setModal ( MODALS.DECRYPT_AND_SIGN ); }}/>
+                        <UI.Dropdown.Item icon = 'unlock'       text = 'Export'             onClick = {() => { setModal ( MODALS.EXPORT ); }}/>
+                        <UI.Dropdown.Item icon = 'shield'       text = 'Entitlements'       onClick = {() => { setModal ( MODALS.ENTITLEMENTS ); }}/>
+                    </UI.Dropdown.Menu>
+                </UI.Dropdown>
+            </UI.Segment>
 
-                <KeyInfoModalBody
-                    key                 = { counter }
-                    accountService      = { accountService }
-                    keyName             = { keyName }
-                    open                = { open }
-                    onClose             = { onClose }
-                />
-
-            </UI.Message.Content>
-
-        </UI.Message>
+        </React.Fragment>
     );
 });
