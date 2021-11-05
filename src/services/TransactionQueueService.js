@@ -62,6 +62,23 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
+    async clearAndResetAsync () {
+
+        this.clearTransactionError ();
+
+        await this.loadAsync ();
+        runInAction (() => {
+            this.queue          = [];
+            this.history        = [];
+            this.status         = TX_SERVICE_STATUS.UNLOADED;
+        });
+        await AppDB.putAsync ( 'transactionQueue', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: []});
+        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: []});
+        await AppDB.deleteWhereAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
+    }
+
+    //----------------------------------------------------------------//
+    @action
     async clearUnsentTransactionsAsync () {
 
         this.clearTransactionError ();
@@ -382,6 +399,8 @@ export class TransactionQueueService {
         const consensusService  = this.networkService.consensusService;
         const accountName       = transaction.accountName;
         
+        debugLog ( 'CONSENSUS SERVICE ONLINE:', consensusService.isOnline );
+
         if ( !consensusService.isOnline ) return;
 
         let responseCount = 0;
@@ -471,12 +490,14 @@ export class TransactionQueueService {
 
             // if *all* nodes have accepted the transaction, remove it from the queue and advance.
             if ( transaction.nonce < this.accountService.nonce ) {
+                debugLog ( 'ACCEPTED:', transaction.nonce, transaction.UUID );
                 transaction.setStatus ( TX_STATUS.ACCEPTED );
                 transaction.clearMiners ();
             }
 
             // if *all* nodes have rejected the transaction, stop and report.
             if ( rejectedCount ) {
+
                 if ( rejectedCount === responseCount ) {
                     runInAction (() => {
                         account.transactionError = {
