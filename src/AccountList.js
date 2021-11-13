@@ -1,13 +1,13 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PollingList }                      from './PollingList';
-import * as vol                             from './util/vol';
 import * as bitcoin                         from 'bitcoinjs-lib';
 import _                                    from 'lodash';
 import { observer }                         from 'mobx-react';
 import React                                from 'react';
 import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
+import * as vol                             from 'vol';
 
 const ACCOUNT_DELETE_WARNING_0 = `
     Deleting an account will also delete all locally stored private
@@ -64,7 +64,7 @@ export const AccountList = observer (( props ) => {
                     { `Account: ${ accountID }` }
                 </UI.Message.Header>
                 <div style = {{ color: balanceColor }}>
-                    { `Balance: ${ accountService ? vol.format ( accountService.balance ) : '--' }` }
+                    { `Balance: ${ accountService ? vol.util.format ( accountService.balance ) : '--' }` }
                 </div>
             </React.Fragment>
         );

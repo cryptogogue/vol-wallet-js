@@ -1,11 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { CraftingAssetSelectionModal }      from './CraftingAssetSelectionModal';
-import * as vol                             from '../util/vol';
 import CryptoJS                             from 'crypto-js';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
+import * as vol                             from 'vol';
 
 //================================================================//
 // InvocationAssetParamRow

@@ -19,14 +19,10 @@ export const TransactionQueueLabel = observer (( props ) => {
         setOpen ( false );
     }
 
-    const warning           = queue.hasLostTransactions;
+    const warning           = false;
     const error             = queue.hasTransactionError;
     const stagedCount       = queue.stagedTransactions.length;
     const pendingCount      = queue.pendingTransactions.length;
-
-    // console.log ( 'QUEUE', queue, queue.appState, queue.hasTransactionError );
-
-    // color = { error ? 'red' : ( warning ? 'orange' : ( stagedCount > 0 ? 'green' : 'grey' ))}
 
     return (
         <React.Fragment>

@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountLogLabel }                  from './AccountLogLabel';
+import { ConsensusWarning }                 from './ConsensusWarning';
 import { InboxLabel }                       from './InboxLabel';
 import { NavigationBar }                    from './NavigationBar';
 import { TransactionQueueLabel }            from './TransactionQueueLabel';
@@ -8,7 +9,7 @@ import { observer }                         from 'mobx-react';
 import React                                from 'react';
 import { Redirect }                         from 'react-router';
 import { Link, useParams }                  from 'react-router-dom';
-import { Dropdown, Menu }                   from 'semantic-ui-react';
+import * as UI                              from 'semantic-ui-react';
 
 export const ACCOUNT_TABS = {
     ACCOUNT:        'ACCOUNT',
@@ -77,29 +78,31 @@ export const AccountNavigationBar = observer (( props ) => {
                 accountTab          = { accountTab }
             />
 
-            <Menu borderless attached = 'bottom'>
+            <UI.Menu borderless attached = 'bottom'>
 
-                <Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
-                    <Dropdown.Menu>
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )} as = { Link } to = { accountsURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )} as = { Link } to = { keysURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )} as = { Link } to = { inventoryURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )} as = { Link } to = { shopURL }/>
+                <UI.Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
+                    <UI.Dropdown.Menu>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )} as = { Link } to = { accountsURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )} as = { Link } to = { keysURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )} as = { Link } to = { inventoryURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )} as = { Link } to = { shopURL }/>
 
                         <If condition = { accountService.isMiner }>
-                            <Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>
+                            <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>
                         </If>
-                    </Dropdown.Menu>
-                </Dropdown>
+                    </UI.Dropdown.Menu>
+                </UI.Dropdown>
 
-                <Menu.Menu position = 'right'>
-                    <Menu.Item>
+                <UI.Menu.Menu position = 'right'>
+                    <UI.Menu.Item>
                         <InboxLabel accountService = { accountService }/>
                         <TransactionQueueLabel accountService = { accountService }/>
                         <AccountLogLabel accountService = { accountService }/>
-                    </Menu.Item>
-                </Menu.Menu>
-            </Menu>
+                    </UI.Menu.Item>
+                </UI.Menu.Menu>
+            </UI.Menu>
+
+            <ConsensusWarning networkService = { accountService.networkService }/>
         </React.Fragment>
     );
 });

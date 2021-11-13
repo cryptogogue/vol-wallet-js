@@ -2,11 +2,11 @@
 
 import { CraftingAssetSelectionModal }      from './CraftingAssetSelectionModal';
 import { InvocationField }                  from './InvocationField';
-import * as vol                             from '../util/vol';
 import CryptoJS                             from 'crypto-js';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
+import * as vol                             from 'vol';
 
 //================================================================//
 // CraftingMethodDropdown

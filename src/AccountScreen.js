@@ -2,12 +2,12 @@
 
 import { AppStateService }                  from './services/AppStateService';
 import { TransactionModal }                 from './transactions/TransactionModal';
-import * as vol                             from './util/vol';
 import { SingleColumnContainerView, util }  from 'fgc';
 import { observer }                         from 'mobx-react';
 import React, { useState, useRef }          from 'react';
 import { Redirect }                         from 'react-router';
 import * as UI                              from 'semantic-ui-react';
+import * as vol                             from 'vol';
 
 import { AccountNavigationBar, ACCOUNT_TABS } from './AccountNavigationBar';
 
@@ -51,7 +51,7 @@ const AccountDetailsView = observer (( props ) => {
 
             <div style = {{ visibility: hasInfo ? 'visible' : 'hidden' }}>
                 <UI.Header as = 'h3' style = {{ color: balanceColor }}>
-                    { `Balance: ${ vol.format ( accountService.balance )}` }
+                    { `Balance: ${ vol.util.format ( accountService.balance )}` }
                 </UI.Header>
 
                 <UI.Header.Subheader>

@@ -115,7 +115,7 @@ export const ConsensusScreen = observer (( props ) => {
                             <UI.Table.HeaderCell/>
                             <UI.Table.HeaderCell>Miner ID</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Total</UI.Table.HeaderCell>
-                            <UI.Table.HeaderCell>Current</UI.Table.HeaderCell>
+                            <UI.Table.HeaderCell>Height</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Digest</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Commit</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Release</UI.Table.HeaderCell>

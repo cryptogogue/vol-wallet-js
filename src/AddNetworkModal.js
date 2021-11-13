@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { ConsensusService }         from './services/ConsensusService';
 import { hooks }                    from 'fgc';
 import React, { useState }          from 'react';
 import { runInAction }              from 'mobx';
@@ -8,6 +7,7 @@ import { observer }                 from 'mobx-react';
 import * as UI                      from 'semantic-ui-react';
 import url                          from 'url';
 import validator                    from 'validator';
+import * as vol                     from 'vol';
 
 const NETWORK_NAME_REGEX     = /^[a-z0-9]+[a-z0-9-]*$/;
 
@@ -31,7 +31,7 @@ export const AddNetworkModalBody = observer (( props ) => {
     const [ testURL, setTestURL ]               = useState ( '' );
     const [ suggestName, setSuggestName ]       = useState ( false );
 
-    const consensusService  = hooks.useFinalizable (() => new ConsensusService ());
+    const consensusService  = hooks.useFinalizable (() => new vol.ConsensusService ());
 
     let onChangeName = ( value ) => {
 

@@ -1,11 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { ConsensusWarning }                 from './ConsensusWarning';
 import { NavigationBar }                    from './NavigationBar';
 import { observer }                         from 'mobx-react';
 import React                                from 'react';
 import { Redirect }                         from 'react-router';
 import { Link }                             from 'react-router-dom';
-import { Dropdown, Menu }                   from 'semantic-ui-react';
+import * as UI                              from 'semantic-ui-react';
 
 export const NETWORK_TABS = {
     NETWORK:            'NETWORK',
@@ -66,20 +67,22 @@ export const NetworkNavigationBar = observer (( props ) => {
                 accountID       = { '' }
             />
 
-            <Menu borderless attached = 'bottom'>
-                <Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
-                    <Dropdown.Menu>
+            <UI.Menu borderless attached = 'bottom'>
+                <UI.Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
+                    <UI.Dropdown.Menu>
 
-                        <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.NETWORK )} as = { Link } to = { networkURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CONSENSUS )} as = { Link } to = { consensusURL }/>
-                        <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )} as = { Link } to = { termsURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.NETWORK )} as = { Link } to = { networkURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CONSENSUS )} as = { Link } to = { consensusURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )} as = { Link } to = { termsURL }/>
 
                         <If condition = { false }>
-                            <Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CHAIN )} as = { Link } to = { chainURL }/>
+                            <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CHAIN )} as = { Link } to = { chainURL }/>
                         </If>
-                    </Dropdown.Menu>
-                </Dropdown>
-            </Menu>
+                    </UI.Dropdown.Menu>
+                </UI.Dropdown>
+            </UI.Menu>
+
+            <ConsensusWarning networkService = { networkService }/>
         </React.Fragment>
     );
 });

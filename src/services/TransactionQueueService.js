@@ -1,11 +1,11 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import * as AppDB                       from './AppDB';
+import * as AppDB                               from './AppDB';
 import { Transaction, TransactionStatus, TX_STATUS, TRANSACTION_TYPE } from '../transactions/Transaction';
-import * as vol                         from '../util/vol';
-import { assert, crypto, RevocableContext } from 'fgc';
-import _                                from 'lodash';
+import { assert, crypto, RevocableContext }     from 'fgc';
+import _                                        from 'lodash';
 import { action, computed, observable, runInAction, toJS } from 'mobx';
+import * as vol                                 from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@TX:', ...args ); }
@@ -299,7 +299,7 @@ export class TransactionQueueService {
 
             case TRANSACTION_TYPE.SEND_VOL: {
 
-                const amount = vol.format ( body.amount );
+                const amount = vol.util.format ( body.amount );
 
                 if ( isMaker ) return `You sent ${ body.accountName } ${ amount } VOL.`;
                 return `${ body.maker.accountName } sent you ${ amount } VOL.`;
@@ -688,6 +688,9 @@ export class TransactionQueueService {
                 if ( transaction.isAccepted && ( transaction.nonce >= nonce )) {
                     transaction.status      = TX_STATUS.LOST;
                     needsSave               = true;
+                }
+                else {
+                    transaction.status      = TX_STATUS.RESTORED;
                 }
             }
         });

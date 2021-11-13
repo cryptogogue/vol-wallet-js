@@ -2,11 +2,10 @@
 
 import { AccountStateService }          from './AccountStateService';
 import * as AppDB                       from './AppDB';
-import { ConsensusService }             from './ConsensusService';
 import { assert, crypto, randomBytes, RevocableContext, storage, StorageContext } from 'fgc';
 import _                                from 'lodash';
 import { action, computed, observable, runInAction } from 'mobx';
-import { vol }                          from 'vol';
+import * as vol                         from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@NETWORK SERVICE:', ...args ); }
@@ -113,7 +112,7 @@ export class NetworkStateService {
         }
 
         // don't use the passed in consensus service
-        consensusService = new ConsensusService ();
+        consensusService = new vol.ConsensusService ();
         consensusService.load ( this.network );
 
         runInAction (() => {
@@ -291,7 +290,7 @@ export class NetworkStateService {
         this.network.digest = this.network.genesis;
         this.network.minerURLs = [];
         
-        this.consensusService = new ConsensusService ();
+        this.consensusService = new vol.ConsensusService ();
         this.consensusService.load ( this.network );
         this.startServiceLoopAsync ();
     }
@@ -337,7 +336,7 @@ export class NetworkStateService {
             await this.consensusService.updateConsensus ();
             this.saveConsensusState ();
 
-            timeout = this.consensusService.isCurrent ? 15000 : 1;
+            timeout = ( this.consensusService.isCurrent || this.consensusService.isBlocked ) ? 15000 : 1;
         }
 
         this.setServiceCountdown ( 1 );
@@ -379,7 +378,7 @@ export class NetworkStateService {
             requestID = `vol_${ randomBytes ( 6 ).toString ( 'hex' )}`;
         } while ( _.has ( this.pendingAccounts, requestID ));
 
-        const encoded = vol.encodeAccountRequest ( this.genesis, publicKeyHex, signature );
+        const encoded = vol.util.encodeAccountRequest ( this.genesis, publicKeyHex, signature );
 
         const pendingAccount = {
             requestID:              requestID,

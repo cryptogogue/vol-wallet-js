@@ -6,11 +6,11 @@ import { InvocationConstNumericParamField }     from './InvocationConstNumericPa
 import { InvocationConstStringParamField }      from './InvocationConstStringParamField';
 import { InvocationConstTextParamField }        from './InvocationConstTextParamField';
 import { InvocationConstVOLParamField }         from './InvocationConstVOLParamField';
-import * as vol                                 from '../util/vol';
 import CryptoJS                                 from 'crypto-js';
 import { observer }                             from 'mobx-react';
 import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
+import * as vol                                 from 'vol';
 
 //================================================================//
 // InvocationConstParamField

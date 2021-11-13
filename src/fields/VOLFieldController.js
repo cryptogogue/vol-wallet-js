@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { InputFieldController }             from './InputFieldController'
-import * as vol                             from '../util/vol';
+import * as vol                             from 'vol';
 
 //================================================================//
 // VOLFieldController
@@ -21,7 +21,7 @@ export class VOLFieldController extends InputFieldController {
 
     //----------------------------------------------------------------//
     virtual_toString ( value ) {
-        return vol.format ( value );
+        return vol.util.format ( value );
     }
 
     //----------------------------------------------------------------//

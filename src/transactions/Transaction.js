@@ -85,7 +85,7 @@ export class TransactionStatus {
     @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
     @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
     @computed get isRestored        () { return ( this.queueStatus === TX_QUEUE_STATUS.RESTORED ); }
-    @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING )); }
+    @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING ) || ( this.queueStatus === TX_QUEUE_STATUS.LOST )); }
     @computed get queueStatus       () { return this.getQueueStatus (); }
 
     //----------------------------------------------------------------//

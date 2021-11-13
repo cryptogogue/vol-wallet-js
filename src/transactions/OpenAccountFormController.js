@@ -41,7 +41,7 @@ export class OpenAccountFormController extends TransactionFormController {
 
         debugLog ( 'DECODE REQUEST', this.fields.request.value );
 
-        const request = vol.decodeAccountRequest ( this.fields.request.value );
+        const request = vol.util.decodeAccountRequest ( this.fields.request.value );
 
         if ( !request ) return 'Problem decoding request.';
         if ( !request.key ) return 'Missing key.';

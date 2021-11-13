@@ -5,7 +5,6 @@ import { AppStateService }                                  from './services/App
 import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
 import { CancelOfferFormController }                        from './transactions/CancelOfferFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
-import * as vol                                             from './util/vol';
 import { AssetModal, Inventory, InventoryView, InventoryViewController } from 'cardmotron';
 import { assert, hooks, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
@@ -15,6 +14,7 @@ import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
 import { Redirect }                                         from 'react-router';
 import * as UI                                              from 'semantic-ui-react';
+import * as vol                                             from 'vol';
 
 const appState = AppStateService.get ();
 
@@ -231,7 +231,7 @@ export const ShopScreen = observer (( props ) => {
                         <When condition = { controller.status === STATUS.FOR_SALE }>
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
-                                <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
+                                <UI.Header as = 'h3'>{ `Price: ${ vol.util.format ( controller.info.price )}` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Expires: ${ controller.expires }` }</UI.Header>
                                 <UI.Button fluid color = 'green' onClick = {() => { onClickBuy ()}}>Buy</UI.Button>
                             </UI.Segment>
@@ -240,7 +240,7 @@ export const ShopScreen = observer (( props ) => {
                         <When condition = { controller.status === STATUS.FOR_SALE_BY_SELF }>
                             <UI.Segment>
                                 <UI.Header as = 'h3'>{ `Seller: ${ controller.info.seller }` }</UI.Header>
-                                <UI.Header as = 'h3'>{ `Price: ${ vol.format ( controller.info.price )}` }</UI.Header>
+                                <UI.Header as = 'h3'>{ `Price: ${ vol.util.format ( controller.info.price )}` }</UI.Header>
                                 <UI.Header as = 'h3'>{ `Expires: ${ controller.expires }` }</UI.Header>
                                 <UI.Button fluid color = 'red' onClick = {() => { onClickCancel ()}}>Cancel Offer</UI.Button>
                             </UI.Segment>

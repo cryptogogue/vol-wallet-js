@@ -1,15 +1,15 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { PagingMenu, PagingController } from './PagingMenu';
-import { TX_STATUS }        from './transactions/Transaction';
-import { Transaction }      from './transactions/Transaction';
-import * as vol             from './util/vol';
-import _                    from 'lodash';
-import JSONTree             from 'react-json-tree';
-import React, { useState }  from 'react';
-import { hooks }            from 'fgc';
-import { observer }         from 'mobx-react';
-import * as UI              from 'semantic-ui-react';
+import { PagingMenu, PagingController }     from './PagingMenu';
+import { TX_STATUS }                        from './transactions/Transaction';
+import { Transaction }                      from './transactions/Transaction';
+import _                                    from 'lodash';
+import JSONTree                             from 'react-json-tree';
+import React, { useState }                  from 'react';
+import { hooks }                            from 'fgc';
+import { observer }                         from 'mobx-react';
+import * as UI                              from 'semantic-ui-react';
+import * as vol                             from 'vol';
 
 const ROW_STATUS = {
     POSITIVE:           'POSITIVE',
@@ -60,7 +60,7 @@ export const TransactionQueueView = observer (( props ) => {
             // ACCEPTED
             case TX_STATUS.ACCEPTED:    return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
             case TX_STATUS.RESTORED:    return (<React.Fragment><UI.Icon name = 'cloud download' /> restored</React.Fragment>);
-            case TX_STATUS.LOST:        return (<React.Fragment><UI.Icon name = 'question'/> lost</React.Fragment>);
+            case TX_STATUS.LOST:        return (<React.Fragment><UI.Icon name = 'circle notched' loading/> recovering</React.Fragment>);
         }
         return <React.Fragment/>;
     }
@@ -72,6 +72,7 @@ export const TransactionQueueView = observer (( props ) => {
             // POSITIVE
             case TX_STATUS.ACCEPTED:
             case TX_STATUS.RESTORED:
+            case TX_STATUS.LOST:
                 return ROW_STATUS.POSITIVE;
 
             // NEUTRAL
@@ -83,7 +84,6 @@ export const TransactionQueueView = observer (( props ) => {
             // WARNING
             case TX_STATUS.MIXED:
             case TX_STATUS.BLOCKED:
-            case TX_STATUS.LOST:
                 return ROW_STATUS.WARNING;
 
             // ERROR
@@ -118,7 +118,7 @@ export const TransactionQueueView = observer (( props ) => {
                     </UI.Header>
                 </UI.Table.Cell>
 
-                <UI.Table.Cell collapsing>{ vol.format ( transaction.cost )}</UI.Table.Cell>
+                <UI.Table.Cell collapsing>{ vol.util.format ( transaction.cost )}</UI.Table.Cell>
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{( !transaction.isUnsent ) ? transaction.nonce : '--' }</UI.Table.Cell>

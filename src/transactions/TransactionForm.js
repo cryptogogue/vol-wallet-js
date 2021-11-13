@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as Fields                              from '../fields/fields'
-import * as vol                                 from '../util/vol';
 import { AccountPolicyForm }                    from './AccountPolicyForm';
 import { AffirmKeyForm }                        from './AffirmKeyForm';
 import { BetaGetAssetsForm }                    from './BetaGetAssetsForm';
@@ -26,6 +25,7 @@ import { UpdateMinerInfoForm }                  from './UpdateMinerInfoForm';
 import { observer }                             from 'mobx-react';
 import React                                    from 'react';
 import * as UI                                  from 'semantic-ui-react';
+import * as vol                                 from 'vol';
 
 //================================================================//
 // TransactionBalanceHeader
@@ -44,7 +44,7 @@ export const TransactionBalanceHeader = observer (( props ) => {
                 as = 'h4'
                 style = {{ color: balanceColor, marginBottom: 0 }}
             >
-                Balance: { vol.format ( balance )}
+                Balance: { vol.util.format ( balance )}
             </UI.Header>
 
             <UI.Header
@@ -59,7 +59,7 @@ export const TransactionBalanceHeader = observer (( props ) => {
                     as = 'h6'
                     style = {{ marginTop: 0 }}
                 >
-                    Suggested Gratuity: { vol.format ( controller.suggestedGratuity )}
+                    Suggested Gratuity: { vol.util.format ( controller.suggestedGratuity )}
                 </UI.Header>
             </If>
 

@@ -2,11 +2,11 @@
 
 import { CraftingAssetSelectionModal }      from './CraftingAssetSelectionModal';
 import { InvocationAssetParamRow }          from './InvocationAssetParamRow';
-import * as vol                             from '../util/vol';
 import CryptoJS                             from 'crypto-js';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
+import * as vol                             from 'vol';
 
 //================================================================//
 // InvocationConstVOLParamField
@@ -30,7 +30,7 @@ export const InvocationConstVOLParamField = observer (( props ) => {
         else {
             value = Math.floor ( value * 1000 );
             controller.setConstParam ( invocation, paramName, value );
-            setInputString ( vol.format ( value ));
+            setInputString ( vol.util.format ( value ));
         }
     };
 

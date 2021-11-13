@@ -4,11 +4,11 @@ import { StampAssetPreviewModal }               from './StampAssetPreviewModal'
 import { StampAssetSelectionModal }             from './StampAssetSelectionModal'
 import { STATUS }                               from './StampAssetsFormController'
 import * as Fields                              from '../fields/fields'
-import * as vol                                 from '../util/vol';
 import { AssetCardView }                        from 'cardmotron';
 import { observer }                             from 'mobx-react';
 import React, { useState }                      from 'react';
 import * as UI                                  from 'semantic-ui-react';
+import * as vol                                 from 'vol';
 
 //================================================================//
 // StampAssetsForm
@@ -62,7 +62,7 @@ export const StampAssetsForm = observer (({ controller }) => {
                         <AssetCardView assetID = { controller.stampAsset.assetID } inventory = { controller.stampInventory }/>
 
                         <UI.Header.Subheader as = 'h3' style = {{ paddingBottom: 10 }}>
-                            { `Price per Asset: ${ vol.format ( controller.stamp.price )}` }
+                            { `Price per Asset: ${ vol.util.format ( controller.stamp.price )}` }
                         </UI.Header.Subheader>
                     </div>
                 </div>

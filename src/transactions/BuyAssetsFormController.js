@@ -3,9 +3,9 @@
 import * as Fields                          from '../fields/fields'
 import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
-import * as vol                             from '../util/vol';
 import _                                    from 'lodash';
 import { action }                           from 'mobx';
+import * as vol                             from 'vol';
 
 //================================================================//
 // BuyAssetsFormController
@@ -50,7 +50,7 @@ export class BuyAssetsFormController extends TransactionFormController {
     virtual_validate () {
 
         if ( this.fields.price.value < this.minimumPrice ) {
-            this.fields.price.error = `Offer price must meet or exceed ${ vol.format ( this.minimumPrice )}.`;
+            this.fields.price.error = `Offer price must meet or exceed ${ vol.util.format ( this.minimumPrice )}.`;
         }
     }
 }
