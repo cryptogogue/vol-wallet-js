@@ -206,18 +206,13 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    formatServiceURL ( base, path, query, mostCurrent ) {
-        return this.consensusService.formatServiceURL ( base, path, query, mostCurrent );
-    }
-
-    //----------------------------------------------------------------//
     getAccount ( accountID ) {
         return _.has ( this.accounts, accountID ) ? this.accounts [ accountID ] : false;
     }
 
     //----------------------------------------------------------------//
     getPrimaryURL ( path, query, mostCurrent ) {
-        return this.consensusService.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
+        return ConsensusService.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//

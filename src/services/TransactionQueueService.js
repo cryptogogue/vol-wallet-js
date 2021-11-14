@@ -220,7 +220,7 @@ export class TransactionQueueService {
                 debugLog ( 'checkNonce', minerURL );
 
                 try {
-                    const serviceURL = consensusService.formatServiceURL ( minerURL, `/accounts/${ accountID }`, undefined, undefined, true );
+                    const serviceURL = ConsensusService.formatServiceURL ( minerURL, `/accounts/${ accountID }`, undefined, undefined, true );
 
                     debugLog ( 'serviceURL', serviceURL );
 
@@ -425,7 +425,7 @@ export class TransactionQueueService {
 
         const checkTransactionStatus = async ( minerURL ) => {
 
-            const serviceURL = consensusService.formatServiceURL ( minerURL, `/accounts/${ accountName }/transactions/${ transaction.uuid }` );
+            const serviceURL = ConsensusService.formatServiceURL ( minerURL, `/accounts/${ accountName }/transactions/${ transaction.uuid }` );
 
             if ( !transaction.miners.includes ( minerURL )) {
                 debugLog ( 'submitting tx to:', minerURL );

@@ -130,7 +130,7 @@ export const ConsensusScreen = observer (( props ) => {
 
                     <UI.Table.Footer fullWidth>
                         <UI.Table.Row>
-                            <UI.Table.HeaderCell colSpan = '6'>
+                            <UI.Table.HeaderCell colSpan = '8'>
 
                                 <UI.Button
                                     color = 'red'
@@ -165,7 +165,6 @@ export const ConsensusScreen = observer (( props ) => {
                             </UI.Table.HeaderCell>
                         </UI.Table.Row>
                     </UI.Table.Footer>
-
 
                 </UI.Table>
             </div> 

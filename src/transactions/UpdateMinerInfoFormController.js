@@ -108,7 +108,7 @@ export class UpdateMinerInfoFormController extends TransactionFormController {
         const minerURL          = this.minerURL || this.accountService.minerInfo.url;
 
         try {
-            const result = await this.revocable.fetchJSON ( networkService.formatServiceURL ( minerURL, `/visage`, { motto: motto }));
+            const result = await this.revocable.fetchJSON ( ConsensusService.formatServiceURL ( minerURL, `/visage`, { motto: motto }));
 
             runInAction (() => {
                 this.motto      = motto;
