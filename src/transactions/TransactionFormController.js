@@ -37,12 +37,6 @@ export class TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     formatBody () {
         
         let result = {};

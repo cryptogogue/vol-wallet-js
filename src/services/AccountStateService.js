@@ -7,7 +7,7 @@ import { InventoryTagsController }      from './InventoryTagsController';
 import { TransactionQueueService }      from './TransactionQueueService';
 import * as bitcoin                     from 'bitcoinjs-lib';
 import { Inventory }                    from 'cardmotron';
-import { assert, crypto, ProgressController, RevocableContext, StorageContext } from 'fgc';
+import { assert, crypto, hooks, ProgressController, RevocableContext, StorageContext } from 'fgc';
 import _                                from 'lodash';
 import { action, computed, observable, runInAction } from 'mobx';
 
@@ -112,7 +112,7 @@ export class AccountStateService {
 
         this.storage.remove ( this, 'account' );
         AppDB.deleteAccountAsync ( this.networkID, this.index );
-        this.finalize ();
+        hooks.finalize ( this );
     }
 
     //----------------------------------------------------------------//
@@ -125,14 +125,11 @@ export class AccountStateService {
     //----------------------------------------------------------------//
     finalize () {
 
-        this.inventoryProgress.finalize ();
-        this.inventory.finalize ();
-        this.inventoryService.finalize ();
-        this.inventoryTags.finalize ();
-        this.transactionQueue.finalize ();
-
-        this.revocable.finalize ();
-        this.storage.finalize ();
+        hooks.finalize ( this.inventoryProgress );
+        hooks.finalize ( this.inventory );
+        hooks.finalize ( this.inventoryService );
+        hooks.finalize ( this.inventoryTags );
+        hooks.finalize ( this.transactionQueue );
     }
 
     //----------------------------------------------------------------//

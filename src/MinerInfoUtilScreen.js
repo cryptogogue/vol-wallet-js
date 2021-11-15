@@ -32,10 +32,6 @@ export class MinerInfoFormController extends Fields.FormController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-    }
-
-    //----------------------------------------------------------------//
     @action
     virtual_compute () {
 

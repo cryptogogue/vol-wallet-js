@@ -20,10 +20,6 @@ export class FormController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-    }
-
-    //----------------------------------------------------------------//
     initialize ( appState, fieldsArray ) {
 
         this.appState               = appState;

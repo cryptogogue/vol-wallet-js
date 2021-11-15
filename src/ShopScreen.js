@@ -56,12 +56,6 @@ class ShopScreenController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     async loadAsync ( assetID ) {
 
         try {

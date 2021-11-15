@@ -28,12 +28,6 @@ export class NetMonService {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     getCard ( i ) {
         return CARDS [ this.cardArray [ i ]];
     }

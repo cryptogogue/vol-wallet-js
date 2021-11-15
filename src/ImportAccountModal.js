@@ -33,12 +33,6 @@ class ImportAccountController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     @action
     async import ( key, phraseOrKey, password ) {
 

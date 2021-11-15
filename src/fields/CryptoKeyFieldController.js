@@ -38,11 +38,7 @@ export class CryptoKeyFieldController extends FieldController {
         }
         this.update ();
     }
-
-    //----------------------------------------------------------------//
-    finalize () {
-    }
-
+    
     //----------------------------------------------------------------//
     virtual_isComplete () {
         return Boolean ( this.key );

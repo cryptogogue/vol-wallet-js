@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { NetworkStateService }          from './NetworkStateService';
-import { assert, crypto, RevocableContext, storage, StorageContext } from 'fgc';
+import { assert, crypto, hooks, RevocableContext, storage, StorageContext } from 'fgc';
 import * as bcrypt                      from 'bcryptjs';
 import _                                from 'lodash';
 import { action, computed, observable } from 'mobx';
@@ -47,10 +47,7 @@ export class AppStateService {
         let networkService = this.networksByID [ networkID ];
 
         if ( consensusService || !networkService ) {
-
-            if ( networkService ) {
-                networkService.finalize ();
-            }
+            hooks.finalize ( networkService );
             networkService = new NetworkStateService ( this, networkID, consensusService );
         }
 
@@ -179,11 +176,8 @@ export class AppStateService {
     finalize () {
 
         for ( let networkID in this.networksByID ) {
-            this.networksByID [ networkID ].finalize ();
+            hooks.finalize ( this.networksByID [ networkID ]);
         }
-
-        this.storage.finalize ();
-        this.revocable.finalize ();
     }
 
     //----------------------------------------------------------------//

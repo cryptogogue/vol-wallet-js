@@ -35,11 +35,6 @@ class DebugHTTPController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     @action setBusy ( busy ) {
         this.isBusy = busy;
     }

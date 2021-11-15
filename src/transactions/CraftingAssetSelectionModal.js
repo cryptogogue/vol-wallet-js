@@ -28,12 +28,6 @@ class CraftingAssetSelectionModalController {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     @action
     scheduleClose ( doClose ) {
 

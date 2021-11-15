@@ -26,12 +26,6 @@ export class PollingService {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     getStatus ( identifier, asyncGetInfo, checkIdentifier ) {
 
         let polling = this.polling [ identifier ];

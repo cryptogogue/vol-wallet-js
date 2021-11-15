@@ -5,6 +5,7 @@ import { TransactionFormController }        from './TransactionFormController';
 import _                                    from 'lodash';
 import { action, observable, runInAction }  from 'mobx';
 import url                                  from 'url';
+import * as vol                             from 'vol';
 
 export const MINER_INFO_STATE = {
     IDLE:   'IDLE',
@@ -105,10 +106,11 @@ export class UpdateMinerInfoFormController extends TransactionFormController {
         motto = motto || "";
 
         const networkService    = this.accountService.networkService;
+        const consensusService  = networkService.consensusService;
         const minerURL          = this.minerURL || this.accountService.minerInfo.url;
 
         try {
-            const result = await this.revocable.fetchJSON ( ConsensusService.formatServiceURL ( minerURL, `/visage`, { motto: motto }));
+            const result = await this.revocable.fetchJSON ( consensusService.formatServiceURL ( minerURL, `/visage`, { motto: motto }));
 
             runInAction (() => {
                 this.motto      = motto;

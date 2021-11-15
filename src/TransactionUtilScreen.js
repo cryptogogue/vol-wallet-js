@@ -52,9 +52,6 @@ export class TransactionContext {
         return 0;
     }
 
-    //----------------------------------------------------------------//
-    finalize () {
-    }
 }
 
 //================================================================//
@@ -73,10 +70,6 @@ export class TransactionUtilController extends Fields.FormController {
             new Fields.IntegerFieldController       ( 'nonce',          'Nonce' ),
         ];
         this.initialize ( appState, fieldsArray );
-    }
-
-    //----------------------------------------------------------------//
-    finalize () {
     }
 }
 

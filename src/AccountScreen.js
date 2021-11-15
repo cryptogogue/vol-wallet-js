@@ -29,7 +29,7 @@ const AccountDetailsView = observer (( props ) => {
 
     const consensusService      = networkService.consensusService;
     const accountURL            = networkService.getPrimaryURL ( `/accounts/${ accountService.accountID }`, undefined, true );
-    const hasInfo               = accountService.hasAccountInfo && networkService.isCurrent;
+    const hasInfo               = accountService.hasAccountInfo;
     const balance               = accountService.balance;
     const balanceColor          = balance > 0 ? 'black' : 'red';
     const iconName              = accountService.isMiner ? 'gem outline' : 'trophy';

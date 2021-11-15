@@ -161,7 +161,6 @@ export class InventoryService {
     //----------------------------------------------------------------//
     finalize () {
 
-        this.revocable.finalize ();
         this.worker.terminate ();
     }
 

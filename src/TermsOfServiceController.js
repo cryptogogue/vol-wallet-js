@@ -49,10 +49,4 @@ export class TermsOfServiceController {
         }
         this.revocable.timeout (() => { this.fetchTermsOfService ()}, 1000 );
     }
-
-    //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
 }

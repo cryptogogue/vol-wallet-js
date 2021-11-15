@@ -27,12 +27,6 @@ export class NetStatService {
     }
 
     //----------------------------------------------------------------//
-    finalize () {
-
-        this.revocable.finalize ();
-    }
-
-    //----------------------------------------------------------------//
     async scanNetwork () {
 
         const promises = [];

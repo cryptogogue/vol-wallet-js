@@ -2,7 +2,7 @@
 
 import { AccountStateService }          from './AccountStateService';
 import * as AppDB                       from './AppDB';
-import { assert, crypto, randomBytes, RevocableContext, storage, StorageContext } from 'fgc';
+import { assert, crypto, hooks, randomBytes, RevocableContext, storage, StorageContext } from 'fgc';
 import _                                from 'lodash';
 import { action, computed, observable, runInAction } from 'mobx';
 import * as vol                         from 'vol';
@@ -28,7 +28,6 @@ export class NetworkStateService {
     @computed get genesis               () { return this.consensusService.genesis || ''; }
     @computed get height                () { return this.consensusService.height; }
     @computed get identity              () { return this.consensusService.identity; }
-    @computed get isCurrent             () { return this.consensusService.isCurrent; }
     @computed get isOnline              () { return this.consensusService.isOnline; }
     @computed get nodeURL               () { return this.network.nodeURL; }
     @computed get pendingAccounts       () { return this.network.pendingAccounts; }    
@@ -174,7 +173,7 @@ export class NetworkStateService {
             AppDB.deleteNetworkAsync ( this.networkID );
             this.networkID = false;
 
-            this.finalize ();
+            hooks.finalize ( this );
         }
     }
 
@@ -182,12 +181,9 @@ export class NetworkStateService {
     finalize () {
 
         for ( let accountID in this.accounts ) {
-            this.accounts [ accountID ].finalize ();
+            hooks.finalize ( this.accounts [ accountID ]);
         }
-
-        this.consensusService.finalize ();
-        this.revocable.finalize ();
-        this.storage.finalize ();
+        hooks.finalize ( this.consensusService );
     }
 
     //----------------------------------------------------------------//
@@ -212,7 +208,7 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     getPrimaryURL ( path, query, mostCurrent ) {
-        return ConsensusService.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
+        return this.consensusService.formatServiceURL ( this.network.nodeURL, path, query, mostCurrent );
     }
 
     //----------------------------------------------------------------//
@@ -279,7 +275,7 @@ export class NetworkStateService {
     async resetConsensus () {
 
         this.revocable.revokeAll ();
-        this.consensusService.finalize ();
+        hooks.finalize ( this.consensusService );
 
         this.network.height = 0;
         this.network.digest = this.network.genesis;
@@ -322,17 +318,10 @@ export class NetworkStateService {
         debugLog ( 'SERVICE LOOP RUN:', count );
         this.serviceLoopCount = count + 1;
 
-        await this.consensusService.discoverMinersAsync ();
-        await this.consensusService.updateMinersAsync ();
+        await this.consensusService.serviceStepAsync ();
+        this.saveConsensusState ();
 
-        let timeout = 5000;
-        if ( this.consensusService.onlineMiners.length ) {
-
-            await this.consensusService.updateConsensus ();
-            this.saveConsensusState ();
-
-            timeout = ( this.consensusService.isCurrent || this.consensusService.isBlocked ) ? 15000 : 1;
-        }
+        const timeout = ( this.consensusService.isCurrent || this.consensusService.isBlocked ) ? 15000 : 1;
 
         this.setServiceCountdown ( 1 );
 
