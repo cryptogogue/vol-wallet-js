@@ -54,8 +54,8 @@ export const ConsensusScreen = observer (( props ) => {
                         <UI.Table.Cell collapsing>{ miner.digest ? miner.digest.substring ( 0, 7 ) : '' }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.nextHeight }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.nextDigest ? miner.nextDigest.substring ( 0, 7 ) : '' }</UI.Table.Cell>
-                        <UI.Table.Cell collapsing>{ miner.commit ? miner.commit.substring ( 0, 7 ) : '' }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ release }</UI.Table.Cell>
+                        <UI.Table.Cell collapsing>{ miner.commit ? miner.commit.substring ( 0, 7 ) : '' }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ latency.toFixed ( 2 )}</UI.Table.Cell>
                     </When>
                     <Otherwise>
@@ -120,8 +120,8 @@ export const ConsensusScreen = observer (( props ) => {
                             <UI.Table.HeaderCell>Height'</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Digest'</UI.Table.HeaderCell>
 
-                            <UI.Table.HeaderCell>Commit</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Release</UI.Table.HeaderCell>
+                            <UI.Table.HeaderCell>Commit</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Latency</UI.Table.HeaderCell>
                         </UI.Table.Row>
                     </UI.Table.Header>
@@ -133,7 +133,7 @@ export const ConsensusScreen = observer (( props ) => {
 
                     <UI.Table.Footer fullWidth>
                         <UI.Table.Row>
-                            <UI.Table.HeaderCell colSpan = '8'>
+                            <UI.Table.HeaderCell colSpan = '10'>
 
                                 <UI.Button
                                     color = 'red'
