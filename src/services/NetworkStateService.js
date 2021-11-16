@@ -20,7 +20,6 @@ export class NetworkStateService {
     @observable ignoreURLs              = {};
     @observable minersByID              = {};
     @observable networkID               = '';
-    @observable serviceCountdown        = 1.0;
 
     @computed get accountIndices        () { return this.network.accountIndices; }
     @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
@@ -128,7 +127,7 @@ export class NetworkStateService {
             this.accounts [ accountID ] = account;
         }
 
-        this.startServiceLoopAsync ();
+        this.consensusService.startServiceLoopAsync (() => { this.saveConsensusState (); });
     }
 
     //----------------------------------------------------------------//
@@ -291,56 +290,6 @@ export class NetworkStateService {
     saveConsensusState () {
 
         this.consensusService.save ( this.network );
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setServiceCountdown ( countdown ) {
-        this.serviceCountdown = countdown;
-    }
-
-    //----------------------------------------------------------------//
-    async startServiceLoopAsync () {
-        this.serviceLoopAsync ();
-    }
-
-    //----------------------------------------------------------------//
-    async serviceLoopAsync () {
-
-        if ( this.serviceCountdownTimeout ) {
-            this.revocable.revoke ( this.serviceCountdownTimeout );
-            this.serviceCountdownTimeout = false;
-        }
-
-        this.setServiceCountdown ( 0 );
-
-        let count = this.serviceLoopCount || 0;
-        debugLog ( 'SERVICE LOOP RUN:', count );
-        this.serviceLoopCount = count + 1;
-
-        await this.consensusService.serviceStepAsync ();
-        this.saveConsensusState ();
-
-        const timeout = ( this.consensusService.isCurrent || this.consensusService.isBlocked ) ? 15000 : 1;
-
-        this.setServiceCountdown ( 1 );
-
-        if ( timeout > 1000 ) {
-
-            const delay = Math.floor ( timeout / 100 );
-            let i = 0;
-
-            const countdown = () => {
-                if ( i++ < 100 ) {
-                    this.setServiceCountdown ( 1.0 - ( i / 100 ));
-                    this.serviceCountdownTimeout = this.revocable.timeout (() => { countdown ()}, delay );
-                }
-            }
-            countdown ();
-        }
-
-        debugLog ( 'Next update in...', timeout );
-        this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
     }
 
     //----------------------------------------------------------------//

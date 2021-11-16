@@ -679,12 +679,14 @@ export class TransactionQueueService {
 
         runInAction (() => {
             for ( let transaction of this.queue ) {
-                if ( transaction.isAccepted && ( transaction.nonce >= nonce )) {
+
+                if (( transaction.isAccepted || transaction.isRestored ) && ( transaction.nonce >= nonce )) {
                     transaction.status      = TX_STATUS.LOST;
                     needsSave               = true;
                 }
-                else {
+                else if ( transaction.isLost && ( transaction.nonce < nonce )) {
                     transaction.status      = TX_STATUS.RESTORED;
+                    needsSave               = true;
                 }
             }
         });
