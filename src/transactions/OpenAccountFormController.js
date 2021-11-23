@@ -6,7 +6,7 @@ import { TransactionFormController }        from './TransactionFormController';
 import { randomBytes }                      from 'fgc';
 import _                                    from 'lodash';
 import { action }                           from 'mobx';
-import { vol }                              from 'vol';
+import * as vol                             from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( 'OPEN ACCOUNT CONTROLLER:', ...args ); }
