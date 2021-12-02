@@ -5,22 +5,19 @@ import React                                from 'react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
-// ConsensusWarning
+// InventoryWarning
 //================================================================//
-export const ConsensusWarning = observer (( props ) => {
+export const InventoryWarning = observer (( props ) => {
 
-    const { networkService } = props;
-    const consensusService = networkService.consensusService;
-
-    const consensusURL = `/net/${ networkService.networkID }/consensus`;
+    const { inventoryService } = props;
 
     return (
-        <If condition = { consensusService.isBlocked }>
+        <If condition = { inventoryService.warning }>
             <UI.Message icon warning>
                 <UI.Icon name = 'warning sign'/>
                 <UI.Message.Content>
                     <UI.Message.Header>Warning</UI.Message.Header>
-                    <p>Consensus appears to be blocked. This may resolve in time, but you can also <a href = { consensusURL }>manually reset</a> the consensus service.</p>
+                    <p>Inventory sync mismatch detected. This might go away if you refresh, or you might need to manually resync your inventory.</p>
                 </UI.Message.Content>
             </UI.Message>
         </If>

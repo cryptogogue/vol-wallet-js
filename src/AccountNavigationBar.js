@@ -3,6 +3,7 @@
 import { AccountLogLabel }                  from './AccountLogLabel';
 import { ConsensusWarning }                 from './ConsensusWarning';
 import { InboxLabel }                       from './InboxLabel';
+import { InventoryWarning }                 from './InventoryWarning';
 import { NavigationBar }                    from './NavigationBar';
 import { TransactionQueueLabel }            from './TransactionQueueLabel';
 import { observer }                         from 'mobx-react';
@@ -103,6 +104,7 @@ export const AccountNavigationBar = observer (( props ) => {
             </UI.Menu>
 
             <ConsensusWarning networkService = { accountService.networkService }/>
+            <InventoryWarning inventoryService = { accountService.inventoryService }/>
         </React.Fragment>
     );
 });

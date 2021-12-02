@@ -282,7 +282,7 @@ export class NetworkStateService {
         
         this.consensusService = new vol.ConsensusService ();
         this.consensusService.load ( this.network );
-        this.startServiceLoopAsync ();
+        this.startServiceLoopAsync (() => { this.saveConsensusState (); });
     }
 
     //----------------------------------------------------------------//

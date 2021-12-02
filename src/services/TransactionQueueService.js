@@ -378,16 +378,9 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    async processTransactionsAsync () {
-
-        await this.loadAsync ();
-        await this.fetchHistoryAsync ();
-        await this.restoreTransactionsAsync ();
+    async processTransactionAsync ( transaction ) {
 
         if ( this.hasTransactionError ) return;
-
-        const transaction = this.pendingTransactions [ 0 ];
-        if ( !transaction ) return;
 
         const account           = this.account;
         const consensusService  = this.networkService.consensusService;
@@ -517,14 +510,29 @@ export class TransactionQueueService {
                 }
             }
         }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async processTransactionsAsync () {
+
+        await this.loadAsync ();
+        await this.fetchHistoryAsync ();
+        await this.restoreTransactionsAsync ();
+
+        if ( this.hasTransactionError ) return;
+
+        const promises = [];
+        for ( let transaction of this.pendingTransactions ) {
+            promises.push ( this.processTransactionAsync ( transaction ));
+        }
+        await this.revocable.all ( promises );
 
         await this.saveAsync ();
     }
 
     //----------------------------------------------------------------//
     async putTransactionAsync ( serviceURL, envelope ) {
-
-        debugLog ( 'putTransactionsAsync', envelope );
 
         let result = false;
 

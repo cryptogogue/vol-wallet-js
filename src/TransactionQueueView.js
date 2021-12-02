@@ -52,10 +52,11 @@ export const TransactionQueueView = observer (( props ) => {
 
             // PENDING
             case TX_STATUS.PENDING:     return (<React.Fragment><UI.Icon name = 'clock'/> pending</React.Fragment>);
-            case TX_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'paper plane'/> sent</React.Fragment>);
-            case TX_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> sent</React.Fragment>);
+            case TX_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'circle notched' loading/> submitting</React.Fragment>);
+            case TX_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> submitting</React.Fragment>);
+
             case TX_STATUS.REJECTED:    return (<React.Fragment><UI.Icon name = 'times circle'/> rejected</React.Fragment>);
-            case TX_STATUS.BLOCKED:     return (<React.Fragment><UI.Icon name = 'circle notched' loading/> blocked</React.Fragment>);
+            case TX_STATUS.BLOCKED:     return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> cancelled</React.Fragment>);
 
             // ACCEPTED
             case TX_STATUS.ACCEPTED:    return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);

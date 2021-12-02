@@ -248,10 +248,7 @@ export class AccountStateService {
         try {
 
             await this.syncAccountInfoAsync ();
-
-            await this.inventoryService.serviceStep ();
-            await this.inventoryService.applyDeltaAsync ();
-
+            await this.inventoryService.serviceStepAsync ();
             await this.transactionQueue.tagLostTransactionsAsync ( this.nonce );
             await this.transactionQueue.processTransactionsAsync ();
 
@@ -259,27 +256,6 @@ export class AccountStateService {
         }
         catch ( error ) {
             debugLog ( error );
-        }
-    }
-
-    //----------------------------------------------------------------//
-    @action
-    setAccountInfo ( accountInfo ) {
-
-        debugLog ( 'setAccountInfo', accountInfo );
-
-        if ( accountInfo ) {
-
-            if ( !this.accountInfo ) {
-                this.accountInfo = {};
-            }
-
-            this.accountInfo.balance            = accountInfo.balance;
-            this.accountInfo.nonce              = accountInfo.nonce;
-            this.accountInfo.height             = accountInfo.height || 0;
-        }
-        else {
-            this.accountInfo = false;
         }
     }
 

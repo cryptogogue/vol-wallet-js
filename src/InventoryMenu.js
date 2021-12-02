@@ -171,6 +171,17 @@ export const InventoryMenu = observer (( props ) => {
                         </Menu.Item>
                     </Otherwise>
                 </Choose>
+
+                <Menu.Menu position = 'right'>
+                    <Dropdown
+                        item
+                        icon = 'settings'
+                    >
+                        <Dropdown.Menu>
+                            <Dropdown.Item icon = 'redo'     text = 'Reset Inventory'       onClick = {() => { accountService.inventoryService.reset (); }}/>
+                        </Dropdown.Menu>
+                    </Dropdown>
+                </Menu.Menu>
             </Menu>
 
             <Menu borderless attached = 'bottom'>

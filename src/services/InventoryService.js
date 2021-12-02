@@ -23,6 +23,7 @@ export class InventoryService {
     @observable version         = false;
     @observable isLoaded        = false;
     @observable.ref schema      = false;
+    @observable warning         = false;
 
     @computed get accountID     () { return this.accountService.accountID; }
     @computed get accountIndex  () { return this.accountService.index; }
@@ -32,23 +33,11 @@ export class InventoryService {
     //----------------------------------------------------------------//
     async applyDeltaAsync () {
 
-        if ( !this.delta ) return false;
+        if ( !this.delta ) return;
 
-        debugLog ( 'APPLY DELTA' );
+        debugLog ( 'APPLY DELTA ADDITIONS' );
 
         const delta = this.delta;
-
-        for ( let assetID of delta.deletions ) {
-            
-            if ( delta.additions.includes ( assetID )) continue; // skip if removed then re-added
-            debugLog ( 'DELETING ASSET', assetID );
-            await AppDB.deleteWhereAsync ( 'assets', { networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
-
-            runInAction (() => {
-                delete this.assets [ assetID ];
-                this.inventory.deleteAsset ( assetID );
-            });
-        }
 
         const assets =_.cloneDeep ( delta.assets );
         const inbox = [];
@@ -97,6 +86,8 @@ export class InventoryService {
             }
         });
 
+        debugLog ( 'FINISH DELTA' );
+
         runInAction (() => {
             this.version.nonce          = delta.nextNonce;
             this.version.timestamp      = delta.timestamp;
@@ -106,6 +97,28 @@ export class InventoryService {
         await AppDB.deleteWhereAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex });
 
         this.delta = false;
+    }
+
+    //----------------------------------------------------------------//
+    async applyDeltaDeletionsAsync () {
+
+        if ( !this.delta ) return false;
+
+        debugLog ( 'APPLY DELTA DELETIONS' );
+
+        const delta = this.delta;
+
+        for ( let assetID of delta.deletions ) {
+            
+            if ( delta.additions.includes ( assetID )) continue; // skip if removed then re-added
+            debugLog ( 'DELETING ASSET', assetID );
+            await AppDB.deleteWhereAsync ( 'assets', { networkID: this.networkID, accountIndex: this.accountIndex, assetID: assetID });
+
+            runInAction (() => {
+                delete this.assets [ assetID ];
+                this.inventory.deleteAsset ( assetID );
+            });
+        }
 
         return true;
     }
@@ -235,6 +248,7 @@ export class InventoryService {
         const deltaRow = await AppDB.getAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex });
         if ( deltaRow && deltaRow.delta ) {
             this.delta = deltaRow.delta;
+            this.revocable.timeout (() => { this.applyDeltaAsync ()}, 100 ); // start applying the delta
         }
     }
 
@@ -334,10 +348,11 @@ export class InventoryService {
     }
 
     //----------------------------------------------------------------//
-    async serviceStep () {
+    async serviceStepAsync () {
 
-        if ( !this.isLoaded ) return;
+        if ( this.warning ) return;
         if ( this.delta ) return;
+        if ( !this.isLoaded ) return;
 
         try {
             await this.updateAsync ();
@@ -345,6 +360,12 @@ export class InventoryService {
         catch ( error ) {
             debugLog ( error );
         }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setWarning ( warning ) {
+        this.warning = warning;
     }
 
     //----------------------------------------------------------------//
@@ -357,16 +378,11 @@ export class InventoryService {
         debugLog ( 'STATUS FROM SERVER:', data );
 
         if ( data.inventoryTimestamp ) {
-
             await this.updateSchema ( data.schemaHash, data.schemaVersion );
             if ( this.schema ) {
                 await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
             }
         }
-        else {
-            await this.reset ();
-        }
-
     }
 
     //----------------------------------------------------------------//
@@ -381,11 +397,15 @@ export class InventoryService {
         debugLog ( 'TIMESTAMP:', timestamp );
 
         if ( nextNonce === currentNonce ) return;
-        if (( timestamp !== this.version.timestamp ) || ( nextNonce < currentNonce )) {
+        if ( this.version.timestamp && (( timestamp !== this.version.timestamp ) || ( nextNonce < currentNonce ))) {
             debugLog ( 'TIMESTAMP MISMATCH OR NONCE ROLLBACK; RESETTING' );
-            await this.reset ();
-            currentNonce = 0;
+
+            if (( timestamp !== this.version.timestamp ) || ( nextNonce < currentNonce )) {
+                this.setWarning ( true );
+                return;
+            }
         }
+        this.setWarning ( false );
 
         const count         = nextNonce - currentNonce;
         const serviceURL    = this.networkService.getServiceURL ( `/accounts/${ this.accountID }/inventory/log/${ currentNonce }`, { count: count });
@@ -395,8 +415,18 @@ export class InventoryService {
 
         data.timestamp = timestamp; // store it here for later
 
-        await AppDB.putAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex, delta: data });
+        // setting this will prevent the service loop from running until the delta is applied
         this.delta = data;
+
+        // do the deletions immediately
+        await this.applyDeltaDeletionsAsync ();
+
+        const storeAndApplyDeltaAsync = async () => {
+            // store the delta so we can resume if we reload
+            await AppDB.putAsync ( 'inventoryDelta', { networkID: this.networkID, accountIndex: this.accountIndex, delta: data });
+            await this.applyDeltaAsync ();
+        }
+        this.revocable.timeout (() => { storeAndApplyDeltaAsync ()}, 100 ); // start applying the delta
     }
 
     //----------------------------------------------------------------//
