@@ -249,8 +249,7 @@ export class AccountStateService {
 
             await this.syncAccountInfoAsync ();
             await this.inventoryService.serviceStepAsync ();
-            await this.transactionQueue.tagLostTransactionsAsync ( this.nonce );
-            await this.transactionQueue.processTransactionsAsync ();
+            await this.transactionQueue.serviceStepAsync ();
 
             this.revocable.timeout (() => { this.serviceLoopAsync ()}, 5000 );
         }

@@ -89,21 +89,11 @@ export const TransactionQueueModal = observer (( props ) => {
     }
     
     let onClickSubmit = async () => {        
-
         setBusy ( true );
         setError ( '' );
         clearPassword ();
-
-        transactionQueue.clearTransactionError ();
-
-        const nonce = await transactionQueue.findNonceAsync ( accountService.accountID );
+        await transactionQueue.submitTransactionsAsync ( password );
         setBusy ( false );
-
-        if ( nonce === false ) {
-            setError ( 'Could not synchronize nonce. Try again later.' );    
-            return;
-        }
-        await transactionQueue.submitTransactionsAsync ( password, nonce );
     }
     
     let onClickClear = async () => {

@@ -51,15 +51,8 @@ const TransactionModalBody = observer (( props ) => {
         setError ( '' );
         clearPassword ();
 
-        const nonce = await queue.findNonceAsync ( accountService.accountID );
-        if ( nonce === false ) {
-            setError ( 'Could not synchronize nonce. Try again or stage transaction for later.' );
-            setBusy ( false );
-            return;
-        }
-
         await queue.stageTransactionAsync ( controller.transaction );
-        await queue.submitTransactionsAsync ( password, nonce );
+        await queue.submitTransactionsAsync ( password );
 
         setBusy ( false );
         onClose ();

@@ -58,11 +58,11 @@ export const TX_STATUS = {
 
 export const TX_QUEUE_STATUS = {
 
-    STAGED:             'STAGED',
-    PENDING:            'PENDING',
-    BLOCKED:            'BLOCKED',
     ACCEPTED:           'ACCEPTED',
+    BLOCKED:            'BLOCKED',
     LOST:               'LOST',
+    PENDING:            'PENDING',
+    STAGED:             'STAGED',
 };
 
 //================================================================//
@@ -82,9 +82,10 @@ export class TransactionStatus {
 
     @computed get friendlyName      () { return Transaction.friendlyNameForType ( this.type ); }
     @computed get isAccepted        () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
+    @computed get isBlocked         () { return ( this.queueStatus === TX_QUEUE_STATUS.BLOCKED ); }
     @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
     @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
-    @computed get isRestored        () { return ( this.queueStatus === TX_QUEUE_STATUS.RESTORED ); }
+    @computed get isStaged          () { return ( this.queueStatus === TX_QUEUE_STATUS.STAGED ); }
     @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING ) || ( this.queueStatus === TX_QUEUE_STATUS.LOST )); }
     @computed get queueStatus       () { return this.getQueueStatus (); }
 
