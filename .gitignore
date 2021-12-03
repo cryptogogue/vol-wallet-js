@@ -4,6 +4,7 @@
 /node_modules
 /public/meta.json
 /src/consts/consts.js
+*.zip
 
 # for now
 package-lock.json
