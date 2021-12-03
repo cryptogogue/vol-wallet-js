@@ -56,7 +56,6 @@ export class InventoryTagsController {
     //----------------------------------------------------------------//
     @action
     deleteTag ( tagName ) {
-    
         delete this.tags [ tagName ];
         this.saveTags ();
     }
@@ -64,8 +63,15 @@ export class InventoryTagsController {
     //----------------------------------------------------------------//
     @computed
     get hasTags () {
-
         return Object.keys ( this.tags ).length !== 0;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    importTags ( tags ) {
+        
+        this.tags = tags;
+        this.saveTags ();
     }
 
     //----------------------------------------------------------------//

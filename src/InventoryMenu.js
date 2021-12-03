@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
-import { InventoryTagsDropdown }                            from './InventoryTagsDropdown';
+import { InventoryTagsModal }                               from './InventoryTagsModal';
 import { OfferAssetsFormController }                        from './transactions/OfferAssetsFormController';
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { StampAssetsFormController }                        from './transactions/StampAssetsFormController';
@@ -185,7 +185,7 @@ export const InventoryMenu = observer (( props ) => {
             </Menu>
 
             <Menu borderless attached = 'bottom'>
-                <InventoryTagsDropdown controller = { inventoryViewController } tags = { tags }/>
+                <InventoryTagsModal controller = { inventoryViewController } tags = { tags }/>
                 <InventoryFilterDropdown tags = { tags }/>
 
                 <Menu.Menu position = 'right'>

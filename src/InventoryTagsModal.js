@@ -1,17 +1,20 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import _                                                    from 'lodash';
-import { observer }                                         from 'mobx-react';
-import React, { useState }                                  from 'react';
-import { Button, Checkbox, Icon, Input, Menu, Modal }       from 'semantic-ui-react';
+import FileSaver                        from 'file-saver';
+import * as fgc                         from 'fgc'
+import _                                from 'lodash';
+import { observer }                     from 'mobx-react';
+import React, { useState }              from 'react';
+import * as UI                          from 'semantic-ui-react';
 
 //================================================================//
-// InventoryTagsDropdownItems
+// InventoryTagsModalItems
 //================================================================//
-export const InventoryTagsDropdownList = observer (( props ) => {
+export const InventoryTagsModalList = observer (( props ) => {
 
-    const [ tagInput, setTagInput ]     = useState ( '' );
-    const [ isOpen, setIsOpen ]         = useState ( false );
+    const [ tagInput, setTagInput ]         = useState ( '' );
+    const [ isOpen, setIsOpen ]             = useState ( false );
+    const [ tagToDelete, setTagToDelete ]   = useState ( false );
 
     const { controller, tags } = props;
 
@@ -36,7 +39,7 @@ export const InventoryTagsDropdownList = observer (( props ) => {
                 key = { tagName }
                 style = {{ marginBottom: '12px' }}
             >
-                <Checkbox
+                <UI.Checkbox
                     label           = { tagName + ' (' + tagSize + ')' }
                     checked         = { allTagged }
                     indeterminate   = { indeterminate }
@@ -46,28 +49,50 @@ export const InventoryTagsDropdownList = observer (( props ) => {
                         event.stopPropagation ();
                     }}
                 />
-                <Button
+                <UI.Button
                     floated         = 'right'
                     icon            = 'trash'
                     size            = 'mini'
                     style           = {{ marginTop: '-5px'}}
-                    onClick         = {() => { tags.deleteTag ( tagName )}}
+                    onClick         = {() => { setTagToDelete ( tagName )}}
                 />
             </div>
         );
     }
 
+    const deleteTag = () => {
+        tags.deleteTag ( tagToDelete );
+        setTagToDelete ( false );
+    }
+
     return (
-        <div>
+        <React.Fragment>
             { tagList }
-        </div>
+            <UI.Modal
+                open = { tagToDelete !== false }
+                onClose = {() => { setTagToDelete ( false ); }}
+            >
+                <UI.Modal.Header>Delete Tag</UI.Modal.Header>
+                <UI.Modal.Content>
+                    { `Are you sure you want to delete tag '${ tagToDelete }'?` }
+                </UI.Modal.Content>
+                <UI.Modal.Actions>
+                    <UI.Button
+                        negative
+                        onClick         = { deleteTag }
+                    >
+                        Delete It
+                    </UI.Button>
+                </UI.Modal.Actions>
+            </UI.Modal>
+        </React.Fragment>
     );
 });
 
 //================================================================//
-// InventoryTagsDropdown
+// InventoryTagsModal
 //================================================================//
-export const InventoryTagsDropdown = observer (( props ) => {
+export const InventoryTagsModal = observer (( props ) => {
 
     const [ tagInput, setTagInput ]     = useState ( '' );
     const [ isOpen, setIsOpen ]         = useState ( false );
@@ -82,12 +107,26 @@ export const InventoryTagsDropdown = observer (( props ) => {
         }
     }
 
+    const downloadTags = () => {
+        const blob = new Blob ([ JSON.stringify ( tags.tags, null, 4 )], { type: 'text/plain;charset=utf-8' });
+        FileSaver.saveAs ( blob, 'inventory-tags.json' );
+    }
+
+    const uploadTagsAsync = async ( text ) => {
+        try {
+            tags.importTags ( JSON.parse ( text ));
+        }
+        catch ( error ) {
+            console.log ( error );
+        }
+    }
+
     return (
-        <Menu.Item
+        <UI.Menu.Item
             onClick = {() => { setIsOpen ( true )}}
         >
-            <Icon name = 'tags'/>
-                <Modal
+            <UI.Icon name = 'tags'/>
+                <UI.Modal
                     style = {{ height : 'auto' }}
                     open = { isOpen }
                     onClose = {() => {
@@ -95,13 +134,26 @@ export const InventoryTagsDropdown = observer (( props ) => {
                         controller.clearSelection ();
                     }}
                 >
-                    <Modal.Content>
-                        <div>
-                            <InventoryTagsDropdownList
+                    <UI.Modal.Content>
+                        <UI.Menu inverted attached = 'top'>
+                            <fgc.FilePickerMenuItem
+                                hideReloadButton
+                                accept      = 'application/json'
+                                format      = 'text'
+                                icon        = { 'upload' }
+                                loadFile    = { uploadTagsAsync }
+                            />
+                            <UI.Menu.Item
+                                icon        = { 'download' }
+                                onClick     = { downloadTags }
+                            />
+                        </UI.Menu>
+                        <UI.Segment attached = 'bottom'>
+                            <InventoryTagsModalList
                                 controller      = { controller }
                                 tags            = { tags }
                             />
-                            <Input
+                            <UI.Input
                                 fluid
                                 maxLength = '20'
                                 placeholder = 'New Tag...'
@@ -110,9 +162,9 @@ export const InventoryTagsDropdown = observer (( props ) => {
                                 onChange = {( event ) => { setTagInput ( event.target.value )}}
                                 onKeyPress = {( event ) => { onTagInputKey ( event.key )}}
                             />
-                        </div>
-                    </Modal.Content>
-                </Modal>
-        </Menu.Item>
+                        </UI.Segment>
+                    </UI.Modal.Content>
+                </UI.Modal>
+        </UI.Menu.Item>
     );
 });
