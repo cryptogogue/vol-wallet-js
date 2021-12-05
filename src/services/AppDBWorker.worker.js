@@ -42,7 +42,7 @@ async function handleMessageAsync ( event ) {
 
         case 'DELETE_ACCOUNT': {
 
-            const [ asset, svg ] = params;
+            const [ networkID, accountIndex ] = params;
 
             await db.accounts.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();
             await db.assets.where ({ networkID: networkID, accountIndex: accountIndex }).delete ();

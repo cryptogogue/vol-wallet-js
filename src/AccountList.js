@@ -1,7 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { PollingList }                      from './PollingList';
-import * as bitcoin                         from 'bitcoinjs-lib';
+import './PollingList.css';
+
+import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
+// import * as bitcoin                         from 'bitcoinjs-lib';
 import _                                    from 'lodash';
 import { observer }                         from 'mobx-react';
 import React                                from 'react';
@@ -27,63 +29,67 @@ export const AccountList = observer (( props ) => {
 
     const { networkService } = props;
 
-    const asyncGetInfo = async ( revocable, accountID ) => {
-        
-        let json = await revocable.fetchJSON ( networkService.getServiceURL ( `/accounts/${ accountID }` ));
 
-        if ( !json.account ) {
-            const account = networkService.getAccount ( accountID );
-            const key = Object.values ( account.keys )[ 0 ];
-            const keyID = bitcoin.crypto.sha256 ( key.publicKeyHex ).toString ( 'hex' ).toLowerCase ();
-            json = await revocable.fetchJSON ( networkService.getServiceURL ( `/keys/${ keyID }/account` ));
-        }
-        return json;
-    }
+    const onlineIcon = props.onlineIcon || 'check circle';
 
-    const checkIdentifier = ( accountID ) => {
-        return _.has ( networkService.accounts, accountID );
-    }
+    const list = [];
+    for ( let accountID in networkService.accounts ) {
 
-    const onDelete = ( accountID ) => {
-        networkService.deleteAccount ( accountID );
-    }
-
-    const makeItemMessageBody = ( accountID, info ) => {
-
-        const accountService    = info && info.account && networkService.getAccount ( accountID ) || false;
-
+        const accountService    = networkService.accounts [ accountID ];
+        const iconName          = accountService.isMiner ? 'gem outline' : 'trophy';
         const balance           = accountService ? accountService.balance : 0;
         const balanceColor      = accountService && balance <= 0 ? 'red' : undefined;
 
-        return (
-            <React.Fragment>
-                <UI.Message.Header
-                    as = { Link }
-                    to = { `/net/${ networkService.networkID }/account/${ accountID }` }
-                >
-                    { `Account: ${ accountID }` }
-                </UI.Message.Header>
-                <div style = {{ color: balanceColor }}>
-                    { `Balance: ${ accountService ? vol.util.format ( accountService.balance ) : '--' }` }
-                </div>
-            </React.Fragment>
+        const onDelete = () => {
+            networkService.deleteAccount ( accountID );
+        }
+
+        list.push (
+            <UI.Message
+                key             = { accountID }
+                icon
+                positive
+            >
+                <Choose>
+                    <When condition = { !accountService.hasAccountInfo }>
+                        <UI.Icon name = 'circle notched' loading/>
+                    </When>
+
+                    <Otherwise>
+                        <UI.Icon name = { iconName }/>
+                    </Otherwise>
+                </Choose>
+
+                <UI.Message.Content>
+
+                    <WarnAndDeleteModal
+                        trigger = {
+                            <UI.Icon name = 'window close'/>
+                        }
+                        warning0 = { ACCOUNT_DELETE_WARNING_0 }
+                        warning1 = { ACCOUNT_DELETE_WARNING_1 }
+                        onDelete = { onDelete }
+                    />
+
+                    <UI.Message.Header
+                        as = { Link }
+                        to = { `/net/${ networkService.networkID }/account/${ accountID }` }
+                    >
+                        { `Account: ${ accountID }` }
+                    </UI.Message.Header>
+
+                    <div style = {{ color: balanceColor }}>
+                        { `Balance: ${ accountService.hasAccountInfo ? vol.util.format ( accountService.balance ) : '--' }` }
+                    </div>
+
+                </UI.Message.Content>
+            </UI.Message>
         );
     }
 
-    const onlineIcon = ( accountID, info ) => {
-        return info.miner ? 'gem outline' : 'trophy';
-    }
-
     return (
-        <PollingList
-            items                   = { _.keys ( networkService.accounts )}
-            asyncGetInfo            = { asyncGetInfo }
-            checkIdentifier         = { checkIdentifier }
-            onlineIcon              = { onlineIcon }
-            onDelete                = { onDelete }
-            makeItemMessageBody     = { makeItemMessageBody }
-            warning0                = { ACCOUNT_DELETE_WARNING_0 }
-            warning1                = { ACCOUNT_DELETE_WARNING_1 }
-        />
+        <UI.List>
+            { list }
+        </UI.List>
     );
 });

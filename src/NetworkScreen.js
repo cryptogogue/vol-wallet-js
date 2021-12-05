@@ -61,15 +61,16 @@ export const NetworkActionsSegment = observer (( props ) => {
             </UI.Segment>
 
             <ImportAccountModal
-                networkService = { networkService }
-                open = { importAccountModalOpen }
-                onClose = {() => { setImportAccountModalOpen ( false )}}
+                networkService      = { networkService }
+                open                = { importAccountModalOpen }
+                onClose             = {() => { setImportAccountModalOpen ( false )}}
+                disabled            = { !networkService.consensusService.isOnline }
             />
 
             <RequestAccountModal
-                networkService = { networkService }
-                open = { requestAccountModalOpen }
-                onClose = {() => { setRequestAccountModalOpen ( false )}}
+                networkService      = { networkService }
+                open                = { requestAccountModalOpen }
+                onClose             = {() => { setRequestAccountModalOpen ( false )}}
             />
         </div>
     );

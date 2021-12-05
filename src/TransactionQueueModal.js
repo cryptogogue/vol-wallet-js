@@ -140,7 +140,7 @@ export const TransactionQueueModal = observer (( props ) => {
                             icon            = 'exclamation triangle'
                             header          = 'Transaction Error Occured'
                             content         = { transactionQueue.transactionError.message }
-                            onDismiss       = {() => { transactionQueue.clearTransactionError ()}}
+                            onDismiss       = {() => { transactionQueue.setTransactionError ()}}
                         />
                     </If>
 

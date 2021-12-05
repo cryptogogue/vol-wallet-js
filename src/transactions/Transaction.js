@@ -1,6 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { assert, util }                     from 'fgc';
+import { util }                             from 'fgc';
 import { action, computed, observable }     from 'mobx';
 
 //const debugLog = function () {}
@@ -40,7 +40,7 @@ export const TX_STATUS = {
 
     // PENDING
     PENDING:            'PENDING',
-    SENT:               'SENT',
+    SENDING:            'SENDING',
     MIXED:              'MIXED',
 
     // STOPPED
@@ -65,36 +65,50 @@ export const TX_QUEUE_STATUS = {
     STAGED:             'STAGED',
 };
 
+export const TX_MINER_STATUS = {
+    NEW:                'NEW',
+    ACCEPTED:           'ACCEPTED',
+    REJECTED:           'REJECTED',
+    TIMED_OUT:          'TIMED_OUT',
+};
+
 //================================================================//
 // TransactionStatus
 //================================================================//
 export class TransactionStatus {
 
-    @observable status              = TX_STATUS.STAGED;
-    @observable accountName         = '';
-    @observable assetsFiltered      = {};
-    @observable cost                = 0;
-    @observable miners              = [];
-    @observable acceptedCount       = 0;
-    @observable uuid                = '';
-    @observable type                = '';
-    @observable nonce               = -1;
+    @observable status                  = TX_STATUS.STAGED;
+    @observable accountName             = '';
+    @observable assetsFiltered          = {};
+    @observable cost                    = 0;
+    @observable uuid                    = '';
+    @observable type                    = '';
+    @observable nonce                   = -1;
 
-    @computed get friendlyName      () { return Transaction.friendlyNameForType ( this.type ); }
-    @computed get isAccepted        () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
-    @computed get isBlocked         () { return ( this.queueStatus === TX_QUEUE_STATUS.BLOCKED ); }
-    @computed get isLost            () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
-    @computed get isPending         () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
-    @computed get isStaged          () { return ( this.queueStatus === TX_QUEUE_STATUS.STAGED ); }
-    @computed get isUnsent          () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING ) || ( this.queueStatus === TX_QUEUE_STATUS.LOST )); }
-    @computed get queueStatus       () { return this.getQueueStatus (); }
+    @observable submitCount             = 0;
+    @observable minerStatus             = {};
+    @observable minerBusy               = {};
+    @observable rejection               = false;
+
+    @computed get friendlyName          () { return Transaction.friendlyNameForType ( this.type ); }
+    @computed get isAccepted            () { return ( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ); }
+    @computed get isBlocked             () { return ( this.queueStatus === TX_QUEUE_STATUS.BLOCKED ); }
+    @computed get isLost                () { return ( this.queueStatus === TX_QUEUE_STATUS.LOST ); }
+    @computed get isPending             () { return ( this.queueStatus === TX_QUEUE_STATUS.PENDING ); }
+    @computed get isStaged              () { return ( this.queueStatus === TX_QUEUE_STATUS.STAGED ); }
+    @computed get isUnsent              () { return !(( this.queueStatus === TX_QUEUE_STATUS.ACCEPTED ) || ( this.queueStatus === TX_QUEUE_STATUS.PENDING ) || ( this.queueStatus === TX_QUEUE_STATUS.LOST )); }
+    @computed get queueStatus           () { return this.getQueueStatus (); }
+
+    @computed get acceptingMiners       () { return Object.keys ( this.minerStatus ).filter (( minerID ) => { return this.minerStatus [ minerID ] === TX_MINER_STATUS.ACCEPTED; }); }
+    @computed get rejectingMiners       () { return Object.keys ( this.minerStatus ).filter (( minerID ) => { return this.minerStatus [ minerID ] === TX_MINER_STATUS.REJECTED; }); }
+    @computed get respondingMiners      () { return Object.keys ( this.minerStatus ).filter (( minerID ) => { return this.minerStatus [ minerID ] !== TX_MINER_STATUS.TIMED_OUT; }); }
 
     //----------------------------------------------------------------//
     @action
-    affirmMiner ( minerURL ) {
+    affirmMiner ( minerID ) {
 
-        if ( !this.miners.includes ( minerURL )) {
-            this.miners.push ( minerURL );
+        if ( !_.has ( this.minerStatus, minerID )) {
+            this.minerStatus [ minerID ] = TX_MINER_STATUS.NEW;
         }
     }
 
@@ -102,7 +116,10 @@ export class TransactionStatus {
     @action
     clearMiners () {
 
-        this.miners = [];
+        this.minerStatus        = {};
+        this.minerBusy          = {};
+        this.rejection          = false;
+        this.submitCount        = this.submitCount + 1;
     }
 
     //----------------------------------------------------------------//
@@ -125,6 +142,18 @@ export class TransactionStatus {
     }
 
     //----------------------------------------------------------------//
+    getMinerBusy ( minerID ) {
+
+        return this.minerBusy [ minerID ] || false;
+    }
+
+    //----------------------------------------------------------------//
+    getMinerStatus ( minerID ) {
+
+        return this.minerStatus [ minerID ] || false;
+    }
+
+    //----------------------------------------------------------------//
     getQueueStatus () {
 
         switch ( this.status ) {
@@ -135,7 +164,7 @@ export class TransactionStatus {
 
             // PENDING
             case TX_STATUS.PENDING:
-            case TX_STATUS.SENT:
+            case TX_STATUS.SENDING:
             case TX_STATUS.MIXED:
                 return TX_QUEUE_STATUS.PENDING;
 
@@ -153,7 +182,7 @@ export class TransactionStatus {
             case TX_STATUS.LOST:      // isUnsent
                 return TX_QUEUE_STATUS.LOST;
         }
-        assert ( false );
+        throw ( new Error ( 'Unknown transaction status; could not resolve getQueueStatus().' ))
     }
 
     //----------------------------------------------------------------//
@@ -166,34 +195,60 @@ export class TransactionStatus {
         loadedTransaction.accountName       = transaction.accountName;
         loadedTransaction.assetsFiltered    = transaction.assetsFiltered || {};
         loadedTransaction.cost              = transaction.cost;
-        loadedTransaction.miners            = transaction.miners;
         loadedTransaction.acceptedCount     = transaction.acceptedCount;
         loadedTransaction.uuid              = transaction.uuid;
         loadedTransaction.type              = transaction.type;
         loadedTransaction.nonce             = transaction.nonce;
+
+        loadedTransaction.minerStatus       = transaction.minerStatus || {};
+        loadedTransaction.rejection         = transaction.rejection || false;
+        loadedTransaction.submitCount       = transaction.submitCount || 0;
 
         return loadedTransaction;
     }
 
     //----------------------------------------------------------------//
     @action
-    setAcceptedCount ( acceptedCount ) {
+    setMinerBusy ( minerID, busy ) {
 
-        this.acceptedCount  = acceptedCount;
+        this.minerBusy [ minerID ] = busy;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setMinerStatus ( minerID, status ) {
+
+        this.minerStatus [ minerID ] = status;
     }
 
     //----------------------------------------------------------------//
     @action
     setNonce ( nonce ) {
 
-        this.nonce          = nonce;
+        this.nonce = nonce;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setRejection ( rejection ) {
+
+        this.rejection = rejection;
     }
 
     //----------------------------------------------------------------//
     @action
     setStatus ( status ) {
 
-        this.status         = status;
+        this.status = status;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    submitWithNonce ( nonce ) {
+
+        this.clearMiners ();
+        this.status  = TX_STATUS.PENDING;
+        this.nonce   = nonce;
     }
 };
 

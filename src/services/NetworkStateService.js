@@ -41,9 +41,9 @@ export class NetworkStateService {
             this.appState.assertPassword ( password );
         }
 
-        let account = this.accounts [ accountID ] || new AccountStateService ( this, accountIndex, accountID );
-
-        let key = account.keys [ keyName ] || {};
+        const account = this.accounts [ accountID ] || new AccountStateService ( this, accountIndex, accountID );
+        
+        const key = account.keys [ keyName ] || {};
 
         key.phraseOrKeyAES      = password ? crypto.aesPlainToCipher ( phraseOrKey, password ) : phraseOrKey;
         key.privateKeyHexAES    = password ? crypto.aesPlainToCipher ( privateKeyHex, password ) : privateKeyHex;
@@ -57,6 +57,7 @@ export class NetworkStateService {
         if ( !this.accountIndices.includes ( accountIndex )) {
             this.accountIndices.push ( accountIndex );
         }
+        account.startServiceLoopAsync ();
     }
 
     //----------------------------------------------------------------//
@@ -118,16 +119,26 @@ export class NetworkStateService {
         });
 
         for ( let accountIndex of this.accountIndices ) {
-
             const accountID = this.accountIDsByIndex [ accountIndex ];
             if ( accountID === undefined ) continue;
-
             debugLog ( 'loading account', accountID );
             const account = new AccountStateService ( this, accountIndex, accountID );
             this.accounts [ accountID ] = account;
         }
 
-        this.consensusService.startServiceLoopAsync (() => { this.saveConsensusState (); });
+        ( async () => {
+
+            debugLog ( 'DISCOVER MINERS' );
+            await this.consensusService.discoverMinersSinglePassAsync ();
+
+            debugLog ( 'START CONSENSUS SERVICE' );
+            this.consensusService.startServiceLoopAsync (() => { this.saveConsensusState (); });
+
+            debugLog ( 'START ACCOUNTS' );
+            for ( let accountID in this.accounts ) {
+                this.accounts [ accountID ].startServiceLoopAsync ();
+            }
+        })();
     }
 
     //----------------------------------------------------------------//
@@ -272,6 +283,8 @@ export class NetworkStateService {
     //----------------------------------------------------------------//
     @action
     async resetConsensus () {
+
+        debugLog ( 'RESET CONSENSUS' );
 
         this.revocable.revokeAll ();
         hooks.finalize ( this.consensusService );

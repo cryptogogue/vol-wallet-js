@@ -49,11 +49,11 @@ export const ConsensusScreen = observer (( props ) => {
 
                 <Choose>
                     <When condition = { !ignored }>
-                        <UI.Table.Cell collapsing>{ miner.total }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.height }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.digest ? miner.digest.substring ( 0, 7 ) : '' }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.nextHeight }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.nextDigest ? miner.nextDigest.substring ( 0, 7 ) : '' }</UI.Table.Cell>
+                        <UI.Table.Cell collapsing>{ miner.total }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ release }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ miner.commit ? miner.commit.substring ( 0, 7 ) : '' }</UI.Table.Cell>
                         <UI.Table.Cell collapsing>{ latency.toFixed ( 2 )}</UI.Table.Cell>
@@ -113,12 +113,12 @@ export const ConsensusScreen = observer (( props ) => {
                         <UI.Table.Row>
                             <UI.Table.HeaderCell/>
                             <UI.Table.HeaderCell>Miner ID</UI.Table.HeaderCell>
-                            <UI.Table.HeaderCell>Total</UI.Table.HeaderCell>
                             
                             <UI.Table.HeaderCell>Height</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Digest</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Height'</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Digest'</UI.Table.HeaderCell>
+                            <UI.Table.HeaderCell>Total</UI.Table.HeaderCell>
 
                             <UI.Table.HeaderCell>Release</UI.Table.HeaderCell>
                             <UI.Table.HeaderCell>Commit</UI.Table.HeaderCell>

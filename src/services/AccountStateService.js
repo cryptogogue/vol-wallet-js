@@ -22,10 +22,12 @@ export class AccountStateService {
     @observable accountID           = false;
     @observable index               = false;
     @observable hasAccountInfo      = false;
+    @observable isRunning           = false;
 
     @computed get accountKeyNames           () { return ( this.account && Object.keys ( this.account.keys )) || []; }
     @computed get balance                   () { return this.account.balance - this.transactionQueue.cost; }
     @computed get controlKey                () { return this.account.controlKey; }
+    @computed get hasTransactionError       () { return Boolean ( this.account.transactionError ); }
     @computed get inboxRead                 () { return this.account.inboxRead || 0; }
     @computed get inventoryNonce            () { return this.inventoryService.nonce; }
     @computed get isMiner                   () { return Boolean ( this.minerInfo ); }
@@ -103,16 +105,14 @@ export class AccountStateService {
         this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
         this.inventoryTags          = new InventoryTagsController ( networkService.networkID );
         this.transactionQueue       = new TransactionQueueService ( this );
-
-        this.startServiceLoopAsync ();
     }
 
     //----------------------------------------------------------------//
     deleteAccount () {
 
+        hooks.finalize ( this );
         this.storage.remove ( this, 'account' );
         AppDB.deleteAccountAsync ( this.networkID, this.index );
-        hooks.finalize ( this );
     }
 
     //----------------------------------------------------------------//
@@ -124,6 +124,8 @@ export class AccountStateService {
 
     //----------------------------------------------------------------//
     finalize () {
+
+        console.log ( 'FINALIZING ACCOUNT STATE SERVICE!' );
 
         hooks.finalize ( this.inventoryProgress );
         hooks.finalize ( this.inventory );
@@ -222,13 +224,29 @@ export class AccountStateService {
 
     //----------------------------------------------------------------//
     @action
+    setTransactionError ( uuid, message ) {
+
+        if ( uuid ) {
+            this.account.transactionError = {
+                uuid:       uuid,
+                message:    message,
+            };
+        }
+        else {
+            this.account.transactionError = false;
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
     async startServiceLoopAsync () {
+
+        if ( this.isRunning ) return;
+        this.isRunning = true;
 
         try {
 
-            debugLog ( 'LOADED SUB-SERVICES' );
-
-            await this.syncAccountInfoAsync ();
+            debugLog ( 'LOADING SUB-SERVICES' );
 
             await this.transactionQueue.loadAsync ();
             await this.inventoryService.loadAsync ();
@@ -245,13 +263,19 @@ export class AccountStateService {
     @action
     async serviceLoopAsync () {
 
+        debugLog ( 'ACCOUNT STATE SERVICE LOOP' );
+
         try {
 
             await this.syncAccountInfoAsync ();
-            await this.inventoryService.serviceStepAsync ();
-            await this.transactionQueue.serviceStepAsync ();
+            if ( this.hasAccountInfo ) {
+                await this.inventoryService.serviceStepAsync ();
+                await this.transactionQueue.serviceStepAsync ();
+            }
 
-            this.revocable.timeout (() => { this.serviceLoopAsync ()}, 5000 );
+            const timeout = this.transactionQueue.pendingTransactions.length > 0 ? 1000 : 5000;
+
+            this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
         }
         catch ( error ) {
             debugLog ( error );

@@ -5,6 +5,7 @@ import { ConsensusWarning }                 from './ConsensusWarning';
 import { InboxLabel }                       from './InboxLabel';
 import { InventoryWarning }                 from './InventoryWarning';
 import { NavigationBar }                    from './NavigationBar';
+import { NetworkNavigationBar, getNetworkTabTitle, getNetworkTabURL, NETWORK_TABS } from './NetworkNavigationBar';
 import { TransactionQueueLabel }            from './TransactionQueueLabel';
 import { observer }                         from 'mobx-react';
 import React                                from 'react';
@@ -21,7 +22,7 @@ export const ACCOUNT_TABS = {
 };
 
 //----------------------------------------------------------------//
-function getAccountTabTitle ( tab ) {
+export function getAccountTabTitle ( tab ) {
 
     switch ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return 'Account';
@@ -34,7 +35,7 @@ function getAccountTabTitle ( tab ) {
 };
 
 //----------------------------------------------------------------//
-function getAccountTabURL ( tab ) {
+export function getAccountTabURL ( tab ) {
 
     switch ( tab ) {
         case ACCOUNT_TABS.ACCOUNT:      return '';
@@ -64,6 +65,11 @@ export const AccountNavigationBar = observer (( props ) => {
     const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
     const shopURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.SHOP )}`;
 
+    const chainURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
+    const networkURL            = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
+    const consensusURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CONSENSUS )}`;
+    const termsURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.TERMS_OF_SERVICE )}`;
+
     const accountTab            = getAccountTabURL ( tab );
 
     if ( accountService.accountID !== accountID ) {
@@ -83,14 +89,21 @@ export const AccountNavigationBar = observer (( props ) => {
 
                 <UI.Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
                     <UI.Dropdown.Menu>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )} as = { Link } to = { accountsURL }/>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )} as = { Link } to = { keysURL }/>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )} as = { Link } to = { inventoryURL }/>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )} as = { Link } to = { shopURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )}     as = { Link } to = { accountsURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )}        as = { Link } to = { keysURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )}   as = { Link } to = { inventoryURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )}        as = { Link } to = { shopURL }/>
 
                         <If condition = { accountService.isMiner }>
-                            <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )} as = { Link } to = { minerURL }/>
+                            <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )}   as = { Link } to = { minerURL }/>
                         </If>
+
+                        <UI.Dropdown.Divider/>
+
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.NETWORK )}             as = { Link } to = { networkURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.CONSENSUS )}           as = { Link } to = { consensusURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )}    as = { Link } to = { termsURL }/>
+
                     </UI.Dropdown.Menu>
                 </UI.Dropdown>
 

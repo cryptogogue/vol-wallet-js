@@ -25,7 +25,7 @@ export const TermsOfServiceScreen = observer (( props ) => {
 
     const networkIDFromEndpoint     = util.getMatch ( props, 'networkID' );
     const networkService            = appState.assertNetworkService ( networkIDFromEndpoint );
-    const tosController             = hooks.useFinalizable (() => new TermsOfServiceController ( networkService ));
+    const tosController             = hooks.useFinalizable (() => new TermsOfServiceController ( networkService.consensusService ));
 
     return (
         <React.Fragment>

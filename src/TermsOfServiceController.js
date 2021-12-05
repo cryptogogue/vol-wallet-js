@@ -18,10 +18,10 @@ export class TermsOfServiceController {
     @observable digest          = '';
 
     //----------------------------------------------------------------//
-    constructor ( networkService ) {
+    constructor ( consensusService ) {
 
         this.revocable          = new RevocableContext ();
-        this.networkService     = networkService;
+        this.consensusService   = consensusService;
 
         this.fetchTermsOfService ();
     }
@@ -29,23 +29,25 @@ export class TermsOfServiceController {
     //----------------------------------------------------------------//
     async fetchTermsOfService () {
 
-        try {
+        if ( this.consensusService.isOnline ) {
+            try {
 
-            const accountID = this.accountID;            
-            let data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/tos`, false, true ));
+                const accountID = this.accountID;            
+                let data = await this.revocable.fetchJSON ( this.consensusService.getServiceURL ( `/tos`, false, true ));
 
-            if ( data.contract ) {
-                runInAction (() => {
-                    this.text       = data.contract.text;
-                    this.digest     = data.contract.digest;
-                    this.isBusy     = false;
-                });
-                return;
+                if ( data.contract ) {
+                    runInAction (() => {
+                        this.text       = data.contract.text;
+                        this.digest     = data.contract.digest;
+                        this.isBusy     = false;
+                    });
+                    return;
+                }
             }
-        }
-        catch ( error ) {
-            console.log ( 'AN ERROR!' );
-            console.log ( error );
+            catch ( error ) {
+                console.log ( 'AN ERROR!' );
+                console.log ( error );
+            }
         }
         this.revocable.timeout (() => { this.fetchTermsOfService ()}, 1000 );
     }

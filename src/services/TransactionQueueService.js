@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as AppDB                               from './AppDB';
-import { Transaction, TransactionStatus, TX_QUEUE_STATUS, TX_STATUS, TRANSACTION_TYPE } from '../transactions/Transaction';
+import { Transaction, TransactionStatus, TX_MINER_STATUS, TX_QUEUE_STATUS, TX_STATUS, TRANSACTION_TYPE } from '../transactions/Transaction';
 import { assert, crypto, RevocableContext }     from 'fgc';
 import _                                        from 'lodash';
 import { action, computed, observable, runInAction, toJS } from 'mobx';
@@ -16,6 +16,8 @@ export const TX_SERVICE_STATUS = {
     LOADED:             'LOADED',
 };
 
+const TX_MINER_TIMEOUT = 10000;
+
 //================================================================//
 // TransactionQueueService
 //================================================================//
@@ -26,7 +28,7 @@ export class TransactionQueueService {
     @observable queue           = [];
 
     @computed get account                   () { return this.accountService.account; }
-    @computed get hasTransactionError       () { return Boolean ( this.account.transactionError ); }
+    @computed get hasTransactionError       () { return this.accountService.hasTransactionError; }
     @computed get isLoaded                  () { return this.status === TX_SERVICE_STATUS.LOADED; }
 
     //----------------------------------------------------------------//
@@ -64,7 +66,7 @@ export class TransactionQueueService {
     @action
     async clearAndResetAsync () {
 
-        this.clearTransactionError ();
+        this.setTransactionError ();
 
         await this.loadAsync ();
         runInAction (() => {
@@ -81,7 +83,7 @@ export class TransactionQueueService {
     @action
     async clearUnsentTransactionsAsync () {
 
-        this.clearTransactionError ();
+        this.setTransactionError ();
 
         await this.loadAsync ();
         runInAction (() => {
@@ -91,17 +93,12 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    @action
-    clearTransactionError () {
-        this.account.transactionError = false;
-    }
-
-    //----------------------------------------------------------------//
     constructor ( accountService ) {
         
         this.revocable          = new RevocableContext ();
         this.accountService     = accountService;
         this.networkService     = accountService.networkService;
+        this.consensusService   = this.networkService.consensusService;
         this.appState           = accountService.appState;
     }
 
@@ -161,7 +158,7 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     async fetchHistoryAsync () {
 
-        const consensusService = this.networkService.consensusService;
+        const consensusService = this.consensusService;
         if ( !consensusService.isOnline ) return;
 
         let more = true;
@@ -317,27 +314,105 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    async processTransactionAsync ( transaction ) {
+    async processMinerAsync ( transaction, miner, loadEnvelope ) {
+
+        const minerID       = miner.minerID;
+        const minerURL      = miner.url;
+
+        debugLog ( 'process miner', minerID, minerURL );
+
+        transaction.affirmMiner ( minerID );
+
+        if ( transaction.getMinerStatus ( minerID ) === TX_MINER_STATUS.REJECTED ) return;
+        if ( transaction.getMinerBusy ( minerID )) return;
+
+        const submitCount = transaction.submitCount;
+        transaction.setMinerBusy ( minerID, true );
+
+        const serviceURL = this.consensusService.formatServiceURL ( minerURL, `/accounts/${ transaction.accountName }/transactions/${ transaction.uuid }` );
+
+        const putTransactionAsync = async () => {
+
+            debugLog ( 'submitting transaction', minerID, transaction.uuid );
+
+            // re-send the transaction if not recognized.
+            const envelope = await loadEnvelope ();
+            const result = await this.revocable.fetchJSON ( serviceURL, {
+                method :    'PUT',
+                headers :   { 'content-type': 'application/json' },
+                body :      JSON.stringify ( envelope, null, 4 ),
+            }, TX_MINER_TIMEOUT );
+
+            if ( transaction.submitCount !== submitCount ) return;
+
+            if ( result && ( result.status === 'OK' )) {
+                transaction.setMinerStatus ( minerID, TX_MINER_STATUS.ACCEPTED );
+            }
+        }
+
+        try {
+            
+            if ( transaction.getMinerStatus ( minerID ) === TX_MINER_STATUS.NEW ) {
+                await putTransactionAsync ();
+            }
+            else {
+
+                debugLog ( 'checking transaction', minerID, transaction.uuid );
+                const response = await this.revocable.fetchJSON ( serviceURL, undefined, TX_MINER_TIMEOUT );
+                if ( transaction.submitCount !== submitCount ) return;
+
+                debugLog ( 'RESPONSE:', response );
+
+                switch ( response.status ) {
+
+                    case 'ACCEPTED':
+                        
+                        transaction.setMinerStatus ( minerID, TX_MINER_STATUS.ACCEPTED );
+                        break;
+
+                    case 'REJECTED':
+                    case 'IGNORED':
+                        
+                        if ( response.uuid === transaction.uuid ) {
+                            transaction.setMinerStatus ( minerID, TX_MINER_STATUS.REJECTED );
+                            transaction.setRejection ( response );
+                        }
+                        break;
+
+                    case 'UNKNOWN': {
+
+                        // re-submit
+                        await putTransactionAsync ();
+                        break;
+                    }
+                }
+            }
+        }
+        catch ( error ) {
+            debugLog ( error );
+            if ( transaction.submitCount !== submitCount ) return;
+            if ( transaction.getMinerStatus ( minerID ) === TX_MINER_STATUS.NEW ) { 
+                transaction.setMinerStatus ( minerID, TX_MINER_STATUS.TIMED_OUT );
+            }
+        }
+
+        transaction.setMinerBusy ( minerID, false );
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async processTransaction ( transaction ) {
 
         if ( this.hasTransactionError ) return;
+        if ( !transaction.isPending ) return;
 
-        const account           = this.account;
-        const consensusService  = this.networkService.consensusService;
+        const consensusService  = this.consensusService;
         const accountName       = transaction.accountName;
         
-        debugLog ( 'CONSENSUS SERVICE ONLINE:', consensusService.isOnline );
-
         if ( !consensusService.isOnline ) return;
 
-        const respondingMiners = [];
-
-        let acceptedCount = 0;
-        let rejectedCount = 0;
-
-        let rejected = [];
-
-        if ( transaction.miners.length === 0 ) {
-            transaction.setStatus ( TX_STATUS.SENT );
+        if ( transaction.status === TX_STATUS.PENDING ) {
+            transaction.setStatus ( TX_STATUS.SENDING );
         }
 
         let envelope = false;
@@ -350,118 +425,41 @@ export class TransactionQueueService {
             return envelope;
         }
 
-        const checkTransactionStatus = async ( minerURL ) => {
-
-            const serviceURL = consensusService.formatServiceURL ( minerURL, `/accounts/${ accountName }/transactions/${ transaction.uuid }` );
-
-            debugLog ( 'processTransaction checkTransactionStatus', minerURL );
-
-            try {
-                const response = await this.revocable.fetchJSON ( serviceURL, undefined, 10000 );
-                debugLog ( 'response:', response );
-                
-                respondingMiners.push ( minerURL );
-
-                switch ( response.status ) {
-
-                    case 'ACCEPTED':
-                        acceptedCount++;
-                        break;
-
-                    case 'REJECTED':
-                    case 'IGNORED':
-                        if ( response.uuid === transaction.uuid ) {
-                            rejectedCount++;
-                            rejected.push ( response );
-                        }
-                        break;
-
-                    case 'UNKNOWN':
-                        // re-send the transaction if not recognized.
-                        await this.putTransactionAsync ( serviceURL, await loadEnvelope ());
-                        break;
-
-                    default:
-                        break;
-                }
-            }
-            catch ( error ) {
-                debugLog ( 'error or no response' );
-            }
-        }        
-
-        // check status of transaction on them all.
-        const promises = [];
-        const miners = consensusService.currentMiners;
+        // send transaction to all online miners
+        const miners = consensusService.onlineMiners;
         for ( let miner of miners ) {
-            promises.push ( checkTransactionStatus ( miner.url ));
+            this.processMinerAsync ( transaction, miner, loadEnvelope );
         }
-        await this.revocable.all ( promises );
 
-        const responseCount = respondingMiners.length;
-        if ( respondingMiners.length ) {
+        const responseCount = transaction.respondingMiners.length;
+        const rejectCount   = transaction.rejectingMiners.length;
 
-            // update the miner count
-            transaction.clearMiners ();
-            for ( let minerURL in respondingMiners ) {
-                transaction.affirmMiner ( minerURL );
-            }
+        // if we got any responses, do something
+        if ( responseCount ) {
 
-            debugLog ( 'RESPONSE COUNT:', responseCount );
-            debugLog ( 'ACCEPTED COUNT:', acceptedCount );
-            debugLog ( 'REJECTED COUNT:', rejectedCount );
-            debugLog ( 'RESPONSE COUNT:', responseCount );
-            debugLog ( 'NONCE:', transaction.nonce );
-            debugLog ( 'ACCOUNT NONCE:', this.accountService.nonce );
+            // if there were rejections, do something
+            if ( rejectCount ) {
 
-            transaction.setAcceptedCount ( acceptedCount );
+                if ( rejectCount === responseCount ) {
 
-            // if *all* nodes have rejected the transaction, stop and report.
-            if ( rejectedCount ) {
+                    const rejection = transaction.rejection;
+                    this.setTransactionError ( rejection.uuid, rejection.message );
+                    transaction.setStatus ( TX_STATUS.REJECTED );
 
-                if ( rejectedCount === responseCount ) {
-                    runInAction (() => {
-
-                        account.transactionError = {
-                            message:    rejected [ 0 ].message,
-                            uuid:       rejected [ 0 ].uuid,
-                        };
-                        transaction.setStatus ( TX_STATUS.REJECTED );
-
-                        for ( let transaction of this.queue ) {
-                            if (( transaction.isPending || transaction.isUnsent ) && ( transaction.status !== TX_STATUS.REJECTED )) {
-                                transaction.setStatus ( TX_STATUS.BLOCKED );
-                            }
+                    for ( let transaction of this.queue ) {
+                        if (( transaction.isPending || transaction.isUnsent ) && ( transaction.status !== TX_STATUS.REJECTED )) {
+                            transaction.setStatus ( TX_STATUS.BLOCKED );
                         }
-                    });
+                    }
                 }
                 else {
-                    runInAction (() => {
-                        transaction.setStatus ( TX_STATUS.MIXED );
-                    });
+                    transaction.setStatus ( TX_STATUS.MIXED );
                 }
             }
+            else {
+                transaction.setStatus ( TX_STATUS.SENDING );
+            }
         }
-    }
-
-    //----------------------------------------------------------------//
-    async putTransactionAsync ( serviceURL, envelope ) {
-
-        let result = false;
-
-        try {
-            result = await this.revocable.fetchJSON ( serviceURL, {
-                method :    'PUT',
-                headers :   { 'content-type': 'application/json' },
-                body :      JSON.stringify ( envelope, null, 4 ),
-            });
-        }
-        catch ( error ) {
-            debugLog ( 'error or no response' );
-            debugLog ( error );
-        }
-
-        return ( result && ( result.status === 'OK' ));
     }
 
     //----------------------------------------------------------------//
@@ -518,20 +516,21 @@ export class TransactionQueueService {
 
         await this.loadAsync ();
         await this.fetchHistoryAsync ();
-
-        this.updateTransactionStatus ();
-
+        await this.updateTransactionStatusAsync ();
         await this.restoreTransactionsAsync ();
 
         if ( this.hasTransactionError ) return;
 
-        const promises = [];
         for ( let transaction of this.pendingTransactions ) {
-            promises.push ( this.processTransactionAsync ( transaction ));
+            this.processTransaction ( transaction );
         }
-        await this.revocable.all ( promises );
 
         await this.saveAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    setTransactionError ( uuid, message ) {
+        this.accountService.setTransactionError ( uuid, message );
     }
 
     //----------------------------------------------------------------//
@@ -573,7 +572,7 @@ export class TransactionQueueService {
 
         this.appState.assertPassword ( password );
 
-        this.clearTransactionError ();
+        this.setTransactionError ();
 
         const recordBy = new Date ();
         recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
@@ -604,11 +603,7 @@ export class TransactionQueueService {
             // replace the transaction body with an envelope
             await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid, envelope: envelope });
 
-            runInAction (() => {
-                transaction.status      = TX_STATUS.PENDING;
-                transaction.miners      = [];
-                transaction.nonce       = body.maker.nonce;
-            });
+            transaction.submitWithNonce ( body.maker.nonce );
         }
 
         await this.saveAsync ();
@@ -628,7 +623,7 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @action
-    async updateTransactionStatus () {
+    async updateTransactionStatusAsync () {
 
         const nonce = this.accountService.nonce;
 

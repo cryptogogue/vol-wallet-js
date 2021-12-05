@@ -16,7 +16,7 @@ export const NETWORK_TABS = {
 };
 
 //----------------------------------------------------------------//
-function getAccountTabTitle ( tab ) {
+export function getNetworkTabTitle ( tab ) {
 
     switch ( tab ) {
         case NETWORK_TABS.NETWORK:              return 'Accounts';
@@ -28,7 +28,7 @@ function getAccountTabTitle ( tab ) {
 };
 
 //----------------------------------------------------------------//
-function getNetworkTabURL ( tab ) {
+export function getNetworkTabURL ( tab ) {
 
     switch ( tab ) {
         case NETWORK_TABS.NETWORK:              return '';
@@ -68,15 +68,15 @@ export const NetworkNavigationBar = observer (( props ) => {
             />
 
             <UI.Menu borderless attached = 'bottom'>
-                <UI.Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
+                <UI.Dropdown item text = { getNetworkTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
                     <UI.Dropdown.Menu>
 
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.NETWORK )} as = { Link } to = { networkURL }/>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CONSENSUS )} as = { Link } to = { consensusURL }/>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )} as = { Link } to = { termsURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.NETWORK )}             as = { Link } to = { networkURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.CONSENSUS )}           as = { Link } to = { consensusURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )}    as = { Link } to = { termsURL }/>
 
                         <If condition = { false }>
-                            <UI.Dropdown.Item text = { getAccountTabTitle ( NETWORK_TABS.CHAIN )} as = { Link } to = { chainURL }/>
+                            <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.CHAIN )}           as = { Link } to = { chainURL }/>
                         </If>
                     </UI.Dropdown.Menu>
                 </UI.Dropdown>

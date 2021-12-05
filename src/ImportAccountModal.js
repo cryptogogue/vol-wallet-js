@@ -12,29 +12,23 @@ import * as UI                              from 'semantic-ui-react';
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@IMPORT ACCOUNT:', ...args ); }
 
-const STATUS_WAITING_FOR_INPUT          = 0;
-const STATUS_VERIFYING_KEY              = 1;
-const STATUS_DONE                       = 2;
-
 //================================================================//
 // ImportAccountController
 //================================================================//
 class ImportAccountController {
 
     @observable accountID       = '';
-    @observable status          = STATUS_WAITING_FOR_INPUT;
 
     //----------------------------------------------------------------//
-    constructor ( networkService, onDone ) {
+    constructor ( networkService ) {
 
         this.revocable          = new RevocableContext ();
         this.networkService     = networkService;
-        this.onDone             = onDone;
     }
 
     //----------------------------------------------------------------//
     @action
-    async import ( key, phraseOrKey, password ) {
+    async importAsync ( key, phraseOrKey, password ) {
 
         debugLog ( 'IMPORT' )
 
@@ -49,15 +43,11 @@ class ImportAccountController {
             debugLog ( 'ALREADY EXISTS:', accountID )
 
             this.accountID = accountID;
-            this.status = STATUS_DONE;
-            this.onDone ();
             return;
         }
 
         const keyID = key.getKeyID ();
         console.log ( 'KEY_ID', keyID );
-
-        this.status = STATUS_VERIFYING_KEY;
 
         let keyName = false;
         let accountIndex = false;
@@ -97,14 +87,7 @@ class ImportAccountController {
                 );
 
                 this.accountID = accountID;
-                this.status = STATUS_DONE;
-
                 this.networkService.appState.flags.promptFirstAccount = false;
-
-                this.onDone ();
-            }
-            else {
-                this.status = STATUS_WAITING_FOR_INPUT;
             }
         });
     }
@@ -123,10 +106,17 @@ const ImportAccountModalBody = observer (( props ) => {
     const [ key, setKey ]                   = useState ( false );
     const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
     const [ password, setPassword ]         = useState ( '' );
+    const [ busy, setBusy ]                 = useState ( false );
 
     const onSubmit = async () => {
-        console.log ( 'PHRASE OR KEY:', phraseOrKey );
-        controller.import ( key, phraseOrKey, password );
+        setBusy ( true );
+        await controller.importAsync ( key, phraseOrKey, password );
+        if ( controller.accountID ) {
+            onClose ();
+        }
+        else {
+            setBusy ( false );
+        }
     }
 
     const submitEnabled = key && phraseOrKey && password;
@@ -152,8 +142,9 @@ const ImportAccountModalBody = observer (( props ) => {
             <UI.Modal.Actions>
                 <UI.Button
                     positive
-                    disabled = { !submitEnabled }
-                    onClick = {() => { onSubmit ()}}
+                    disabled        = { !submitEnabled }
+                    onClick         = {() => { onSubmit ()}}
+                    loading         = { busy }
                 >
                     Import
                 </UI.Button>

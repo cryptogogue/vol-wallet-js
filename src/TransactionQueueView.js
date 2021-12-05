@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PagingMenu, PagingController }     from './PagingMenu';
-import { TX_STATUS }                        from './transactions/Transaction';
+import { TX_MINER_STATUS, TX_STATUS }       from './transactions/Transaction';
 import { Transaction }                      from './transactions/Transaction';
 import _                                    from 'lodash';
 import JSONTree                             from 'react-json-tree';
@@ -19,27 +19,124 @@ const ROW_STATUS = {
 };
 
 //================================================================//
+// TransactionStatusModal
+//================================================================//
+export const TransactionStatusModal = observer (( props ) => {
+
+    const { transaction, transactionQueue, onClose } = props;
+
+    const getMinerStatusView = ( minerStatus, minerBusy ) => {
+
+        if ( minerStatus === TX_MINER_STATUS.ACCEPTED )         return <React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>;
+        if ( minerStatus === TX_MINER_STATUS.REJECTED )         return <React.Fragment><UI.Icon name = 'times circle' /> rejected</React.Fragment>;
+
+        if ( minerBusy ) {
+            if ( minerStatus === TX_MINER_STATUS.NEW )          return <React.Fragment><UI.Icon name = 'circle notch' loading/> new</React.Fragment>;
+            if ( minerStatus === TX_MINER_STATUS.TIMED_OUT )    return <React.Fragment><UI.Icon name = 'circle notch' loading/> timed out</React.Fragment>;
+        }
+        else {
+             if ( minerStatus === TX_MINER_STATUS.NEW )         return <React.Fragment><UI.Icon name = 'clock'/> new</React.Fragment>;
+            if ( minerStatus === TX_MINER_STATUS.TIMED_OUT )    return <React.Fragment><UI.Icon name = 'question'/> timed out</React.Fragment>;
+        }
+        return <React.Fragment/>;
+    }
+
+    const getRowStatus = ( minerStatus ) => {
+
+        switch ( minerStatus ) {
+            case TX_MINER_STATUS.NEW:           return ROW_STATUS.NEUTRAL;
+            case TX_MINER_STATUS.ACCEPTED:      return ROW_STATUS.POSITIVE;
+            case TX_MINER_STATUS.REJECTED:      return ROW_STATUS.ERROR;
+            case TX_MINER_STATUS.TIMED_OUT:     return ROW_STATUS.WARNING;
+        }
+        return ROW_STATUS.NEUTRAL;
+    }
+
+    let minerList = [];
+    for ( let minerID in transaction.minerStatus ) {
+
+        const minerStatus   = transaction.minerStatus [ minerID ];
+        const minerBusy     = transaction.minerBusy [ minerID ] || false;
+        const rowStatus     = getRowStatus ( minerStatus );
+
+        minerList.push (
+            <UI.Table.Row
+                key         = { minerID }
+                positive    = { rowStatus === ROW_STATUS.POSITIVE ? true : undefined }
+                warning     = { rowStatus === ROW_STATUS.WARNING ? true : undefined }
+                error       = { rowStatus === ROW_STATUS.ERROR ? true : undefined }
+            >
+                <UI.Table.Cell collapsing>{ minerID }</UI.Table.Cell>
+                <UI.Table.Cell>{ getMinerStatusView ( minerStatus, minerBusy )}</UI.Table.Cell>
+            </UI.Table.Row>
+        );
+    }
+
+    return (
+        <UI.Modal
+            open
+            closeIcon
+            onClose     = { onClose }
+        >
+            <UI.Modal.Header>{ transaction.uuid }</UI.Modal.Header>
+
+            <UI.Modal.Content>
+
+                <UI.Table unstackable>
+                    <UI.Table.Header>
+                        <UI.Table.Row>
+                            <UI.Table.HeaderCell>MinerID</UI.Table.HeaderCell>
+                            <UI.Table.HeaderCell>Status</UI.Table.HeaderCell>
+                        </UI.Table.Row>
+                    </UI.Table.Header>
+
+                    <UI.Table.Body>
+                        { minerList }
+                    </UI.Table.Body>
+                </UI.Table>
+
+                <div style = {{ textAlign: 'center' }}>
+
+                    <UI.Header.Subheader>
+                        Your transaction will not be marked 'accepted' until <b>Height</b> and <b>Nonce</b> have changed. This may take several minutes and/or blocks.
+                    </UI.Header.Subheader>
+
+                    <UI.Header.Subheader>
+                        { `Nonce: ${ transactionQueue.accountService.nonce }` }
+                    </UI.Header.Subheader>
+
+                    <UI.Header.Subheader>
+                        { `Height: ${ transactionQueue.networkService.height }` }
+                    </UI.Header.Subheader>
+
+                    <UI.Header.Subheader style = {{ fontSize: 9 }}>
+                        { `${ transactionQueue.networkService.digest }` }
+                    </UI.Header.Subheader>
+                </div>
+
+            </UI.Modal.Content>
+        </UI.Modal>
+    );
+});
+
+//================================================================//
 // TransactionQueueView
 //================================================================//
 export const TransactionQueueView = observer (( props ) => {
     
-    const { transactionQueue }      = props;
-    const error                     = props.error || false;
+    const { transactionQueue }              = props;
+    const error                             = props.error || false;
+    const transactions                      = transactionQueue.queue;
+    const pagingController                  = hooks.useFinalizable (() => new PagingController ( transactions.length ));
 
-    const transactions              = transactionQueue.queue;
-
-    const pagingController          = hooks.useFinalizable (() => new PagingController ( transactions.length ));
-
-    const [ txUUID, setTxUUID ]     = useState ( false );
-    const [ txBody, setTxBody ]     = useState ( false );
+    const [ txBody, setTxBody ]             = useState ( false );
+    const [ txForModal, setTxForModal ]     = useState ( false );
 
     const loadBody = async ( uuid ) => {
-        setTxUUID ( uuid );
         setTxBody ( await transactionQueue.getTransactionBodyAsync ( uuid ));
     }
 
     const onCloseModal = async ( uuid ) => {
-        setTxUUID ( false );
         setTxBody ( false );
     }
 
@@ -52,7 +149,7 @@ export const TransactionQueueView = observer (( props ) => {
 
             // PENDING
             case TX_STATUS.PENDING:     return (<React.Fragment><UI.Icon name = 'clock'/> pending</React.Fragment>);
-            case TX_STATUS.SENT:        return (<React.Fragment><UI.Icon name = 'circle notched' loading/> submitting</React.Fragment>);
+            case TX_STATUS.SENDING:     return (<React.Fragment><UI.Icon name = 'circle notched' loading/> submitting</React.Fragment>);
             case TX_STATUS.MIXED:       return (<React.Fragment><UI.Icon name = 'exclamation triangle'/> submitting</React.Fragment>);
 
             case TX_STATUS.REJECTED:    return (<React.Fragment><UI.Icon name = 'times circle'/> rejected</React.Fragment>);
@@ -79,7 +176,7 @@ export const TransactionQueueView = observer (( props ) => {
             // NEUTRAL
             case TX_STATUS.STAGED:
             case TX_STATUS.PENDING:
-            case TX_STATUS.SENT:
+            case TX_STATUS.SENDING:
                 return ROW_STATUS.NEUTRAL;
 
             // WARNING
@@ -104,7 +201,7 @@ export const TransactionQueueView = observer (( props ) => {
 
         transactionList.push (
             <UI.Table.Row
-                key = { i }
+                key         = { i }
                 positive    = { rowStatus === ROW_STATUS.POSITIVE ? true : undefined }
                 warning     = { rowStatus === ROW_STATUS.WARNING ? true : undefined }
                 error       = { rowStatus === ROW_STATUS.ERROR ? true : undefined }
@@ -123,7 +220,19 @@ export const TransactionQueueView = observer (( props ) => {
                 <UI.Table.Cell>{ transaction.uuid }</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ getStatusView ( transaction )}</UI.Table.Cell>
                 <UI.Table.Cell collapsing>{( !transaction.isUnsent ) ? transaction.nonce : '--' }</UI.Table.Cell>
-                <UI.Table.Cell collapsing>{( transaction.isPending ) ? `${ transaction.acceptedCount } / ${ transaction.miners.length }` : '--' }</UI.Table.Cell>
+                <Choose>
+                    <When condition = { transaction.isPending }>
+                        <UI.Table.Cell collapsing
+                            style           = {{ cursor: 'pointer' }}
+                            onClick         = {() => { setTxForModal ( transaction )}}
+                        >
+                            { transaction.acceptingMiners.length }
+                        </UI.Table.Cell>
+                    </When>
+                    <Otherwise>
+                         <UI.Table.Cell collapsing>--</UI.Table.Cell>
+                    </Otherwise>
+                </Choose>
             </UI.Table.Row>
         );
     }
@@ -171,14 +280,14 @@ export const TransactionQueueView = observer (( props ) => {
                         <UI.Table.Row>
                             <UI.Table.HeaderCell colSpan = '6'>
                                 <PagingMenu controller = { pagingController }/>
-                        </UI.Table.HeaderCell>
+                            </UI.Table.HeaderCell>
                         </UI.Table.Row>
                     </UI.Table.Footer>
                 </If>
             </UI.Table>
 
             <UI.Modal
-                open        = { txUUID !== false }
+                open        = { txBody !== false }
                 onClose     = {() => { onCloseModal ()}}
                 header      = 'Transaction Body'
                 content     = {
@@ -190,6 +299,14 @@ export const TransactionQueueView = observer (( props ) => {
                     />
                 }
             />
+
+            <If condition = { txForModal !== false }>
+                <TransactionStatusModal
+                    transaction             = { txForModal }
+                    transactionQueue        = { transactionQueue }
+                    onClose                 = {() => { setTxForModal ( false )}}
+                />
+            </If>
         </React.Fragment>
     );
 });
