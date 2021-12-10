@@ -13,6 +13,7 @@ configure ({
     enforceActions:     'always',
 });
 
+import { AccountListScreen }            from './AccountListScreen';
 import { AccountScreen }                from './AccountScreen';
 import { AccountDebugScreen }           from './AccountDebugScreen';
 import { ConsensusScreen }              from './ConsensusScreen';
@@ -26,8 +27,8 @@ import { KeysScreen }                   from './KeysScreen';
 import { KeyUtilScreen }                from './KeyUtilScreen';
 import { MinerControlScreen }           from './MinerControlScreen';
 import { MinerInfoUtilScreen }          from './MinerInfoUtilScreen';
-import { NetworkScreen }                from './NetworkScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
+import { ServicesScreen }               from './ServicesScreen';
 import { ShopScreen }                   from './ShopScreen';
 import { TermsOfServiceScreen }         from './TermsOfServiceScreen';
 import { TransactionUtilScreen }        from './TransactionUtilScreen';
@@ -56,12 +57,13 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID"                component = { AccountScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/debug"          component = { AccountDebugScreen }/>
                 <Route exact path = "/net/:networkID/consensus"                         component = { ConsensusScreen }/>
+                <Route exact path = "/net/:networkID/services"                          component = { ServicesScreen }/>
                 <Route exact path = "/net/:networkID/terms"                             component = { TermsOfServiceScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/inventory"      component = { InventoryScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/miner"          component = { MinerControlScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/shop"           component = { ShopScreen }/>
-                <Route exact path = "/net/:networkID"                                   component = { NetworkScreen }/>
+                <Route exact path = "/net/:networkID"                                   component = { AccountListScreen }/>
 
                 <Route exact path = "/util/diagnostic"          component = { DiagnosticAndRecoveryScreen }/>
                 <Route exact path = "/util/hash"                component = { cardmotron.HashUtilScreen }/>

@@ -24,12 +24,14 @@ export class NetworkStateService {
     @computed get accountIndices        () { return this.network.accountIndices; }
     @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
     @computed get digest                () { return this.consensusService.digest || ''; }
+    @computed get favoriteOffers        () { return this.network.favoriteOffers || []; }
     @computed get genesis               () { return this.consensusService.genesis || ''; }
     @computed get height                () { return this.consensusService.height; }
     @computed get identity              () { return this.consensusService.identity; }
     @computed get isOnline              () { return this.consensusService.isOnline; }
+    @computed get marketplaceURL        () { return this.network.marketplaceURL || false; }
     @computed get nodeURL               () { return this.network.nodeURL; }
-    @computed get pendingAccounts       () { return this.network.pendingAccounts; }    
+    @computed get pendingAccounts       () { return this.network.pendingAccounts; }
 
     //----------------------------------------------------------------//
     @action
@@ -267,6 +269,13 @@ export class NetworkStateService {
 
     //----------------------------------------------------------------//
     @action
+    isFavoriteOffer ( offerID ) {
+
+        return this.favoriteOffers.includes ( offerID );
+    }
+
+    //----------------------------------------------------------------//
+    @action
     renameAccount ( oldName, newName ) {
 
         if ( oldName === newName ) return;
@@ -337,5 +346,28 @@ export class NetworkStateService {
         }
 
         this.pendingAccounts [ requestID ] = pendingAccount;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setMarketplaceURL ( url ) {
+
+        this.network.marketplaceURL = url || false;
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    toggleFavoriteOffer ( offerID ) {
+
+        const favorites = this.favoriteOffers ? this.favoriteOffers.slice () : [];
+        const index = favorites.indexOf ( offerID );
+
+        if ( index < 0 ) {
+            favorites.push ( offerID );
+        }
+        else {
+            favorites.splice ( index, 1 );
+        }
+        this.network.favoriteOffers = favorites;
     }
 }

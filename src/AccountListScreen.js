@@ -77,9 +77,9 @@ export const NetworkActionsSegment = observer (( props ) => {
 });
 
 //================================================================//
-// NetworkScreen
+// AccountListScreen
 //================================================================//
-export const NetworkScreen = observer (( props ) => {
+export const AccountListScreen = observer (( props ) => {
 
     if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
@@ -91,7 +91,7 @@ export const NetworkScreen = observer (( props ) => {
 
             <NetworkNavigationBar
                 networkService      = { networkService }
-                tab                 = { NETWORK_TABS.NETWORK }
+                tab                 = { NETWORK_TABS.ACCOUNTS }
                 networkID           = { networkIDFromEndpoint }
             />
 

@@ -9,7 +9,8 @@ import { Link }                             from 'react-router-dom';
 import * as UI                              from 'semantic-ui-react';
 
 export const NETWORK_TABS = {
-    NETWORK:            'NETWORK',
+    ACCOUNTS:           'ACCOUNTS',
+    SERVICES:           'SERVICES',
     CHAIN:              'CHAIN',
     CONSENSUS:          'CONSENSUS',
     TERMS_OF_SERVICE:   'TERMS_OF_SERVICE',
@@ -19,7 +20,8 @@ export const NETWORK_TABS = {
 export function getNetworkTabTitle ( tab ) {
 
     switch ( tab ) {
-        case NETWORK_TABS.NETWORK:              return 'Accounts';
+        case NETWORK_TABS.ACCOUNTS:             return 'Accounts';
+        case NETWORK_TABS.SERVICES:             return 'Services';
         case NETWORK_TABS.CHAIN:                return 'Chain';
         case NETWORK_TABS.CONSENSUS:            return 'Consensus';
         case NETWORK_TABS.TERMS_OF_SERVICE:     return 'Terms of Service';
@@ -31,7 +33,8 @@ export function getNetworkTabTitle ( tab ) {
 export function getNetworkTabURL ( tab ) {
 
     switch ( tab ) {
-        case NETWORK_TABS.NETWORK:              return '';
+        case NETWORK_TABS.ACCOUNTS:             return '';
+        case NETWORK_TABS.SERVICES:             return '/services';
         case NETWORK_TABS.CHAIN:                return '/chain';
         case NETWORK_TABS.CONSENSUS:            return '/consensus';
         case NETWORK_TABS.TERMS_OF_SERVICE:     return '/terms';
@@ -46,8 +49,9 @@ export const NetworkNavigationBar = observer (( props ) => {
 
     const { networkService, navTitle, networkID, tab } = props;
 
+    const accountsURL       = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.ACCOUNTS )}`;
+    const servicesURL       = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.SERVICES )}`;
     const chainURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
-    const networkURL        = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
     const consensusURL      = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CONSENSUS )}`;
     const termsURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.TERMS_OF_SERVICE )}`;
 
@@ -71,7 +75,8 @@ export const NetworkNavigationBar = observer (( props ) => {
                 <UI.Dropdown item text = { getNetworkTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
                     <UI.Dropdown.Menu>
 
-                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.NETWORK )}             as = { Link } to = { networkURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.ACCOUNTS )}            as = { Link } to = { accountsURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.SERVICES )}            as = { Link } to = { servicesURL }/>
                         <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.CONSENSUS )}           as = { Link } to = { consensusURL }/>
                         <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )}    as = { Link } to = { termsURL }/>
 

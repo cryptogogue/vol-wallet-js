@@ -59,14 +59,15 @@ export const AccountNavigationBar = observer (( props ) => {
 
     const { accountService, tab } = props;
 
-    const accountsURL           = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
+    const accountURL            = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
     const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
     const shopURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.SHOP )}`;
 
+    const accountsURL           = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.ACCOUNTS )}`;
     const chainURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
-    const networkURL            = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.NETWORK )}`;
+    const servicesURL           = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.SERVICES )}`;
     const consensusURL          = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CONSENSUS )}`;
     const termsURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.TERMS_OF_SERVICE )}`;
 
@@ -89,7 +90,7 @@ export const AccountNavigationBar = observer (( props ) => {
 
                 <UI.Dropdown item text = { getAccountTabTitle ( tab )} style = {{ textTransform: 'uppercase' }}>
                     <UI.Dropdown.Menu>
-                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )}     as = { Link } to = { accountsURL }/>
+                        <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.ACCOUNT )}     as = { Link } to = { accountURL }/>
                         <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )}        as = { Link } to = { keysURL }/>
                         <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )}   as = { Link } to = { inventoryURL }/>
                         <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )}        as = { Link } to = { shopURL }/>
@@ -100,7 +101,8 @@ export const AccountNavigationBar = observer (( props ) => {
 
                         <UI.Dropdown.Divider/>
 
-                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.NETWORK )}             as = { Link } to = { networkURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.ACCOUNTS )}            as = { Link } to = { accountsURL }/>
+                        <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.SERVICES )}            as = { Link } to = { servicesURL }/>
                         <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.CONSENSUS )}           as = { Link } to = { consensusURL }/>
                         <UI.Dropdown.Item text = { getNetworkTabTitle ( NETWORK_TABS.TERMS_OF_SERVICE )}    as = { Link } to = { termsURL }/>
 
