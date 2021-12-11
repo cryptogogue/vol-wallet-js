@@ -377,11 +377,12 @@ export class InventoryService {
 
         debugLog ( 'STATUS FROM SERVER:', data );
 
-        if ( data.inventoryTimestamp ) {
+        if ( data.schemaHash && data.schemaVersion ) {
             await this.updateSchema ( data.schemaHash, data.schemaVersion );
-            if ( this.schema ) {
-                await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
-            }
+        }
+
+        if ( this.schema && data.inventoryTimestamp ) {
+            await this.updateDeltaAsync ( data.inventoryNonce, data.inventoryTimestamp );
         }
     }
 
