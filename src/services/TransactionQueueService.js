@@ -211,7 +211,15 @@ export class TransactionQueueService {
         }
 
         switch ( body.type ) {
-            
+
+            case TRANSACTION_TYPE.BUY_ASSETS: {
+
+                const assetList = details ? formatAssetList ( details.assets ) : '[unknown assets]';
+
+                if ( isMaker ) return `You bought ${ assetList } from ${ details.from }.`;
+                return `${ details.to } bought ${ assetList } from you.`;
+            }
+
             case TRANSACTION_TYPE.PUBLISH_SCHEMA:
             case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET: {
 
@@ -304,6 +312,19 @@ export class TransactionQueueService {
     @computed get
     lostTransactions () {
         return this.queue.filter (( elem ) => { return ( elem.status === TX_STATUS.LOST )});
+    }
+
+    //----------------------------------------------------------------//
+    @computed get
+    pendingOfferIDs () {
+
+        const offerIDs = [];
+        for ( let transaction of this.costBearingTransactions ) {
+            if ( transaction.offerID !== false ) {
+                offerIDs.push ( transaction.offerID );
+            }
+        }
+        return offerIDs;
     }
 
     //----------------------------------------------------------------//
@@ -577,7 +598,8 @@ export class TransactionQueueService {
         const recordBy = new Date ();
         recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
 
-        let nonce = this.accountService.nonce;
+        const pending = this.pendingTransactions;
+        let nonce = pending.length ? ( pending [ pending.length - 1 ].nonce + 1 ) : this.accountService.nonce;
 
         for ( let transaction of this.unsentTransactions ) {
 

@@ -268,7 +268,6 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
-    @action
     isFavoriteOffer ( offerID ) {
 
         return this.favoriteOffers.includes ( offerID );

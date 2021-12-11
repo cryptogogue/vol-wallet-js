@@ -28,6 +28,8 @@ export class BuyAssetsFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
     virtual_decorateTransaction ( transaction ) {
+        
+        transaction.setOfferID ( this.offerID );
     }
 
     //----------------------------------------------------------------//

@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
+import { OfferView, OfferListView, OfferController, OfferAssetModal } from './OfferView';
 import { AppStateService }                                  from './services/AppStateService';
 import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
 import { CancelOfferFormController }                        from './transactions/CancelOfferFormController';
@@ -8,7 +9,7 @@ import { TransactionModal }                                 from './transactions
 import * as cardmotron                                      from 'cardmotron';
 import * as fgc                                             from 'fgc';
 import _                                                    from 'lodash';
-import { DateTime }                                         from 'luxon';
+import * as luxon                                           from 'luxon';
 import { action, computed, observable, runInAction }        from 'mobx';
 import { observer }                                         from 'mobx-react';
 import React, { useState }                                  from 'react';
@@ -31,15 +32,86 @@ const PAGE_SIZE = 20;
 const debugLog = function ( ...args ) { console.log ( '@SHOP:', ...args ); }
 
 //================================================================//
-// FavoritesSearchController
+// OfferListUpdateController
 //================================================================//
-class FavoritesSearchController {
+class OfferListUpdateController {
+
+    //----------------------------------------------------------------//
+    constructor ( accountService ) {
+
+        this.revocable          = new fgc.RevocableContext ();
+        this.accountService     = accountService;
+        this.networkService     = accountService.networkService;
+        this.offers             = [];
+        this.updateIndex        = 0;
+
+        this.expirationUpdateLoopAsync ();
+        this.offerUpdateLoopAsync ();
+    }
+
+    //----------------------------------------------------------------//
+    async expirationUpdateLoopAsync () {
+    
+        this.updateNow ();
+        this.revocable.timeout (() => { this.expirationUpdateLoopAsync ()}, 1000 );
+    }
+
+    //----------------------------------------------------------------//
+    async offerUpdateLoopAsync () {
+    
+        if ( this.offers.length ) {
+
+            const updateIndex = this.updateIndex % this.offers.length;
+            const offerID = this.offers [ updateIndex ].offerID;
+
+            try {
+                let marketplaceURL = URL.parse ( this.networkService.marketplaceURL );
+                marketplaceURL.pathname = `/offers/${ offerID }`;
+                marketplaceURL = URL.format ( marketplaceURL );
+
+                const result = await this.revocable.fetchJSON ( marketplaceURL );
+
+                if ( result && result.offer && ( result.offer.offerID === offerID )) {
+                    for ( let offer of this.offers ) {
+                        if ( offer.offerID === offerID ) {
+                            offer.setClosed ( result.offer.closed );
+                        }
+                    }
+                }
+            }
+            catch ( error ) {
+                debugLog ( error );
+            }
+            this.updateIndex = ( updateIndex + 1 ) % this.offers.length;
+        }
+        this.revocable.timeout (() => { this.offerUpdateLoopAsync ()}, 5000 );
+    }
+
+    //----------------------------------------------------------------//
+    setOffers ( offers ) {
+
+        this.offers = offers || [];
+        this.updateNow ();
+    }
+
+    //----------------------------------------------------------------//
+    updateNow () {
+
+        const now = new luxon.DateTime.now ();
+        for ( let offer of this.offers ) {
+            offer.setNow ( now );
+        }
+    }
+}
+
+//================================================================//
+// SearchController
+//================================================================//
+class SearchController {
 
     @observable offers          = [];
     @observable page            = 0;
     @observable nextPage        = 0;
-
-    @computed get count         () { return this.networkService.favoriteOffers.length; }
 
     //----------------------------------------------------------------//
     constructor ( accountService ) {
@@ -47,6 +119,35 @@ class FavoritesSearchController {
         this.accountService     = accountService;
         this.networkService     = accountService.networkService;
         this.revocable          = new fgc.RevocableContext ();
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setOffers ( offers ) {
+
+        this.offers = [];
+        for ( let offer of offers ) {
+            this.offers.push ( new OfferController ( this.accountService, offer ));
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setPage ( page ) {
+        this.page = page;
+    }
+}
+
+//================================================================//
+// FavoritesSearchController
+//================================================================//
+class FavoritesSearchController extends SearchController {
+
+    @computed get count         () { return this.networkService.favoriteOffers.length; }
+
+    //----------------------------------------------------------------//
+    constructor ( accountService ) {
+        super ( accountService );
 
         this.setPageAsync ( 0, true );
     }
@@ -89,10 +190,8 @@ class FavoritesSearchController {
         await this.revocable.all ( promises );
 
         if ( this.nextPage == page ) {
-            runInAction (() => {
-                this.page           = page;
-                this.offers         = offers;
-            });
+            this.setPage ( page );
+            this.setOffers ( offers );
         }
     }
 
@@ -106,20 +205,14 @@ class FavoritesSearchController {
 //================================================================//
 // ShopSearchController
 //================================================================//
-class ShopSearchController {
+class ShopSearchController extends SearchController {
 
-    @observable offers          = [];
-    @observable page            = 0;
-    @observable nextPage        = 0;
     @observable count           = 0;
     @observable token           = false;
 
     //----------------------------------------------------------------//
     constructor ( accountService, excludeSeller, matchSeller, all ) {
-
-        this.accountService     = accountService;
-        this.networkService     = accountService.networkService;
-        this.revocable          = new fgc.RevocableContext ();
+        super ( accountService );
 
         this.excludeSeller      = isNaN ( excludeSeller ) ? false : excludeSeller;
         this.matchSeller        = isNaN ( matchSeller ) ? false : matchSeller;
@@ -136,11 +229,11 @@ class ShopSearchController {
 
             if ( result && result.offers ) {
                 runInAction (() => {
-                    this.page           = 0;
-                    this.offers         = result.offers;
                     this.count          = result.count;
                     this.token          = result.token;
                 });
+                this.setPage ( 0 );
+                this.setOffers ( result.offers );
             }
         }
         catch ( error ) {
@@ -191,10 +284,8 @@ class ShopSearchController {
             const result = await this.revocable.fetchJSON ( this.marketplaceURL );
 
             if ( result && result.offers && ( this.nextPage === page )) {
-                runInAction (() => {
-                    this.page           = page;
-                    this.offers         = result.offers;
-                });
+                this.setPage ( page );
+                this.setOffers ( result.offers );
             }
         }
         catch ( error ) {
@@ -205,147 +296,9 @@ class ShopSearchController {
     //----------------------------------------------------------------//
     @computed get
     totalPages () {
-
         return this.count ? Math.ceil ( this.count / PAGE_SIZE ) : 0;
     }
 }
-
-//================================================================//
-// AssetModal
-//================================================================//
-export const AssetModal = observer (( props ) => {
-
-    const { schema, asset, networkService, onClose } = props;
-
-    const assetURL = networkService.getServiceURL ( `/assets/${ asset.assetID }` );
-
-    return (
-        <UI.Modal
-            open
-            size        = 'small'
-            style       = {{ height : 'auto' }}
-            onClose     = { onClose }
-        >
-            <UI.Modal.Content>
-                <center>
-                    <h3>Card Info</h3>
-                    <UI.Divider/>
-                    <cardmotron.AssetView
-                        inches
-                        asset           = { props.asset }
-                        schema          = { props.schema }
-                    />
-                    <p>
-                        <a href = { assetURL } target = '_blank'>{ asset.assetID }</a>
-                    </p>
-                </center>
-            </UI.Modal.Content>
-        </UI.Modal>
-    );
-});
-
-//================================================================//
-// OfferList
-//================================================================//
-const OfferList = observer (( props ) => {
-
-    const { schema, offers, isOwn, isFavorite, onToggleFavorite, onClickBuy, onClickCancel } = props;
-
-    const getStatusMessage = ( offer ) => {
-        switch ( offer.closed ) {
-            case 'COMPLETED': return 'Sold';
-            case 'CANCELLED': return 'Cancelled';
-        }
-        return 'Expires in 20 days';
-    }
-
-    const getMenuColor = ( offer ) => {
-        switch ( offer.closed ) {
-            case 'COMPLETED': return 'green';
-            case 'CANCELLED': return 'yellow';
-        }
-        return 'grey';
-    }
-
-    const offerList = [];
-    for ( let offer of offers ) {
-
-        const offerID = offer.offerID;
-
-        const cards = [];
-        for ( let asset of offer.assets ) {
-            cards.push (
-                <cardmotron.AssetCardView
-                    key             = { asset.assetID }
-                    asset           = { asset }
-                    schema          = { schema }
-                    onMagnify       = {() => { setZoomedAsset ( asset ); }}
-                />
-            );
-        }
-
-        const isClosed = Boolean ( offer.closed );
-        const isLast = ( offerList.length === ( offers.length - 1 ));
-
-        offerList.push (
-            <div key = { offerID } style = { !isLast ? { marginBottom: '16px' } : undefined }>
-                <UI.Menu
-                    borderless
-                    inverted
-                    color       = { getMenuColor ( offer )}
-                    attached    = 'top'
-                >
-                    <UI.Menu.Item>
-                        { vol.util.format ( offer.minimumPrice )}
-                    </UI.Menu.Item>
-                    <UI.Menu.Item>
-                        { getStatusMessage ( offer )}
-                    </UI.Menu.Item>
-                    <UI.Menu.Menu position = 'right'>
-                        <UI.Menu.Item
-                            icon        = { isFavorite ( offer ) ? 'heart' : 'heart outline' }
-                            onClick     = {() => { onToggleFavorite ( offer ); }}
-                        />
-                    </UI.Menu.Menu>
-                </UI.Menu>    
-                <UI.Segment attached>
-                    <UI.Card.Group centered>
-                        { cards }
-                    </UI.Card.Group>
-                </UI.Segment>
-                <UI.Segment attached = 'bottom' textAlign = 'right'>
-                    <Choose>
-                        <When condition = { isOwn ( offer )}>
-                            <UI.Button
-                                negative
-                                onClick         = {() => { onClickCancel ( offer ); }}
-                                disabled        = { isClosed }
-                                style           = { isClosed ? { visibility: 'hidden' } : {}}
-                            >
-                                Cancel
-                            </UI.Button>
-                        </When>
-                        <Otherwise>
-                            <UI.Button
-                                positive
-                                onClick         = {() => { onClickBuy ( offer ); }}
-                                disabled        = { isClosed }
-                            >
-                                Buy
-                            </UI.Button>
-                        </Otherwise>
-                    </Choose>
-                </UI.Segment>
-            </div>
-        );
-    }
-
-    return (
-        <React.Fragment>
-            { offerList }
-        </React.Fragment>
-    );
-});
 
 //================================================================//
 // ShopScreenFancy
@@ -364,10 +317,9 @@ export const ShopScreenFancy = observer (( props ) => {
     const shopSearchController          = fgc.hooks.useFinalizable (() => new ShopSearchController ( accountService, accountService.index ));
     const favoritesSearchController     = fgc.hooks.useFinalizable (() => new FavoritesSearchController ( accountService ));
     const listingsSearchController      = fgc.hooks.useFinalizable (() => new ShopSearchController ( accountService, false, accountService.index, true ));
+    const updateController              = fgc.hooks.useFinalizable (() => new OfferListUpdateController ( accountService ));
 
-    const [ zoomedAsset, setZoomedAsset ]                       = useState ( false );
     const [ transactionController, setTransactionController ]   = useState ( false );
-    const [ favorites, setFavorites ]                           = useState ( false );
     const [ tab, setTab ]                                       = useState ( TABS.SHOP );
 
     const controllersByTab = {};
@@ -385,12 +337,6 @@ export const ShopScreenFancy = observer (( props ) => {
 
     const isFavorite = ( offer ) => {
         return networkService.isFavoriteOffer ( offer.offerID );
-    }
-
-    const onToggleFavorite = ( offer ) => {
-        networkService.toggleFavoriteOffer ( offer.offerID );
-        setFavorites ( networkService.favoriteOffers );
-        favoritesSearchController.setPageAsync ( favoritesSearchController.nextPage, true );
     }
 
     const onClickBuy = ( offer ) => {
@@ -413,6 +359,11 @@ export const ShopScreenFancy = observer (( props ) => {
         );
     }
 
+    const onToggleFavorite = ( offer ) => {
+        networkService.toggleFavoriteOffer ( offer.offerID );
+        favoritesSearchController.setPageAsync ( favoritesSearchController.nextPage, true );
+    }
+
     const shopCount             = shopSearchController.count;
     const favoritesCount        = networkService.favoriteOffers.length;
     const listingsCount         = listingsSearchController.count;
@@ -425,6 +376,7 @@ export const ShopScreenFancy = observer (( props ) => {
     const onPageChange = ( event, data ) => {
         controller.setPageAsync ( data.activePage - 1 );
     }
+    updateController.setOffers ( controller.offers );
 
     return (
         <React.Fragment>
@@ -473,14 +425,11 @@ export const ShopScreenFancy = observer (( props ) => {
 
                 <UI.Segment tertiary attached = 'bottom'>
                     <If condition = { inventoryService.isLoaded }>
-                        <OfferList
-                            schema              = { inventoryService.schema }
-                            offers              = { controller.offers }
-                            isOwn               = { isOwn }
-                            isFavorite          = { isFavorite }
-                            onToggleFavorite    = { onToggleFavorite }
+                        <OfferListView
+                            controller          = { controller }
                             onClickBuy          = { onClickBuy }
                             onClickCancel       = { onClickCancel }
+                            onToggleFavorite    = { onToggleFavorite }
                         />
                     </If>
                 </UI.Segment>
@@ -493,15 +442,7 @@ export const ShopScreenFancy = observer (( props ) => {
                 open                = { transactionController !== false }
                 onClose             = { onCloseTransactionModal }
             />
-
-            <If condition = { zoomedAsset }>
-                <AssetModal
-                    schema              = { inventoryService.schema }
-                    asset               = { zoomedAsset }
-                    networkService      = { networkService }
-                    onClose             = {() => { setZoomedAsset ( false ); }}
-                />
-            </If>
+            
         </React.Fragment>
     );
 });

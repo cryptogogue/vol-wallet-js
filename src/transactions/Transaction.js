@@ -84,6 +84,7 @@ export class TransactionStatus {
     @observable uuid                    = '';
     @observable type                    = '';
     @observable nonce                   = -1;
+    @observable offerID                 = false;
 
     @observable submitCount             = 0;
     @observable minerStatus             = {};
@@ -134,6 +135,7 @@ export class TransactionStatus {
 
         self.accountName        = transaction.body.maker.accountName;
         self.assetsFiltered     = _.cloneDeep ( transaction.assetsFiltered );
+        self.offerID            = transaction.offerID || false;
         self.cost               = transaction.cost;
         self.uuid               = transaction.uuid;
         self.type               = transaction.type;
@@ -194,6 +196,7 @@ export class TransactionStatus {
         loadedTransaction.status            = transaction.status;
         loadedTransaction.accountName       = transaction.accountName;
         loadedTransaction.assetsFiltered    = transaction.assetsFiltered || {};
+        loadedTransaction.offerID           = transaction.offerID || false;
         loadedTransaction.cost              = transaction.cost;
         loadedTransaction.acceptedCount     = transaction.acceptedCount;
         loadedTransaction.uuid              = transaction.uuid;
@@ -271,6 +274,7 @@ export class Transaction {
     constructor ( body ) {
 
         this.assetsFiltered         = {};
+        this.offerID                = false;
         this.body                   = body;
     }
 
@@ -333,6 +337,13 @@ export class Transaction {
         for ( let assetID of assetIDs ) {
             this.assetsFiltered [ assetID ] = filterStatus;
         }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    setOfferID ( offerID ) {
+
+        this.offerID = offerID;
     }
 
     //----------------------------------------------------------------//
