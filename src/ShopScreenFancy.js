@@ -354,7 +354,8 @@ export const ShopScreenFancy = observer (( props ) => {
         setTransactionController (
             new CancelOfferFormController (
                 accountService,
-                offer.assets
+                offer.assets,
+                offer.offerID
             )
         );
     }
@@ -424,14 +425,14 @@ export const ShopScreenFancy = observer (( props ) => {
                 </UI.Segment>
 
                 <UI.Segment tertiary attached = 'bottom'>
-                    <If condition = { inventoryService.isLoaded }>
+                    <fgc.ProgressSpinner loading = { inventoryService.schema === false }>
                         <OfferListView
                             controller          = { controller }
                             onClickBuy          = { onClickBuy }
                             onClickCancel       = { onClickCancel }
                             onToggleFavorite    = { onToggleFavorite }
                         />
-                    </If>
+                    </fgc.ProgressSpinner>
                 </UI.Segment>
      
             </UI.Container>

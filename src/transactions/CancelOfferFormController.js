@@ -11,13 +11,23 @@ import _                                    from 'lodash';
 export class CancelOfferFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
-    constructor ( accountService, selection ) {
+    constructor ( accountService, selection, offerID ) {
         super ();
+
+        this.offerID = offerID;
 
         const fieldsArray = [
             new Fields.AssetSelectionFieldController    ( 'selection', _.cloneDeep ( selection )),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.CANCEL_OFFER, fieldsArray );
+    }
+
+    //----------------------------------------------------------------//
+    virtual_decorateTransaction ( transaction ) {
+        
+        if ( this.offerID ) {
+            transaction.setOfferID ( this.offerID );
+        }
     }
 
     //----------------------------------------------------------------//

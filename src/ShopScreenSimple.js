@@ -6,7 +6,7 @@ import { BuyAssetsFormController }                          from './transactions
 import { CancelOfferFormController }                        from './transactions/CancelOfferFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import { AssetModal, Inventory, InventoryView, InventoryViewController } from 'cardmotron';
-import { assert, hooks, ProgressSpinner, RevocableContext, SingleColumnContainerView, util } from 'fgc';
+import * as fgc                                             from 'fgc';
 import _                                                    from 'lodash';
 import { DateTime }                                         from 'luxon';
 import { action, computed, observable }                     from 'mobx';
@@ -46,7 +46,7 @@ class ShopScreenController {
         this.accountService     = accountService;
         this.inventoryService   = accountService.inventoryService;
         this.networkService     = accountService.networkService;
-        this.revocable          = new RevocableContext ();
+        this.revocable          = new fgc.RevocableContext ();
     }
 
     //----------------------------------------------------------------//
@@ -57,6 +57,9 @@ class ShopScreenController {
 
     //----------------------------------------------------------------//
     async loadAsync ( assetID ) {
+
+        this.reset ();
+        if ( !assetID ) return;
 
         try {
 
@@ -97,6 +100,14 @@ class ShopScreenController {
 
     //----------------------------------------------------------------//
     @action
+    reset () {
+        this.status         = STATUS.IDLE;
+        this.inventory      = false;
+        this.info           = false;
+    }
+
+    //----------------------------------------------------------------//
+    @action
     setAssets ( assets ) {
 
         // debugLog ( 'SETTING ASSETS', assets );
@@ -131,25 +142,52 @@ export const ShopScreenSimple = observer (( props ) => {
 
     if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
-    const networkID                 = util.getMatch ( props, 'networkID' );
-    const accountID                 = util.getMatch ( props, 'accountID' );
+    const networkID                 = fgc.util.getMatch ( props, 'networkID' );
+    const accountID                 = fgc.util.getMatch ( props, 'accountID' );
 
     const accountService            = appState.assertAccountService ( networkID, accountID );
     const networkService            = accountService.networkService;
     const inventoryService          = accountService.inventoryService;
-    const controller                = hooks.useFinalizable (() => new ShopScreenController ( accountService ));
+    const controller                = fgc.hooks.useFinalizable (() => new ShopScreenController ( accountService ));
     const progress                  = accountService.inventoryProgress;
-
-    const inventoryViewController   = hooks.useFinalizable (() => new InventoryViewController ());
+    const inventoryViewController   = fgc.hooks.useFinalizable (() => new InventoryViewController ());
 
     const [ assetID, setAssetID ]                               = useState ( '' );
     const [ zoomedAssetID, setZoomedAssetID ]                   = useState ( false );
     const [ transactionController, setTransactionController ]   = useState ( false );
+    const [ isBusy, setIsBusy ]                                 = useState ( false );
+    const [ marketplaceURL, setMarketplaceURL ]                 = useState ( false );
+    const [ mktError, setMktError ]                             = useState ( false );
+
+    const onMarketplaceURLAsync = async ( url ) => {
+
+        setIsBusy ( true );
+        try {
+            const result = await networkService.revocable.fetchJSON ( url );
+            console.log ( result );
+            if ( result && ( result.type === 'VOL_QUERY' )) {
+                setMarketplaceURL ( url );
+            }
+            else {
+                setMktError ( 'Not a Volition marketplace service.' );
+            }
+        }
+        catch ( error ) {
+            console.log ( error );
+            setMktError ( 'Could not reach URL.' );
+        }
+        setIsBusy ( false );
+    }
+
+    const onMarketplaceURLChange = async ( input ) => {
+        setMktError ( false );
+        if ( !input ) {
+            setMarketplaceURL ( false );
+        }
+    }
 
     const onBlur = () => {
-        if ( assetID ) {
-            controller.loadAsync ( assetID );
-        }
+        controller.loadAsync ( assetID );
     }
 
     const onKeyPress = ( event ) => {
@@ -191,8 +229,8 @@ export const ShopScreenSimple = observer (( props ) => {
         return <a href = { assetURL } target = '_blank'>{ assetID }</a>
     }
 
-    const hasAssets = Boolean ( inventoryService.isLoaded && controller.inventory );
-    const isLoading = Boolean (( inventoryService.isLoaded === false ) && progress.loading );
+    const hasAssets = Boolean ( inventoryService.schema && controller.inventory );
+    const isLoading = Boolean (( inventoryService.schema === false ) && progress.loading );
 
     inventoryViewController.setInventory ( controller.inventory );
 
@@ -202,7 +240,7 @@ export const ShopScreenSimple = observer (( props ) => {
             flexFlow: 'column',
             height: '100vh',
         }}>
-            <SingleColumnContainerView>
+            <fgc.SingleColumnContainerView>
                 <AccountNavigationBar
                     accountService          = { accountService }
                     tab                     = { ACCOUNT_TABS.SHOP }
@@ -218,6 +256,7 @@ export const ShopScreenSimple = observer (( props ) => {
                         onKeyPress      = { onKeyPress }
                         onBlur          = { onBlur }
                         disabled        = { isLoading }
+                        label           = 'Find Offer'
                     />
                     
                     <Choose>
@@ -252,12 +291,33 @@ export const ShopScreenSimple = observer (( props ) => {
                             </UI.Segment>
                         </When>
 
+                        <Otherwise>
+                            <UI.Segment>
+                                <fgc.URLField
+                                    fluid
+                                    label           = 'Markeplace'
+                                    url             = { networkService.marketplaceURL }
+                                    onChange        = { onMarketplaceURLChange }
+                                    onURL           = { onMarketplaceURLAsync }
+                                    disabled        = { isBusy }
+                                    error           = { mktError }
+                                />
+                                <UI.Button
+                                    fluid
+                                    positive
+                                    onClick             = {() => { networkService.setMarketplaceURL ( marketplaceURL ); }}
+                                    disabled            = { marketplaceURL === false }
+                                >
+                                    Set Marketplace Service
+                                </UI.Button>
+                            </UI.Segment>
+                        </Otherwise>
                     </Choose>
                     
                 </UI.Form>
-            </SingleColumnContainerView>
+            </fgc.SingleColumnContainerView>
 
-            <ProgressSpinner loading = { isLoading } message = { inventoryService.isLoaded ? '' : progress.message }>
+            <fgc.ProgressSpinner loading = { isLoading }>
 
                 <If condition = { hasAssets }>
                     <div style = {{ flex: 1 }}>
@@ -274,7 +334,7 @@ export const ShopScreenSimple = observer (( props ) => {
                     />
                 </If>
 
-            </ProgressSpinner>
+            </fgc.ProgressSpinner>
 
             <TransactionModal
                 accountService      = { accountService }

@@ -88,7 +88,7 @@ export class OfferController {
 
     //----------------------------------------------------------------//
     @computed get
-    purchasePending () {
+    transactionPending () {
         const offerIDs = this.accountService.transactionQueue.pendingOfferIDs;
         if ( offerIDs.includes ( this.offerID )) return true;
         return false;
@@ -240,7 +240,7 @@ export const OfferView = observer (( props ) => {
                             <UI.Button
                                 negative
                                 onClick         = {() => { onClickCancel ( offer ); }}
-                                disabled        = { isClosedOrExpired }
+                                disabled        = { offer.transactionPending || isClosedOrExpired }
                                 style           = { isClosedOrExpired ? { visibility: 'hidden' } : {}}
                             >
                                 Cancel
@@ -250,7 +250,7 @@ export const OfferView = observer (( props ) => {
                             <UI.Button
                                 positive
                                 onClick         = {() => { onClickBuy ( offer ); }}
-                                disabled        = { offer.hasAssets || offer.purchasePending || isClosedOrExpired }
+                                disabled        = { offer.hasAssets || offer.transactionPending || isClosedOrExpired }
                                 style           = { offer.hasAssets ? { visibility: 'hidden' } : {}}
                             >
                                 Buy
