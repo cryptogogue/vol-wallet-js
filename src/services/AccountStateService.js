@@ -273,7 +273,7 @@ export class AccountStateService {
                 await this.transactionQueue.serviceStepAsync ();
             }
 
-            const timeout = this.transactionQueue.pendingTransactions.length > 0 ? 1000 : 5000;
+            const timeout = this.transactionQueue.pendingQueue.length > 0 ? 1000 : 5000;
 
             this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
         }

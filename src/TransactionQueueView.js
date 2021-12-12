@@ -1,8 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PagingMenu, PagingController }     from './PagingMenu';
-import { TX_MINER_STATUS, TX_STATUS }       from './transactions/Transaction';
 import { Transaction }                      from './transactions/Transaction';
+import { TX_MINER_STATUS, TX_STATUS }       from './transactions/TransactionQueueEntry';
 import _                                    from 'lodash';
 import JSONTree                             from 'react-json-tree';
 import React, { useState }                  from 'react';

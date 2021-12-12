@@ -21,8 +21,8 @@ export const TransactionQueueLabel = observer (( props ) => {
 
     const warning           = false;
     const error             = queue.hasTransactionError;
-    const stagedCount       = queue.stagedTransactions.length;
-    const pendingCount      = queue.pendingTransactions.length;
+    const stagedCount       = queue.stagedQueue.length;
+    const pendingCount      = queue.pendingQueue.length;
 
     return (
         <React.Fragment>

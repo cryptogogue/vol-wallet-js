@@ -29,9 +29,7 @@ class Filter {
         const filtered = [];
         for ( let entry of this.unfiltered ) {
 
-            const transaction = entry.transaction;
-
-            switch ( transaction.type ) {
+            switch ( entry.type ) {
                 case TRANSACTION_TYPE.ACCOUNT_POLICY:
                 case TRANSACTION_TYPE.AFFIRM_KEY:
                 case TRANSACTION_TYPE.BETA_GET_ASSETS:
@@ -77,7 +75,7 @@ export const AccountLogView = observer (( props ) => {
 
         const index         = filtered [ filtered.length - i - 1 ];
         const entry         = entries [ index ];
-        const isUnread      = (( accountService.index !== entry.makerIndex ) && ( index >= accountService.inboxRead ));
+        const isUnread      = ( !entry.isMaker && ( index >= accountService.inboxRead ));
 
         const time          = new DateTime.fromISO ( entry.time );
         const friendlyName  = Transaction.friendlyNameForType ( entry.type );

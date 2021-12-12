@@ -27,7 +27,7 @@ const TransactionModalBody = observer (( props ) => {
     const title             = controller ? controller.friendlyName : 'New Transaction';
     const stageEnabled      = accountService.hasAccountInfo && controller && controller.isCompleteAndErrorFree;
     const submitEnabled     = stageEnabled && appState.checkPassword ( password );
-    const submitLabel       = queue.stagedTransactions.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
+    const submitLabel       = queue.stagedQueue.length > 0 ? 'Submit Transactions' : 'Submit Transaction';
 
     let clearPassword = () => {
         setPassword ( '' );

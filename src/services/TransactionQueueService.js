@@ -1,7 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as AppDB                               from './AppDB';
-import { Transaction, TransactionStatus, TX_MINER_STATUS, TX_QUEUE_STATUS, TX_STATUS, TRANSACTION_TYPE } from '../transactions/Transaction';
+import { Transaction, TRANSACTION_TYPE }        from '../transactions/Transaction';
+import { TransactionHistoryEntry }              from '../transactions/TransactionHistoryEntry';
+import { TransactionQueueEntry, TX_MINER_STATUS, TX_QUEUE_STATUS, TX_STATUS } from '../transactions/TransactionQueueEntry';
 import { assert, crypto, RevocableContext }     from 'fgc';
 import _                                        from 'lodash';
 import { action, computed, observable, runInAction, toJS } from 'mobx';
@@ -16,7 +18,13 @@ export const TX_SERVICE_STATUS = {
     LOADED:             'LOADED',
 };
 
-const TX_MINER_TIMEOUT = 10000;
+const TX_MINER_TIMEOUT      = 10000;
+const TX_HISTORY_VERSION    = 1;
+
+// there are *three* tables of tx info in the database.
+//      1. transactionQueue: this is the tx queue itself. it's a monolithic serialization of the entire queue.
+//      2. transactionHistory: this is the account log, downloaded from the network. it's a monolithic serialization of the entire account log.
+//      3. transactions: this is the database of tx bodies/envelopes. each tx body is stored individually. when a tx is submitted or restored, its body is replace with an envelope.
 
 //================================================================//
 // TransactionQueueService
@@ -29,26 +37,16 @@ export class TransactionQueueService {
 
     @computed get account                   () { return this.accountService.account; }
     @computed get hasTransactionError       () { return this.accountService.hasTransactionError; }
+    @computed get hasUnsentTransactions     () { return ( this.unsentQueue.length > 0 ); }
     @computed get isLoaded                  () { return this.status === TX_SERVICE_STATUS.LOADED; }
+    @computed get transactionError          () { return this.account.transactionError || false; }
+    
+    @computed get costBearingQueue          () { return this.queue.filter (( elem ) => { return ( elem.isPending || elem.isUnsent )}); }
+    @computed get pendingQueue              () { return this.queue.filter (( elem ) => { return elem.isPending }); }
+    @computed get stagedQueue               () { return this.queue.filter (( elem ) => { return elem.status === TX_STATUS.STAGED }); }
+    @computed get unsentQueue               () { return this.queue.filter (( elem ) => { return elem.isUnsent }); }
 
-    //----------------------------------------------------------------//
-    @computed get
-    acceptedTransactions () {
-        return this.queue.filter (( elem ) => { return elem.status === TX_STATUS.ACCEPTED });
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    accountQueueHistory () {
-
-        const transactions = [];
-        for ( let entry of this.history ) {
-            if ( entry.makerIndex === this.accountService.index ) {
-                transactions.push ( entry.transaction );
-            }
-        }
-        return transactions;
-    }
+    @computed get accountQueueHistory       () { return this.history.filter (( entry ) => { return entry.isMaker }); }
 
     //----------------------------------------------------------------//
     @computed get
@@ -56,8 +54,8 @@ export class TransactionQueueService {
 
         const assetsFiltered = {};
 
-        for ( let transaction of this.costBearingTransactions ) {
-            _.assign ( assetsFiltered, transaction.assetsFiltered );
+        for ( let queueEntry of this.costBearingQueue ) {
+            _.assign ( assetsFiltered, queueEntry.assetsFiltered );
         }
         return assetsFiltered;
     }
@@ -75,7 +73,7 @@ export class TransactionQueueService {
             this.status         = TX_SERVICE_STATUS.UNLOADED;
         });
         await AppDB.putAsync ( 'transactionQueue', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, transactions: []});
-        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: []});
+        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: [], version: TX_HISTORY_VERSION });
         await AppDB.deleteWhereAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
     }
 
@@ -108,16 +106,10 @@ export class TransactionQueueService {
 
         let cost = 0;
 
-        for ( let transaction of this.costBearingTransactions ) {
-            cost += transaction.cost;
+        for ( let queueEntry of this.costBearingQueue ) {
+            cost += queueEntry.cost;
         }
         return cost;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    costBearingTransactions () {
-        return this.queue.filter (( elem ) => { return ( elem.isPending || elem.isUnsent )});
     }
 
     //----------------------------------------------------------------//
@@ -127,32 +119,21 @@ export class TransactionQueueService {
         if ( !entries.length ) return;
 
         for ( let entry of entries ) {
-
-            const makerIndex    = entry.transaction.makerIndex;
-            const details       = entry.transaction.details;
-            const body          = JSON.parse ( entry.transaction.body );
-
-            const txObject      = Transaction.fromBody ( body );
-            const transaction   = TransactionStatus.fromTransaction ( txObject );
-
-            transaction.setStatus ( TX_STATUS.HISTORY );
-            transaction.setNonce ( body.maker.nonce );
+ 
+            const historyEntry = TransactionHistoryEntry.fromAccountLogEntry ( this.accountService.index, entry );
 
             runInAction (() => {
-                this.history.push ({
-                    time:               entry.time,
-                    blockHeight:        entry.blockHeight,
-                    makerIndex:         makerIndex,
-                    type:               body.type,
-                    explanation:        this.getExplanation ( makerIndex, body, details ),
-                    transaction:        transaction,
-                });
+                this.history.push ( historyEntry );
             });
 
-            await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: body.uuid, envelope: entry.transaction });
+            const envelope = _.cloneDeep ( entry.transaction );
+            delete envelope.makerIndex;
+            delete envelope.details;
+
+            await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: historyEntry.uuid, envelope: envelope });
         }
 
-        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
+        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history ), version: TX_HISTORY_VERSION });
     }
 
     //----------------------------------------------------------------//
@@ -190,63 +171,6 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    getExplanation ( makerIndex, body, details ) {    
-        
-        const isMaker       = this.accountService.index === makerIndex;
-
-        const formatAssetList = ( assets ) => {
-
-            if ( !assets.length ) return 'no assets';
-
-            if ( assets.length === 1 ) {
-                return `an asset (${ assets [ 0 ].assetID })`;
-            }
-
-            const assetIDs = [];
-            for ( let asset of assets ) {
-                assetIDs.push ( asset.assetID );
-            }
-
-            return `${ assets.length } assets (${ assetIDs.join ( ', ' )})`;
-        }
-
-        switch ( body.type ) {
-
-            case TRANSACTION_TYPE.BUY_ASSETS: {
-
-                const assetList = details ? formatAssetList ( details.assets ) : '[unknown assets]';
-
-                if ( isMaker ) return `You bought ${ assetList } from ${ details.from }.`;
-                return `${ details.to } bought ${ assetList } from you.`;
-            }
-
-            case TRANSACTION_TYPE.PUBLISH_SCHEMA:
-            case TRANSACTION_TYPE.PUBLISH_SCHEMA_AND_RESET: {
-
-                const version = body.schema.version;
-                return `You published '${ version.release } - ${ version.major }.${ version.minor }.${ version.revision }'.`;
-            }
-
-            case TRANSACTION_TYPE.SEND_ASSETS: {
-
-                const assetList = details ? formatAssetList ( details.assets ) : '[deleted assets]';
-
-                if ( isMaker ) return `You sent ${ assetList } to ${ body.accountName }.`;
-                return `${ body.maker.accountName } sent you ${ assetList }.`;
-            }
-
-            case TRANSACTION_TYPE.SEND_VOL: {
-
-                const amount = vol.util.format ( body.amount );
-
-                if ( isMaker ) return `You sent ${ body.accountName } ${ amount } VOL.`;
-                return `${ body.maker.accountName } sent you ${ amount } VOL.`;
-            }
-        }
-        return '--';
-    }
-
-    //----------------------------------------------------------------//
     async getTransactionBodyAsync ( uuid ) {
 
         const transactionRow = await AppDB.getAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: uuid });
@@ -254,15 +178,11 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    hasLostTransactions () {
-        return this.lostTransactions.length > 0;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    hasUnsentTransactions () {
-        return ( this.unsentTransactions.length > 0 );
+    async getTransactionEnvelopeAsync ( uuid ) {
+        const transactionRow = await AppDB.getAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: uuid });
+        envelope = transactionRow.envelope;
+        assert ( envelope );
+        return envelope;
     }
 
     //----------------------------------------------------------------//
@@ -288,18 +208,23 @@ export class TransactionQueueService {
         debugLog ( 'TX QUEUE LOAD ASYNC' );
 
         const queueRecord       = await AppDB.getAsync ( 'transactionQueue', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
-        const historyRecord     = await AppDB.getAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
+        let historyRecord       = await AppDB.getAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index });
+
+        if ( historyRecord && ( historyRecord.version !== TX_HISTORY_VERSION )) {
+            await this.resetHistoryAsync ();
+            historyRecord = false;
+        }
 
         runInAction (() => {
             
             this.queue = queueRecord && queueRecord.transactions ? queueRecord.transactions : [];
             for ( let i in this.queue ) {
-                this.queue [ i ] = TransactionStatus.load ( this.queue [ i ]);
+                this.queue [ i ] = TransactionQueueEntry.load ( this.queue [ i ]);
             }
 
             this.history = historyRecord && historyRecord.entries ? historyRecord.entries : [];
             for ( let i in this.history ) {
-                this.history [ i ].transaction = TransactionStatus.load ( this.history [ i ].transaction );
+                this.history [ i ] = TransactionHistoryEntry.load ( this.history [ i ]);
             }
 
             this.status = TX_SERVICE_STATUS.LOADED;
@@ -310,77 +235,65 @@ export class TransactionQueueService {
 
     //----------------------------------------------------------------//
     @computed get
-    lostTransactions () {
-        return this.queue.filter (( elem ) => { return ( elem.status === TX_STATUS.LOST )});
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
     pendingOfferIDs () {
 
         const offerIDs = [];
-        for ( let transaction of this.costBearingTransactions ) {
-            if ( transaction.offerID !== false ) {
-                offerIDs.push ( transaction.offerID );
+        for ( let queueEntry of this.costBearingQueue ) {
+            if ( queueEntry.offerID !== false ) {
+                offerIDs.push ( queueEntry.offerID );
             }
         }
         return offerIDs;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    pendingTransactions () {
-        return this.queue.filter (( elem ) => { return elem.isPending });
-    }
+    }    
 
     //----------------------------------------------------------------//
     @action
-    async processMinerAsync ( transaction, miner, loadEnvelope ) {
+    async processMinerAsync ( queueEntry, miner, loadEnvelopeAsync ) {
 
         const minerID       = miner.minerID;
         const minerURL      = miner.url;
 
         debugLog ( 'process miner', minerID, minerURL );
 
-        transaction.affirmMiner ( minerID );
+        queueEntry.affirmMiner ( minerID );
 
-        if ( transaction.getMinerStatus ( minerID ) === TX_MINER_STATUS.REJECTED ) return;
-        if ( transaction.getMinerBusy ( minerID )) return;
+        if ( queueEntry.getMinerStatus ( minerID ) === TX_MINER_STATUS.REJECTED ) return;
+        if ( queueEntry.getMinerBusy ( minerID )) return;
 
-        const submitCount = transaction.submitCount;
-        transaction.setMinerBusy ( minerID, true );
+        const submitCount = queueEntry.submitCount;
+        queueEntry.setMinerBusy ( minerID, true );
 
-        const serviceURL = this.consensusService.formatServiceURL ( minerURL, `/accounts/${ transaction.accountName }/transactions/${ transaction.uuid }` );
+        const serviceURL = this.consensusService.formatServiceURL ( minerURL, `/accounts/${ queueEntry.accountName }/transactions/${ queueEntry.uuid }` );
 
         const putTransactionAsync = async () => {
 
-            debugLog ( 'submitting transaction', minerID, transaction.uuid );
+            debugLog ( 'submitting transaction', minerID, queueEntry.uuid );
 
             // re-send the transaction if not recognized.
-            const envelope = await loadEnvelope ();
+            const envelope = await loadEnvelopeAsync ();
             const result = await this.revocable.fetchJSON ( serviceURL, {
                 method :    'PUT',
                 headers :   { 'content-type': 'application/json' },
                 body :      JSON.stringify ( envelope, null, 4 ),
             }, TX_MINER_TIMEOUT );
 
-            if ( transaction.submitCount !== submitCount ) return;
+            if ( queueEntry.submitCount !== submitCount ) return;
 
             if ( result && ( result.status === 'OK' )) {
-                transaction.setMinerStatus ( minerID, TX_MINER_STATUS.ACCEPTED );
+                queueEntry.setMinerStatus ( minerID, TX_MINER_STATUS.ACCEPTED );
             }
         }
 
         try {
             
-            if ( transaction.getMinerStatus ( minerID ) === TX_MINER_STATUS.NEW ) {
+            if ( queueEntry.getMinerStatus ( minerID ) === TX_MINER_STATUS.NEW ) {
                 await putTransactionAsync ();
             }
             else {
 
-                debugLog ( 'checking transaction', minerID, transaction.uuid );
+                debugLog ( 'checking transaction', minerID, queueEntry.uuid );
                 const response = await this.revocable.fetchJSON ( serviceURL, undefined, TX_MINER_TIMEOUT );
-                if ( transaction.submitCount !== submitCount ) return;
+                if ( queueEntry.submitCount !== submitCount ) return;
 
                 debugLog ( 'RESPONSE:', response );
 
@@ -388,15 +301,15 @@ export class TransactionQueueService {
 
                     case 'ACCEPTED':
                         
-                        transaction.setMinerStatus ( minerID, TX_MINER_STATUS.ACCEPTED );
+                        queueEntry.setMinerStatus ( minerID, TX_MINER_STATUS.ACCEPTED );
                         break;
 
                     case 'REJECTED':
                     case 'IGNORED':
                         
-                        if ( response.uuid === transaction.uuid ) {
-                            transaction.setMinerStatus ( minerID, TX_MINER_STATUS.REJECTED );
-                            transaction.setRejection ( response );
+                        if ( response.uuid === queueEntry.uuid ) {
+                            queueEntry.setMinerStatus ( minerID, TX_MINER_STATUS.REJECTED );
+                            queueEntry.setRejection ( response );
                         }
                         break;
 
@@ -411,49 +324,45 @@ export class TransactionQueueService {
         }
         catch ( error ) {
             debugLog ( error );
-            if ( transaction.submitCount !== submitCount ) return;
-            if ( transaction.getMinerStatus ( minerID ) === TX_MINER_STATUS.NEW ) { 
-                transaction.setMinerStatus ( minerID, TX_MINER_STATUS.TIMED_OUT );
+            if ( queueEntry.submitCount !== submitCount ) return;
+            if ( queueEntry.getMinerStatus ( minerID ) === TX_MINER_STATUS.NEW ) { 
+                queueEntry.setMinerStatus ( minerID, TX_MINER_STATUS.TIMED_OUT );
             }
         }
 
-        transaction.setMinerBusy ( minerID, false );
+        queueEntry.setMinerBusy ( minerID, false );
     }
 
     //----------------------------------------------------------------//
     @action
-    async processTransaction ( transaction ) {
+    async processQueueEntry ( queueEntry ) {
 
         if ( this.hasTransactionError ) return;
-        if ( !transaction.isPending ) return;
+        if ( !queueEntry.isPending ) return;
 
         const consensusService  = this.consensusService;
-        const accountName       = transaction.accountName;
+        const accountName       = queueEntry.accountName;
         
         if ( !consensusService.isOnline ) return;
 
-        if ( transaction.status === TX_STATUS.PENDING ) {
-            transaction.setStatus ( TX_STATUS.SENDING );
+        if ( queueEntry.status === TX_STATUS.PENDING ) {
+            queueEntry.setStatus ( TX_STATUS.SENDING );
         }
 
         let envelope = false;
-        const loadEnvelope = async () => {
-            if ( envelope === false ) {
-                const transactionRow = await AppDB.getAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid });
-                envelope = transactionRow.envelope;
-                assert ( envelope );
-            }
+        const lazyLoadEnvelopeAsync = async () => {
+            envelope = envelope || await this.getTransactionEnvelopeAsync ( queueEntry.uuid );
             return envelope;
         }
 
         // send transaction to all online miners
         const miners = consensusService.onlineMiners;
         for ( let miner of miners ) {
-            this.processMinerAsync ( transaction, miner, loadEnvelope );
+            this.processMinerAsync ( queueEntry, miner, lazyLoadEnvelopeAsync );
         }
 
-        const responseCount = transaction.respondingMiners.length;
-        const rejectCount   = transaction.rejectingMiners.length;
+        const responseCount = queueEntry.respondingMiners.length;
+        const rejectCount   = queueEntry.rejectingMiners.length;
 
         // if we got any responses, do something
         if ( responseCount ) {
@@ -463,22 +372,22 @@ export class TransactionQueueService {
 
                 if ( rejectCount === responseCount ) {
 
-                    const rejection = transaction.rejection;
+                    const rejection = queueEntry.rejection;
                     this.setTransactionError ( rejection.uuid, rejection.message );
-                    transaction.setStatus ( TX_STATUS.REJECTED );
+                    queueEntry.setStatus ( TX_STATUS.REJECTED );
 
-                    for ( let transaction of this.queue ) {
-                        if (( transaction.isPending || transaction.isUnsent ) && ( transaction.status !== TX_STATUS.REJECTED )) {
-                            transaction.setStatus ( TX_STATUS.BLOCKED );
+                    for ( let queueEntry of this.queue ) {
+                        if (( queueEntry.isPending || queueEntry.isUnsent ) && ( queueEntry.status !== TX_STATUS.REJECTED )) {
+                            queueEntry.setStatus ( TX_STATUS.BLOCKED );
                         }
                     }
                 }
                 else {
-                    transaction.setStatus ( TX_STATUS.MIXED );
+                    queueEntry.setStatus ( TX_STATUS.MIXED );
                 }
             }
             else {
-                transaction.setStatus ( TX_STATUS.SENDING );
+                queueEntry.setStatus ( TX_STATUS.SENDING );
             }
         }
     }
@@ -488,12 +397,12 @@ export class TransactionQueueService {
     async resetHistoryAsync () {
 
         this.history = [];
-        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history )});
+        await AppDB.putAsync ( 'transactionHistory', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, entries: toJS ( this.history ), version: TX_HISTORY_VERSION });
     }
 
     //----------------------------------------------------------------//
     @action
-    async restoreTransactionsAsync () {
+    async restoreQueueAsync () {
 
         const queue     = this.queue;
         const history   = this.accountQueueHistory;
@@ -501,25 +410,17 @@ export class TransactionQueueService {
 
         for ( let i = 0; i < length; ++i ) {
 
-            const txFromQueue       = ( i < queue.length ) ? queue [ i ] : false;
-            const txFromHistory     = ( i < history.length ) ? history [ i ] : false;
+            const queueEntry        = ( i < queue.length ) ? queue [ i ] : false;
+            const historyEntry      = ( i < history.length ) ? history [ i ] : false;
 
-            assert ( txFromQueue || txFromHistory );
+            assert ( queueEntry || historyEntry );
 
             // if there's a tx from the queue, don't overwrite it
-            if ( txFromQueue ) continue;
+            if ( queueEntry ) continue;
 
             // tx from history; overwrite
-            if ( txFromHistory ) {
-
-                debugLog ( 'restoring transaction', txFromHistory.type );
-
-                const transaction = _.cloneDeep ( txFromHistory );
-                assert ( transaction instanceof TransactionStatus );
-
-                transaction.setStatus ( TX_STATUS.RESTORED );
-                this.queue [ i ] = transaction;
-            }
+            debugLog ( 'restoring transaction', historyEntry.type );
+            this.queue [ i ] = TransactionQueueEntry.fromTransactionHistoryEntry ( historyEntry );
         }
 
         await this.saveAsync ();
@@ -537,13 +438,13 @@ export class TransactionQueueService {
 
         await this.loadAsync ();
         await this.fetchHistoryAsync ();
-        await this.updateTransactionStatusAsync ();
-        await this.restoreTransactionsAsync ();
+        await this.updateQueueStatusAsync ();
+        await this.restoreQueueAsync ();
 
         if ( this.hasTransactionError ) return;
 
-        for ( let transaction of this.pendingTransactions ) {
-            this.processTransaction ( transaction );
+        for ( let queueEntry of this.pendingQueue ) {
+            this.processQueueEntry ( queueEntry );
         }
 
         await this.saveAsync ();
@@ -555,28 +456,22 @@ export class TransactionQueueService {
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    stagedTransactions () {
-        return this.queue.filter (( elem ) => { return elem.status === TX_STATUS.STAGED });
-    }
-
-    //----------------------------------------------------------------//
     @action
-    async stageTransactionAsync ( txObject ) {
+    async stageTransactionAsync ( transaction ) {
 
-        debugLog ( 'stageTransactionAsync', txObject );
+        debugLog ( 'stageTransactionAsync', transaction );
 
         await ( this.loadAsync ());
 
-        txObject.setUUID ();
+        transaction.setUUID ();
         const body = _.cloneDeep ( txObject.body );
 
-        const transaction = TransactionStatus.fromTransaction ( txObject );
+        const queueEntry = TransactionQueueEntry.fromTransaction ( transaction );
 
-        await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid, body: body });
+        await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: queueEntry.uuid, body: body });
 
         runInAction (() => {
-            this.queue.push ( transaction );
+            this.queue.push ( queueEntry );
             this.appState.flags.promptFirstTransaction = false;
         });
 
@@ -598,12 +493,12 @@ export class TransactionQueueService {
         const recordBy = new Date ();
         recordBy.setTime ( recordBy.getTime () + ( 8 * 60 * 60 * 1000 )); // yuck
 
-        const pending = this.pendingTransactions;
+        const pending = this.pendingQueue;
         let nonce = pending.length ? ( pending [ pending.length - 1 ].nonce + 1 ) : this.accountService.nonce;
 
-        for ( let transaction of this.unsentTransactions ) {
+        for ( let queueEntry of this.unsentQueue ) {
 
-            const body                  = await this.getTransactionBodyAsync ( transaction.uuid );
+            const body                  = await this.getTransactionBodyAsync ( queueEntry.uuid );
 
             body.maxHeight              = 0; // don't use for now
             body.recordBy               = recordBy.toISOString ();
@@ -623,29 +518,17 @@ export class TransactionQueueService {
             };
 
             // replace the transaction body with an envelope
-            await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: transaction.uuid, envelope: envelope });
+            await AppDB.putAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: queueEntry.uuid, envelope: envelope });
 
-            transaction.submitWithNonce ( body.maker.nonce );
+            queueEntry.submitWithNonce ( body.maker.nonce );
         }
 
         await this.saveAsync ();
     }
 
     //----------------------------------------------------------------//
-    @computed get
-    transactionError () {
-        return this.account.transactionError || false;
-    }
-
-    //----------------------------------------------------------------//
-    @computed get
-    unsentTransactions () {
-        return this.queue.filter (( elem ) => { return elem.isUnsent });
-    }
-
-    //----------------------------------------------------------------//
     @action
-    async updateTransactionStatusAsync () {
+    async updateQueueStatusAsync () {
 
         const nonce = this.accountService.nonce;
 
@@ -653,28 +536,28 @@ export class TransactionQueueService {
         let needsSave = false;
 
         runInAction (() => {
-            for ( let transaction of this.queue ) {
+            for ( let queueEntry of this.queue ) {
 
-                switch ( transaction.queueStatus ) {
+                switch ( queueEntry.queueStatus ) {
 
                     case TX_QUEUE_STATUS.ACCEPTED:
-                        if ( transaction.nonce >= nonce ) {
-                            transaction.status = TX_STATUS.LOST;
+                        if ( queueEntry.nonce >= nonce ) {
+                            queueEntry.status = TX_STATUS.LOST;
                             needsSave = true;
                         }
                         break;
 
                     case TX_QUEUE_STATUS.LOST:
-                        if ( transaction.nonce < nonce ) {
-                            transaction.status = TX_STATUS.RESTORED;
+                        if ( queueEntry.nonce < nonce ) {
+                            queueEntry.status = TX_STATUS.RESTORED;
                             needsSave = true;
                         }
                         break;
 
                     case TX_QUEUE_STATUS.PENDING:
-                        if ( transaction.nonce < nonce ) {
-                            transaction.status = TX_STATUS.ACCEPTED;
-                            transaction.clearMiners ();
+                        if ( queueEntry.nonce < nonce ) {
+                            queueEntry.status = TX_STATUS.ACCEPTED;
+                            queueEntry.clearMiners ();
                             needsSave = true;
                         }
                         break;
