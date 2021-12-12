@@ -23,12 +23,11 @@ export const AccountLogModal = observer (( props ) => {
 
     return (
         <UI.Modal
-            size = 'small'
             closeIcon
             onClose = {() => { onClose ()}}
             open = { open }
         >
-            <UI.Modal.Header>Transaction History</UI.Modal.Header>
+            <UI.Modal.Header>Account Log</UI.Modal.Header>
 
             <UI.Modal.Content>
                 <AccountLogView key = { entries.length } accountService = { accountService } entries = { entries }/>

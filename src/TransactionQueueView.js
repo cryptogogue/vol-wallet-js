@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { PagingMenu, PagingController }     from './PagingMenu';
 import { Transaction }                      from './transactions/Transaction';
 import { TX_MINER_STATUS, TX_STATUS }       from './transactions/TransactionQueueEntry';
 import _                                    from 'lodash';
@@ -17,6 +16,8 @@ const ROW_STATUS = {
     WARNING:            'WARNING',
     ERROR:              'ERROR',
 };
+
+const PAGE_SIZE         = 8;
 
 //================================================================//
 // TransactionStatusModal
@@ -127,10 +128,12 @@ export const TransactionQueueView = observer (( props ) => {
     const { transactionQueue }              = props;
     const error                             = props.error || false;
     const transactions                      = transactionQueue.queue;
-    const pagingController                  = hooks.useFinalizable (() => new PagingController ( transactions.length ));
 
     const [ txBody, setTxBody ]             = useState ( false );
     const [ txForModal, setTxForModal ]     = useState ( false );
+    const [ page, setPage ]                 = useState ( 0 );
+
+    const totalPages                        = Math.ceil ( transactions.length / PAGE_SIZE );
 
     const loadBody = async ( uuid ) => {
         setTxBody ( await transactionQueue.getTransactionBodyAsync ( uuid ));
@@ -157,7 +160,7 @@ export const TransactionQueueView = observer (( props ) => {
 
             // ACCEPTED
             case TX_STATUS.ACCEPTED:    return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
-            case TX_STATUS.RESTORED:    return (<React.Fragment><UI.Icon name = 'cloud download' /> restored</React.Fragment>);
+            case TX_STATUS.RESTORED:    return (<React.Fragment><UI.Icon name = 'check' /> accepted</React.Fragment>);
             case TX_STATUS.LOST:        return (<React.Fragment><UI.Icon name = 'circle notched' loading/> recovering</React.Fragment>);
         }
         return <React.Fragment/>;
@@ -191,8 +194,11 @@ export const TransactionQueueView = observer (( props ) => {
         return ROW_STATUS.NEUTRAL;
     }
 
+    const pageBase  = page * PAGE_SIZE;
+    const pageTop   = Math.min ( transactions.length, pageBase + PAGE_SIZE );
+
     let transactionList = [];
-    for ( let i = pagingController.pageItemMin; i < pagingController.pageItemMax; ++i ) {
+    for ( let i = pageBase; i < pageTop; ++i ) {
 
         const transaction = transactions [ transactions.length - i - 1 ];
         let friendlyName = Transaction.friendlyNameForType ( transaction.type );
@@ -237,22 +243,6 @@ export const TransactionQueueView = observer (( props ) => {
         );
     }
 
-    for ( let i = pagingController.pageItemMax; i < ( pagingController.pageItemMin + pagingController.pageSize ); ++i ) {
-
-        transactionList.push (
-            <UI.Table.Row
-                key = { i }
-            >
-                <UI.Table.Cell collapsing>--</UI.Table.Cell>
-                <UI.Table.Cell collapsing>--</UI.Table.Cell>
-                <UI.Table.Cell>00000000-0000-0000-0000-000000000000</UI.Table.Cell>
-                <UI.Table.Cell collapsing>--</UI.Table.Cell>
-                <UI.Table.Cell collapsing>--</UI.Table.Cell>
-                <UI.Table.Cell collapsing>--</UI.Table.Cell>
-            </UI.Table.Row>
-        );
-    }
-
     // TODO: the JSONTree below leaks DOM nodes like crazy
 
     return (
@@ -275,11 +265,15 @@ export const TransactionQueueView = observer (( props ) => {
                     { transactionList }
                 </UI.Table.Body>
 
-                <If condition = { pagingController.pageCount > 1 }>
+                <If condition = { totalPages > 1 }>
                     <UI.Table.Footer>
                         <UI.Table.Row>
-                            <UI.Table.HeaderCell colSpan = '6'>
-                                <PagingMenu controller = { pagingController }/>
+                            <UI.Table.HeaderCell colSpan = '6' textAlign = 'center'>
+                                <UI.Pagination
+                                    activePage      = { page + 1 }
+                                    totalPages      = { totalPages }
+                                    onPageChange    = {( event, data ) => { setPage ( data.activePage - 1 ); }}
+                                />
                             </UI.Table.HeaderCell>
                         </UI.Table.Row>
                     </UI.Table.Footer>

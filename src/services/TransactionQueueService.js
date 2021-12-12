@@ -180,9 +180,8 @@ export class TransactionQueueService {
     //----------------------------------------------------------------//
     async getTransactionEnvelopeAsync ( uuid ) {
         const transactionRow = await AppDB.getAsync ( 'transactions', { networkID: this.networkService.networkID, accountIndex: this.accountService.index, uuid: uuid });
-        envelope = transactionRow.envelope;
-        assert ( envelope );
-        return envelope;
+        assert ( transactionRow.envelope );
+        return transactionRow.envelope;
     }
 
     //----------------------------------------------------------------//
@@ -408,12 +407,18 @@ export class TransactionQueueService {
         const history   = this.accountQueueHistory;
         const length    = history.length < queue.length ? queue.length : history.length;
 
+        const historyEntriesByNonce = {};
+
         for ( let i = 0; i < length; ++i ) {
 
             const queueEntry        = ( i < queue.length ) ? queue [ i ] : false;
             const historyEntry      = ( i < history.length ) ? history [ i ] : false;
 
             assert ( queueEntry || historyEntry );
+
+            if ( historyEntry ) {
+                historyEntriesByNonce [ historyEntry.nonce ] = historyEntry;
+            }
 
             // if there's a tx from the queue, don't overwrite it
             if ( queueEntry ) continue;
@@ -422,6 +427,12 @@ export class TransactionQueueService {
             debugLog ( 'restoring transaction', historyEntry.type );
             this.queue [ i ] = TransactionQueueEntry.fromTransactionHistoryEntry ( historyEntry );
         }
+
+        // clean up any duplicated nonces
+        this.queue = this.queue.filter (( queueEntry ) => {
+            if ( !_.has ( historyEntriesByNonce, queueEntry.nonce )) return true;
+            return queueEntry.uuid === historyEntriesByNonce [ queueEntry.nonce ].uuid;
+        });
 
         await this.saveAsync ();
     }
@@ -464,7 +475,7 @@ export class TransactionQueueService {
         await ( this.loadAsync ());
 
         transaction.setUUID ();
-        const body = _.cloneDeep ( txObject.body );
+        const body = _.cloneDeep ( transaction.body );
 
         const queueEntry = TransactionQueueEntry.fromTransaction ( transaction );
 

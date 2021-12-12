@@ -1,14 +1,15 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { PagingMenu, PagingController } from './PagingMenu';
 import { Transaction, TRANSACTION_TYPE } from './transactions/Transaction';
-import _                    from 'lodash';
-import React                from 'react';
-import { hooks }            from 'fgc';
-import { DateTime }         from 'luxon';
-import { computed }         from 'mobx';
-import { observer }         from 'mobx-react';
-import * as UI              from 'semantic-ui-react';
+import _                        from 'lodash';
+import { hooks }                from 'fgc';
+import { DateTime }             from 'luxon';
+import { computed }             from 'mobx';
+import { observer }             from 'mobx-react';
+import React, { useState }      from 'react';
+import * as UI                  from 'semantic-ui-react';
+
+const PAGE_SIZE         = 8;
 
 //================================================================//
 // AccountLogView
@@ -17,10 +18,15 @@ export const AccountLogView = observer (( props ) => {
     
     const { entries }           = props;
     const accountService        = props.accountService;
-    const pagingController      = hooks.useFinalizable (() => new PagingController ( entries.length ));
+    const [ page, setPage ]     = useState ( 0 );
+
+    const totalPages            = Math.ceil ( entries.length / PAGE_SIZE );
+
+    const pageBase  = page * PAGE_SIZE;
+    const pageTop   = Math.min ( entries.length, pageBase + PAGE_SIZE );
 
     let transactionList = [];
-    for ( let i = pagingController.pageItemMin; i < pagingController.pageItemMax; ++i ) {
+    for ( let i = pageBase; i < pageTop; ++i ) {
 
         const index         = entries.length - i - 1;
         const entry         = entries [ index ];
@@ -32,6 +38,7 @@ export const AccountLogView = observer (( props ) => {
         transactionList.push (
             <UI.Table.Row key = { i } positive = { isUnread }>
                 <UI.Table.Cell collapsing>{ time.toLocaleString ( DateTime.DATETIME_SHORT )}</UI.Table.Cell>
+                <UI.Table.Cell collapsing><UI.Icon name = { entry.isMaker ? 'sign-out alternate' : 'sign-in alternate' }/></UI.Table.Cell>
                 <UI.Table.Cell collapsing>{ friendlyName }</UI.Table.Cell>
                 <UI.Table.Cell>{ entry.explanation }</UI.Table.Cell>
             </UI.Table.Row>
@@ -44,6 +51,7 @@ export const AccountLogView = observer (( props ) => {
             <UI.Table.Header>
                 <UI.Table.Row>
                     <UI.Table.HeaderCell>Time</UI.Table.HeaderCell>
+                    <UI.Table.HeaderCell></UI.Table.HeaderCell>
                     <UI.Table.HeaderCell>Transaction</UI.Table.HeaderCell>
                     <UI.Table.HeaderCell>Note</UI.Table.HeaderCell>
                 </UI.Table.Row>
@@ -53,11 +61,15 @@ export const AccountLogView = observer (( props ) => {
                 { transactionList }
             </UI.Table.Body>
 
-            <If condition = { pagingController.pageCount > 1 }>
+            <If condition = { totalPages > 1 }>
                 <UI.Table.Footer>
                     <UI.Table.Row>
-                        <UI.Table.HeaderCell colSpan = '6'>
-                            <PagingMenu controller = { pagingController }/>
+                        <UI.Table.HeaderCell colSpan = '4' textAlign = 'center'>
+                            <UI.Pagination
+                                activePage      = { page + 1 }
+                                totalPages      = { totalPages }
+                                onPageChange    = {( event, data ) => { setPage ( data.activePage - 1 ); }}
+                            />
                     </UI.Table.HeaderCell>
                     </UI.Table.Row>
                 </UI.Table.Footer>

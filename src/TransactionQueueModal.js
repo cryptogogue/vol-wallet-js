@@ -29,7 +29,6 @@ const ClearAndResetQueueModal = observer (( props ) => {
         <UI.Modal
             open
             closeIcon
-            size        = 'small'
             onClose     = {() => { onClose ()}}
         >
             <UI.Modal.Header>Clear and Reset Queue</UI.Modal.Header>
