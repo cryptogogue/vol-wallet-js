@@ -15,7 +15,7 @@ import * as vol                                 from 'vol';
 //================================================================//
 export const StampAssetsForm = observer (({ controller }) => {
 
-    const [ stampID, setStampID ]                           = useState ( '' );
+    const [ stampID, setStampID ]                           = useState ( controller.stampAsset ? controller.stampAsset.assetID : '' );
     const [ selectionModalOpen, setSelectionModalOpen ]     = useState ( false );
     const [ previewModalOpen, setPreviewModalOpen ]         = useState ( false );
 
@@ -59,6 +59,7 @@ export const StampAssetsForm = observer (({ controller }) => {
 
                 <div style = {{ width: '100%', textAlign: 'center' }}>
                     <div style = {{ display: 'inline-block' }}>
+
                         <AssetCardView assetID = { controller.stampAsset.assetID } inventory = { controller.stampInventory }/>
 
                         <UI.Header.Subheader as = 'h3' style = {{ paddingBottom: 10 }}>
@@ -96,16 +97,16 @@ export const StampAssetsForm = observer (({ controller }) => {
                     <Fields.AssetSelectionField assets = { controller.assetSelection }/>
 
                     <StampAssetPreviewModal
-                        controller      = { controller }
-                        open            = { previewModalOpen }
-                        setOpen         = { setPreviewModalOpen }
+                        controller          = { controller }
+                        open                = { previewModalOpen }
+                        setOpen             = { setPreviewModalOpen }
                     />
 
                     <UI.Form.Input>
                         <UI.Button
                             fluid
-                            color       = 'teal'
-                            onClick     = {() => { setPreviewModalOpen ( true )}}
+                            color           = 'teal'
+                            onClick         = {() => { setPreviewModalOpen ( true )}}
                         >
                             Preview Assets
                         </UI.Button>

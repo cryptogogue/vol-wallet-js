@@ -1,11 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
-import { OfferView, OfferListView, OfferController, OfferAssetModal } from './OfferView';
+import { AssetModal }                                       from './AssetModal';
 import { MarketplaceSearchController, MarketplaceFavoritesController } from './MarketplaceSearchController';
+import { OfferView, OfferListView, OfferController, OfferAssetModal } from './OfferView';
 import { AppStateService }                                  from './services/AppStateService';
-import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
-import { CancelOfferFormController }                        from './transactions/CancelOfferFormController';
+import { StampController }                                  from './StampController';
+import { StampAssetsFormController }                        from './transactions/StampAssetsFormController';
 import { TransactionModal }                                 from './transactions/TransactionModal';
 import * as cardmotron                                      from 'cardmotron';
 import * as fgc                                             from 'fgc';
@@ -22,20 +23,20 @@ import * as vol                                             from 'vol';
 const appState = AppStateService.get ();
 
 const TABS = {
-    SHOP:               'SHOP',
+    STAMPS:             'STAMPS',
     FAVORITES:          'FAVORITES',
     LISTINGS:           'LISTINGS',
 };
 
 //const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@SHOP:', ...args ); }
+const debugLog = function ( ...args ) { console.log ( '@STAMPS:', ...args ); }
 
 //================================================================//
 // FavoritesController
 //================================================================//
 class FavoritesController extends MarketplaceFavoritesController {
 
-    @computed get offers        () { return this.items; }
+    @computed get stamps        () { return this.items; }
 
     //----------------------------------------------------------------//
     constructor ( accountService ) {
@@ -45,7 +46,7 @@ class FavoritesController extends MarketplaceFavoritesController {
 
     //----------------------------------------------------------------//
     _getFavorites () {
-        return this.networkService.favoriteOffers;
+        return this.networkService.favoriteStamps || [];
     }
 
     //----------------------------------------------------------------//
@@ -53,13 +54,13 @@ class FavoritesController extends MarketplaceFavoritesController {
 
         try {
             let marketplaceURL = URL.parse ( this.networkService.marketplaceURL );
-            marketplaceURL.pathname = `/offers/${ favoriteID }`;
+            marketplaceURL.pathname = `/stamps/${ favoriteID }`;
             marketplaceURL = URL.format ( marketplaceURL );
 
             const result = await this.revocable.fetchJSON ( marketplaceURL );
 
-            if ( result && result.offer ) {
-                return result.offer;
+            if ( result && result.asset ) {
+                return result.asset;
             }
         }
         catch ( error ) {
@@ -70,7 +71,7 @@ class FavoritesController extends MarketplaceFavoritesController {
 
     //----------------------------------------------------------------//
     _makeItemController ( item ) {
-        return new OfferController ( this.accountService, item );
+        return new StampController ( this.accountService, item );
     }
 }
 
@@ -79,15 +80,14 @@ class FavoritesController extends MarketplaceFavoritesController {
 //================================================================//
 class SearchController extends MarketplaceSearchController {
 
-    @computed get offers        () { return this.items; }
+    @computed get stamps        () { return this.items; }
 
     //----------------------------------------------------------------//
-    constructor ( accountService, excludeSeller, matchSeller, all ) {
+    constructor ( accountService, excludeSeller, matchSeller ) {
         super ( accountService );
 
         this.excludeSeller      = isNaN ( excludeSeller ) ? false : excludeSeller;
         this.matchSeller        = isNaN ( matchSeller ) ? false : matchSeller;
-        this.all                = all || false;
 
         this.start ();
     }
@@ -108,16 +108,12 @@ class SearchController extends MarketplaceSearchController {
             query.match_seller = this.matchSeller;
         }
 
-        if ( this.all !== false ) {
-            query.all = this.all;
-        }
-
         if ( this.token ) {
             query.token = this.token;
         }
 
         const baseURL       = URL.parse ( this.networkService.marketplaceURL );
-        baseURL.pathname    = `/offers`;
+        baseURL.pathname    = `/stamps`;
         baseURL.query       = query;
 
         return URL.format ( baseURL );
@@ -125,16 +121,16 @@ class SearchController extends MarketplaceSearchController {
 
     //----------------------------------------------------------------//
     _makeItemController ( item ) {
-        return new OfferController ( this.accountService, item );
+        return new StampController ( this.accountService, item.stamp, item.asset );
     }
 
     //----------------------------------------------------------------//
     _processResult ( result ) {
 
-        if ( !( result && result.offers )) return false;
+        if ( !( result && result.stamps )) return false;
 
         return {
-            items:      result.offers,
+            items:      result.stamps,
             count:      result.count || false,
             token:      result.token || false,
         };
@@ -142,82 +138,97 @@ class SearchController extends MarketplaceSearchController {
 }
 
 //================================================================//
-// OfferListUpdateController
+// StampView
 //================================================================//
-class OfferListUpdateController {
+export const StampView = observer (( props ) => {
 
-    //----------------------------------------------------------------//
-    constructor ( accountService ) {
+    const { stamp, onClickStamp, onToggleFavorite } = props;
+    const [ zoomedAsset, setZoomedAsset ] = useState ( false );
 
-        this.revocable          = new fgc.RevocableContext ();
-        this.accountService     = accountService;
-        this.networkService     = accountService.networkService;
-        this.offers             = [];
-        this.updateIndex        = 0;
+    const totalAssets = stamp.filteredInventory.assetsArray.length;
 
-        this.expirationUpdateLoopAsync ();
-        this.offerUpdateLoopAsync ();
-    }
+    return (
+        <React.Fragment>
+            <UI.Card>
+                <UI.Card.Content>
+                    <UI.Menu
+                        borderless
+                        secondary
+                    >
+                        <UI.Menu.Item>
+                            { vol.util.format ( stamp.price )}
+                        </UI.Menu.Item>
+                        <UI.Menu.Menu position = 'right'>
+                            <UI.Menu.Item
+                                icon                = { stamp.isFavorite ? 'heart' : 'heart outline' }
+                                onClick             = {() => { onToggleFavorite ( stamp ); }}
+                            />
+                        </UI.Menu.Menu>
+                    </UI.Menu>
+                </UI.Card.Content>
 
-    //----------------------------------------------------------------//
-    async expirationUpdateLoopAsync () {
-    
-        this.updateNow ();
-        this.revocable.timeout (() => { this.expirationUpdateLoopAsync ()}, 1000 );
-    }
+                <UI.Card.Content textAlign = 'center'>
+                    <UI.Card.Group>
+                        <cardmotron.AssetCardView
+                            asset               = { stamp.asset }
+                            schema              = { stamp.schema }
+                            onClick             = {() => { setZoomedAsset ( stamp.asset ); }}
+                        />
+                    </UI.Card.Group>
+                </UI.Card.Content>
 
-    //----------------------------------------------------------------//
-    async offerUpdateLoopAsync () {
-    
-        if ( this.offers.length ) {
-
-            const updateIndex = this.updateIndex % this.offers.length;
-            const offerID = this.offers [ updateIndex ].offerID;
-
-            try {
-                let marketplaceURL = URL.parse ( this.networkService.marketplaceURL );
-                marketplaceURL.pathname = `/offers/${ offerID }`;
-                marketplaceURL = URL.format ( marketplaceURL );
-
-                const result = await this.revocable.fetchJSON ( marketplaceURL );
-
-                if ( result && result.offer && ( result.offer.offerID === offerID )) {
-                    for ( let offer of this.offers ) {
-                        if ( offer.offerID === offerID ) {
-                            offer.setClosed ( result.offer.closed );
-                        }
-                    }
-                }
-            }
-            catch ( error ) {
-                debugLog ( error );
-            }
-            this.updateIndex = ( updateIndex + 1 ) % this.offers.length;
-        }
-        this.revocable.timeout (() => { this.offerUpdateLoopAsync ()}, 5000 );
-    }
-
-    //----------------------------------------------------------------//
-    setOffers ( offers ) {
-
-        this.offers = offers || [];
-        this.updateNow ();
-    }
-
-    //----------------------------------------------------------------//
-    updateNow () {
-
-        const now = new luxon.DateTime.now ();
-        for ( let offer of this.offers ) {
-            offer.setNow ( now );
-        }
-    }
-}
+                <UI.Card.Content extra textAlign = 'center'>
+                    <UI.Button
+                        positive
+                        onClick         = {() => { onClickStamp ( stamp ); }}
+                        disabled        = { totalAssets === 0 }
+                    >
+                        Apply
+                    </UI.Button>
+                </UI.Card.Content>
+            </UI.Card>
+            <AssetModal
+                networkService      = { stamp.networkService }
+                schema              = { stamp.schema }
+                asset               = { zoomedAsset }
+                onClose             = {() => { setZoomedAsset ( false ); }}
+            />
+        </React.Fragment>
+    );
+});
 
 //================================================================//
-// ShopScreenFancy
+// StampListView
 //================================================================//
-export const ShopScreenFancy = observer (( props ) => {
+export const StampListView = observer (( props ) => {
+
+    const { controller, onClickStamp, onToggleFavorite } = props;
+
+    const stamps = controller.stamps;
+
+    const stampList = [];
+    for ( let stamp of stamps ) {
+        stampList.push (
+            <StampView
+                key                 = { stamp.asset.assetID }
+                stamp               = { stamp }
+                onClickStamp        = { onClickStamp }
+                onToggleFavorite    = { onToggleFavorite }
+            />
+        );
+    }
+
+    return (
+        <UI.Card.Group centered>
+            { stampList }
+        </UI.Card.Group>
+    );
+});
+
+//================================================================//
+// StampsScreen
+//================================================================//
+export const StampsScreen = observer (( props ) => {
 
     if ( AppStateService.needsReset ()) return (<Redirect to = { '/util/reset' }/>);
 
@@ -230,14 +241,13 @@ export const ShopScreenFancy = observer (( props ) => {
     const inventoryService              = accountService.inventoryService;
     const shopSearchController          = fgc.hooks.useFinalizable (() => new SearchController ( accountService, accountService.index ));
     const favoritesSearchController     = fgc.hooks.useFinalizable (() => new FavoritesController ( accountService ));
-    const listingsSearchController      = fgc.hooks.useFinalizable (() => new SearchController ( accountService, false, accountService.index, true ));
-    const updateController              = fgc.hooks.useFinalizable (() => new OfferListUpdateController ( accountService ));
+    const listingsSearchController      = fgc.hooks.useFinalizable (() => new SearchController ( accountService, false, accountService.index ));
 
     const [ transactionController, setTransactionController ]   = useState ( false );
-    const [ tab, setTab ]                                       = useState ( TABS.SHOP );
+    const [ tab, setTab ]                                       = useState ( TABS.STAMPS );
 
     const controllersByTab = {};
-    controllersByTab [ TABS.SHOP ]          = shopSearchController;
+    controllersByTab [ TABS.STAMPS ]        = shopSearchController;
     controllersByTab [ TABS.FAVORITES ]     = favoritesSearchController;
     controllersByTab [ TABS.LISTINGS ]      = listingsSearchController;
 
@@ -245,29 +255,17 @@ export const ShopScreenFancy = observer (( props ) => {
         setTransactionController ( false );
     }
 
-    const onClickBuy = ( offer ) => {
+    const onClickStamp = ( stampController ) => {
         setTransactionController (
-            new BuyAssetsFormController (
+            new StampAssetsFormController (
                 accountService,
-                offer.minimumPrice,
-                offer.offerID,
-                offer.assets
+                stampController
             )
         );
     }
 
-    const onClickCancel = ( offer ) => {
-        setTransactionController (
-            new CancelOfferFormController (
-                accountService,
-                offer.assets,
-                offer.offerID
-            )
-        );
-    }
-
-    const onToggleFavorite = ( offer ) => {
-        networkService.toggleFavoriteOffer ( offer.offerID );
+    const onToggleFavorite = ( stamp ) => {
+        networkService.toggleFavoriteStamp ( stamp.assetID );
         favoritesSearchController.setPageAsync ( favoritesSearchController.nextPage, true );
     }
 
@@ -283,7 +281,6 @@ export const ShopScreenFancy = observer (( props ) => {
     const onPageChange = ( event, data ) => {
         controller.setPageAsync ( data.activePage - 1 );
     }
-    updateController.setOffers ( controller.offers );
 
     return (
         <React.Fragment>
@@ -291,18 +288,18 @@ export const ShopScreenFancy = observer (( props ) => {
             <fgc.SingleColumnContainerView>
                 <AccountNavigationBar
                     accountService          = { accountService }
-                    tab                     = { ACCOUNT_TABS.SHOP }
+                    tab                     = { ACCOUNT_TABS.STAMPS }
                 />
             </fgc.SingleColumnContainerView>
 
             <UI.Container>
                 <UI.Menu tabular attached = 'top'>
                     <UI.Menu.Item
-                        active      = { tab === TABS.SHOP }
-                        onClick     = {() => { setTab ( TABS.SHOP ); }}
+                        active      = { tab === TABS.STAMPS }
+                        onClick     = {() => { setTab ( TABS.STAMPS ); }}
                         disabled    = { shopCount === 0 }
                     >
-                        { `Shop${ formatCount ( shopCount )}` }
+                        { `Stamps${ formatCount ( shopCount )}` }
                     </UI.Menu.Item>
                     <UI.Menu.Item
                         active      = { tab === TABS.FAVORITES }
@@ -316,26 +313,25 @@ export const ShopScreenFancy = observer (( props ) => {
                         onClick     = {() => { setTab ( TABS.LISTINGS ); }}
                         disabled    = { listingsCount === 0 }
                     >
-                        { `My Listings${ formatCount ( listingsCount )}` }
+                        { `My Stamps${ formatCount ( listingsCount )}` }
                     </UI.Menu.Item>
                 </UI.Menu>
      
                 <UI.Segment attached textAlign = 'center'>
                     <If condition = { controller.totalPages > 1 }>
                         <UI.Pagination
-                            activePage      = { controller.nextPage + 1 }
-                            totalPages      = { controller.totalPages }
-                            onPageChange    = { onPageChange }
+                            activePage          = { controller.nextPage + 1 }
+                            totalPages          = { controller.totalPages }
+                            onPageChange        = { onPageChange }
                         />
                     </If>
                 </UI.Segment>
 
                 <UI.Segment tertiary attached = 'bottom'>
                     <fgc.ProgressSpinner loading = { inventoryService.schema === false }>
-                        <OfferListView
+                        <StampListView
                             controller          = { controller }
-                            onClickBuy          = { onClickBuy }
-                            onClickCancel       = { onClickCancel }
+                            onClickStamp        = { onClickStamp }
                             onToggleFavorite    = { onToggleFavorite }
                         />
                     </fgc.ProgressSpinner>

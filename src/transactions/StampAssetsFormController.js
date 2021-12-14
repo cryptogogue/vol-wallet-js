@@ -2,6 +2,7 @@
 
 import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
+import { StampController }                  from '../StampController';
 import { Inventory, INVENTORY_FILTER_STATUS, InventoryWithFilter, makeSquap } from 'cardmotron';
 import _                                    from 'lodash';
 import { action, computed, observable }     from 'mobx';
@@ -22,13 +23,15 @@ const debugLog = function ( ...args ) { console.log ( '@STAMP:', ...args ); }
 //================================================================//
 export class StampAssetsFormController extends TransactionFormController {
 
-    @observable status              = STATUS.IDLE;
-    @observable stamp               = false;
-    @observable stampAsset          = false;
-    @observable filteredInventory   = false;
-    @observable previewInventory    = false;
-    @observable stampInventory      = false;
-    @observable assetSelection      = {};
+    @observable status                  = STATUS.IDLE;
+    @observable stampController         = false;
+    @observable previewInventory        = false;
+    @observable assetSelection          = {};
+
+    @computed get filteredInventory     () { return this.stampController ? this.stampController.filteredInventory : false; }
+    @computed get stamp                 () { return this.stampController ? this.stampController.stamp : false; }
+    @computed get stampAsset            () { return this.stampController ? this.stampController.asset : false; }
+    @computed get stampInventory        () { return this.stampController ? this.stampController.stampInventory : false; }
 
     //----------------------------------------------------------------//
     @action
@@ -40,18 +43,24 @@ export class StampAssetsFormController extends TransactionFormController {
     }
 
     //----------------------------------------------------------------//
-    constructor ( accountService ) {
+    constructor ( accountService, stampController ) {
         super ();
 
-        this.inventory = accountService.inventory;
+        this.accountService     = accountService;
+        this.inventoryService   = accountService.inventoryService;
         this.initialize ( accountService, TRANSACTION_TYPE.STAMP_ASSETS );
+
+        if ( stampController ) {
+            this.setStampController ( stampController );
+            this.setStatus ( STATUS.FOUND );
+        }
     }
 
     //----------------------------------------------------------------//
     async fetchStampAsync ( stampID ) {
 
         this.setStatus ( STATUS.BUSY );
-        this.setStamp ( false );
+        this.setStampController ();
 
         try {
 
@@ -59,7 +68,7 @@ export class StampAssetsFormController extends TransactionFormController {
             const result        = await this.revocable.fetchJSON ( serviceURL );
 
             if ( result && result.stamp ) {
-                this.setStamp ( result.stamp, result.asset );
+                this.setStampController ( new StampController ( this.accountService, result.stamp, result.asset ));
                 this.setStatus ( STATUS.FOUND );
             }
             else {
@@ -86,7 +95,7 @@ export class StampAssetsFormController extends TransactionFormController {
         this.assetSelection = _.cloneDeep ( selection );
 
         this.previewInventory = new Inventory ();
-        this.previewInventory.setSchema ( this.inventory.schema );
+        this.previewInventory.setSchema ( this.inventoryService.schema );
 
         for ( let assetID in this.assetSelection ) {
 
@@ -105,40 +114,8 @@ export class StampAssetsFormController extends TransactionFormController {
 
     //----------------------------------------------------------------//
     @action
-    setStamp ( stamp, asset ) {
-        
-        this.stamp                  = stamp || false;
-        this.stampAsset             = asset || false;
-        
-        this.filteredInventory      = false;
-        this.stampInventory         = false;
-        this.previewInventory       = false;
-        this.assetSelection         = {};
-        
-        if ( !stamp ) return;
-        
-        this.stampInventory = new Inventory ();
-        this.stampInventory.setSchema ( this.inventory.schema );
-        this.stampInventory.setAsset ( this.stampAsset );
-
-        let qualifier = false;
-        if ( stamp.qualifier ) {
-            qualifier = makeSquap ( stamp.qualifier );
-        }
-        
-        const availableAssets = {};
-        
-        for ( let assetID in this.inventory.assets ) {
-            const asset = this.inventory.assets [ assetID ];
-
-            if ( !qualifier || qualifier.eval ({[ '' ]: asset })) {
-                availableAssets [ assetID ] = true;
-            }
-        }
-
-        this.filteredInventory = new InventoryWithFilter ( this.inventory, ( assetID ) => {
-            return availableAssets [ assetID ] || false;
-        });
+    setStampController ( stampController ) {
+        this.stampController = stampController || false;
     }
 
     //----------------------------------------------------------------//
@@ -152,8 +129,8 @@ export class StampAssetsFormController extends TransactionFormController {
 
         const body = {};
         
-        body.stamp              = this.stampAsset.assetID;
-        body.price              = this.stampAsset.owner === this.accountService.accountID ? 0 : this.stamp.price;
+        body.stamp              = this.stamp.assetID;
+        body.price              = this.stamp.owner === this.accountService.accountID ? 0 : this.stamp.price;
         body.version            = this.stamp.version;
         body.assetIdentifiers   = this.selectedAssetIDs;
         return body;

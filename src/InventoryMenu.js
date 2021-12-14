@@ -130,6 +130,9 @@ export const InventoryMenu = observer (( props ) => {
     const isPrintLayout = inventoryViewController.isPrintLayout;
     const hideCollapse = isPrintLayout || !inventoryViewController.hasDuplicates;
 
+    const networkService = accountService.networkService;
+    const stampsURL = networkService.marketplaceURL ? `/net/${ networkService.networkID }/account/${ accountService.accountID }/stamps` : false;
+
     return (
         <React.Fragment>
 
@@ -213,11 +216,22 @@ export const InventoryMenu = observer (( props ) => {
                             { methodListItems }
                         </Dropdown.Menu>
                     </Dropdown>
-                    <Menu.Item
-                        icon        = 'images'
-                        disabled    = { isPrintLayout }
-                        onClick     = {() => { onClickStampAssets ()}}
-                    />
+                    <Choose>
+                        <When condition = { stampsURL }>
+                            <Menu.Item
+                                icon        = 'images'
+                                disabled    = { isPrintLayout }
+                                href        = { stampsURL }
+                            />
+                        </When>
+                        <Otherwise>
+                            <Menu.Item
+                                icon        = 'images'
+                                disabled    = { isPrintLayout }
+                                onClick     = {() => { onClickStampAssets ()}}
+                            />
+                        </Otherwise>
+                    </Choose>
                 </Menu.Menu>
             </Menu>
 

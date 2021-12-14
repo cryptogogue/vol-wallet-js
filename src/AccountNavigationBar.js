@@ -19,6 +19,7 @@ export const ACCOUNT_TABS = {
     KEYS:           'KEYS',
     MINER:          'MINER',
     SHOP:           'SHOP',
+    STAMPS:         'STAMPS',
 };
 
 //----------------------------------------------------------------//
@@ -30,6 +31,7 @@ export function getAccountTabTitle ( tab ) {
         case ACCOUNT_TABS.KEYS:         return 'Keys';
         case ACCOUNT_TABS.MINER:        return 'Miner';
         case ACCOUNT_TABS.SHOP:         return 'Shop';
+        case ACCOUNT_TABS.STAMPS:       return 'Stamps';
     }
     return '';
 };
@@ -43,6 +45,7 @@ export function getAccountTabURL ( tab ) {
         case ACCOUNT_TABS.KEYS:         return '/keys';
         case ACCOUNT_TABS.MINER:        return '/miner';
         case ACCOUNT_TABS.SHOP:         return '/shop';
+        case ACCOUNT_TABS.STAMPS:       return '/stamps';
     }
     return '/';
 };
@@ -58,12 +61,14 @@ export const AccountNavigationBar = observer (( props ) => {
     const accountID = params.accountID || '';
 
     const { accountService, tab } = props;
+    const networkService = accountService.networkService;
 
     const accountURL            = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.ACCOUNT )}`;
     const inventoryURL          = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.INVENTORY )}`;
     const keysURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.KEYS )}`;
     const minerURL              = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.MINER )}`;
     const shopURL               = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.SHOP )}`;
+    const stampsURL             = `/net/${ networkID }/account/${ accountID }${ getAccountTabURL ( ACCOUNT_TABS.STAMPS )}`;
 
     const accountsURL           = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.ACCOUNTS )}`;
     const chainURL              = `/net/${ networkID }${ getNetworkTabURL ( NETWORK_TABS.CHAIN )}`;
@@ -74,13 +79,13 @@ export const AccountNavigationBar = observer (( props ) => {
     const accountTab            = getAccountTabURL ( tab );
 
     if ( accountService.accountID !== accountID ) {
-        return (<Redirect to = { `/net/${ accountService.networkService.networkID }/account/${ accountService.accountID }${ accountTab }` }/>);
+        return (<Redirect to = { `/net/${ networkService.networkID }/account/${ accountService.accountID }${ accountTab }` }/>);
     }
 
     return (
         <React.Fragment>
             <NavigationBar
-                networkService      = { accountService.networkService }
+                networkService      = { networkService }
                 networkID           = { networkID }
                 accountID           = { accountID }
                 accountTab          = { accountTab }
@@ -94,6 +99,10 @@ export const AccountNavigationBar = observer (( props ) => {
                         <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.KEYS )}        as = { Link } to = { keysURL }/>
                         <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.INVENTORY )}   as = { Link } to = { inventoryURL }/>
                         <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.SHOP )}        as = { Link } to = { shopURL }/>
+
+                        <If condition = { networkService.marketplaceURL }>
+                            <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.STAMPS )}  as = { Link } to = { stampsURL }/>
+                        </If>
 
                         <If condition = { accountService.isMiner }>
                             <UI.Dropdown.Item text = { getAccountTabTitle ( ACCOUNT_TABS.MINER )}   as = { Link } to = { minerURL }/>

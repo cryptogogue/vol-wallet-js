@@ -1,11 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
+import { AssetModal }                                       from './AssetModal';
 import { CraftingFormController }                           from './transactions/CraftingFormController';
 import { InventoryMenu }                                    from './InventoryMenu';
 import { AppStateService }                                  from './services/AppStateService';
 import { UpgradeAssetsFormController }                      from './transactions/UpgradeAssetsFormController';
-import { AssetModal, InventoryWithFilter, INVENTORY_FILTER_STATUS, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
+import { InventoryWithFilter, INVENTORY_FILTER_STATUS, InventoryPrintController, InventoryViewController, InventoryPrintView, InventoryView } from 'cardmotron';
 import { hooks, ProgressSpinner, SingleColumnContainerView, util } from 'fgc';
 import _                                                    from 'lodash';
 import { observer }                                         from 'mobx-react';
@@ -78,11 +79,6 @@ export const InventoryScreen = observer (( props ) => {
         }
     }
 
-    const assetIDtoAnchor = ( assetID ) => {
-        const assetURL = networkService.getServiceURL ( `/assets/${ assetID }` );
-        return <a href = { assetURL } target = '_blank'>{ assetID }</a>
-    }
-
     const hasAssets = ( inventoryService.isLoaded && ( inventoryViewController.assetsArray.length > 0 ));
 
     return (
@@ -145,9 +141,9 @@ export const InventoryScreen = observer (( props ) => {
                                 />
                             </div>
                             <AssetModal
+                                networkService      = { networkService }
                                 controller          = { inventoryViewController }
                                 assetID             = { zoomedAssetID }
-                                formatAssetID       = { assetIDtoAnchor }
                                 onClose             = {() => { setZoomedAssetID ( false )}}
                                 renderAsync         = { renderAsync }
                             />

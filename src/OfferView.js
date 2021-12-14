@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { AccountNavigationBar, ACCOUNT_TABS }               from './AccountNavigationBar';
+import { AssetModal }                                       from './AssetModal';
 import { AppStateService }                                  from './services/AppStateService';
 import { BuyAssetsFormController }                          from './transactions/BuyAssetsFormController';
 import { CancelOfferFormController }                        from './transactions/CancelOfferFormController';
@@ -228,7 +229,7 @@ export const OfferView = observer (( props ) => {
                             onClick             = {() => { onToggleFavorite ( offer ); }}
                         />
                     </UI.Menu.Menu>
-                </UI.Menu>    
+                </UI.Menu>
                 <UI.Segment attached>
                     <UI.Card.Group centered>
                         { cards }
@@ -259,14 +260,12 @@ export const OfferView = observer (( props ) => {
                     </Choose>
                 </UI.Segment>
             </div>
-            <If condition = { zoomedAsset }>
-                <OfferAssetModal
-                    schema              = { offer.schema }
-                    asset               = { zoomedAsset }
-                    networkService      = { offer.networkService }
-                    onClose             = {() => { setZoomedAsset ( false ); }}
-                />
-            </If>
+            <AssetModal
+                networkService      = { offer.networkService }
+                schema              = { offer.schema }
+                asset               = { zoomedAsset }
+                onClose             = {() => { setZoomedAsset ( false ); }}
+            />
         </React.Fragment>
     );
 });

@@ -2,7 +2,7 @@
 
 import { AccountStateService }          from './AccountStateService';
 import * as AppDB                       from './AppDB';
-import { assert, crypto, hooks, randomBytes, RevocableContext, storage, StorageContext } from 'fgc';
+import { assert, crypto, hooks, randomBytes, RevocableContext, storage, StorageContext, util } from 'fgc';
 import _                                from 'lodash';
 import { action, computed, observable, runInAction } from 'mobx';
 import * as vol                         from 'vol';
@@ -25,6 +25,7 @@ export class NetworkStateService {
     @computed get accountIDsByIndex     () { return this.network.accountIDsByIndex; }
     @computed get digest                () { return this.consensusService.digest || ''; }
     @computed get favoriteOffers        () { return this.network.favoriteOffers || []; }
+    @computed get favoriteStamps        () { return this.network.favoriteStamps || []; }
     @computed get genesis               () { return this.consensusService.genesis || ''; }
     @computed get height                () { return this.consensusService.height; }
     @computed get identity              () { return this.consensusService.identity; }
@@ -274,6 +275,12 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
+    isFavoriteStamp ( stampID ) {
+
+        return this.favoriteStamps.includes ( stampID );
+    }
+
+    //----------------------------------------------------------------//
     @action
     renameAccount ( oldName, newName ) {
 
@@ -358,15 +365,13 @@ export class NetworkStateService {
     @action
     toggleFavoriteOffer ( offerID ) {
 
-        const favorites = this.favoriteOffers ? this.favoriteOffers.slice () : [];
-        const index = favorites.indexOf ( offerID );
+        this.network.favoriteOffers = util.toggleArrayMember ( this.favoriteOffers, offerID );
+    }
 
-        if ( index < 0 ) {
-            favorites.push ( offerID );
-        }
-        else {
-            favorites.splice ( index, 1 );
-        }
-        this.network.favoriteOffers = favorites;
+    //----------------------------------------------------------------//
+    @action
+    toggleFavoriteStamp ( stampID ) {
+
+        this.network.favoriteStamps = util.toggleArrayMember ( this.favoriteStamps, stampID );
     }
 }

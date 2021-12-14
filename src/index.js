@@ -30,6 +30,7 @@ import { MinerInfoUtilScreen }          from './MinerInfoUtilScreen';
 import { SchemaUtilScreen }             from './SchemaUtilScreen';
 import { ServicesScreen }               from './ServicesScreen';
 import { ShopScreen }                   from './ShopScreen';
+import { StampsScreen }                 from './StampsScreen';
 import { TermsOfServiceScreen }         from './TermsOfServiceScreen';
 import { TransactionUtilScreen }        from './TransactionUtilScreen';
 import registerServiceWorker            from './util/registerServiceWorker';
@@ -63,6 +64,7 @@ const App = () => {
                 <Route exact path = "/net/:networkID/account/:accountID/keys"           component = { KeysScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/miner"          component = { MinerControlScreen }/>
                 <Route exact path = "/net/:networkID/account/:accountID/shop"           component = { ShopScreen }/>
+                <Route exact path = "/net/:networkID/account/:accountID/stamps"         component = { StampsScreen }/>
                 <Route exact path = "/net/:networkID"                                   component = { AccountListScreen }/>
 
                 <Route exact path = "/util/diagnostic"          component = { DiagnosticAndRecoveryScreen }/>
