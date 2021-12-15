@@ -59,8 +59,9 @@ class FavoritesController extends MarketplaceFavoritesController {
 
             const result = await this.revocable.fetchJSON ( marketplaceURL );
 
-            if ( result && result.asset ) {
-                return result.asset;
+            if ( result && result.stamp ) {
+                console.log ( 'STAMP:', result.stamp );
+                return result.stamp;
             }
         }
         catch ( error ) {
@@ -71,7 +72,7 @@ class FavoritesController extends MarketplaceFavoritesController {
 
     //----------------------------------------------------------------//
     _makeItemController ( item ) {
-        return new StampController ( this.accountService, item );
+        return new StampController ( this.accountService, item.stamp, item.asset );
     }
 }
 
