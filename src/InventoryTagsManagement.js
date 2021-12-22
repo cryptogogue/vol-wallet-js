@@ -79,6 +79,7 @@ export const InventoryTagsManagement = observer (( props ) => {
             <Dropdown.Item
                 icon        = 'tags'
                 text        = { tagName }
+                description = { "(" + tags.countAssetsByTag ( tagName ) + ")" }
                 onClick     = {() => { setCurrentTag( tagName );}}
             />
         );
@@ -86,7 +87,7 @@ export const InventoryTagsManagement = observer (( props ) => {
 
     return (
         <UI.Menu attached = 'top'>
-            <Dropdown item icon = 'book' disabled = { options.length === 0 ? true : false }>
+            <Dropdown floating item icon = 'book' disabled = { options.length === 0 ? true : false }>
                 <Dropdown.Menu>
                     {/* <Input icon = 'search' iconPosition = 'left' className = 'search' onClick = { ( e ) => e.stopPropagation ()} /> */}
                     <Dropdown.Menu scrolling>
