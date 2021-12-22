@@ -11,6 +11,7 @@ import * as UI                          from 'semantic-ui-react';
 export const InventorySearch = observer (( props ) => {
 
     const [ searchString, setSearchString ]                               = useState ( '' );
+    const [ lastSearch, setLastSearch ]                               = useState ( '' );
     const [ searchHistory, setSearchHistory ]                               = useState ( [] );
     const { inventory, tags} = props;
 
@@ -23,14 +24,12 @@ export const InventorySearch = observer (( props ) => {
 
     const onSearchInputKey = ( key, value, back) => {
         if ( key === 'Enter' ) {
-            let search = searchString;
-            if(value) {
-                search = value;
-            }
+            setLastSearch(searchString);
+            setSearchString(value);
 
             const results = _.filter(inventory.inventory.assets, function(o) { 
                 var r=_.filter(o.fields,function(item){
-                    return includesValue(search, item);
+                    return includesValue(value, item);
                 });
                 return r.length;
              });
@@ -46,9 +45,7 @@ export const InventorySearch = observer (( props ) => {
              tags.setFilter ( LAST_SEARCH_RESULTS );
 
              if(!back) {
-                setSearchHistory( searchHistory => [...searchHistory, searchString]);
-             } else {
-                setSearchString(search);
+                setSearchHistory( searchHistory => [...searchHistory, lastSearch]);
              }
         }
     }
@@ -57,12 +54,12 @@ export const InventorySearch = observer (( props ) => {
         <UI.Menu attached = 'top'>
             <UI.Menu.Menu position = 'left'>
                 <UI.Menu.Item
-                disabled = {searchHistory.length === 0 && searchString===""}
+                disabled = {searchHistory.length === 0}
                     icon        = 'arrow left'
                     onClick     = {() => { 
                         let last = searchHistory.pop();
                         if(last == undefined) {
-                            last = "";
+                            last = " ";
                         }
                         onSearchInputKey("Enter", last , true);}}
                 /> 
@@ -75,7 +72,7 @@ export const InventorySearch = observer (( props ) => {
                             name            = 'searchString'
                             value           = { searchString }
                             onChange        = {( event ) => { setSearchString ( event.target.value )}}
-                            onKeyPress      = { ( event ) => { onSearchInputKey ( event.key , searchString )} }
+                            onKeyPress      = { ( event ) => { onSearchInputKey ( event.key , event.target.value )} }
                             disabled        = { false }
                         />
             </UI.Menu.Item>
