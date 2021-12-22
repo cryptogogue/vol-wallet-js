@@ -53,6 +53,10 @@ export class InventoryTagsController {
         return count;
     }
 
+    getTagItems(tagName) {
+       return _.cloneDeep ( this.tags [ tagName ]) || {};
+    }
+
     //----------------------------------------------------------------//
     @action
     deleteTag ( tagName ) {

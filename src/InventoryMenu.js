@@ -3,6 +3,7 @@
 import { InventoryFilterDropdown }                          from './InventoryFilterDropdown';
 import { InventoryTagsModal }                               from './InventoryTagsModal';
 import { InventorySearch }                               from './InventorySearch';
+import { InventoryTagsManagement }                               from './InventoryTagsManagement';
 import { OfferAssetsFormController }                        from './transactions/OfferAssetsFormController';
 import { SendAssetsFormController }                         from './transactions/SendAssetsFormController';
 import { StampAssetsFormController }                        from './transactions/StampAssetsFormController';
@@ -236,10 +237,14 @@ export const InventoryMenu = observer (( props ) => {
                 </Menu.Menu>
             </Menu>
 
+            <InventorySearch inventory={inventoryViewController.inventory} tags = { tags } />
             
-            <InventorySearch inventory={inventoryViewController.inventory} tags = { tags }/>
-        
-    
+            <InventoryTagsManagement
+            tags = { tags } 
+            controller={inventoryViewController}
+            />
+
+
             <InventoryDownloadModal
                 options             = { downloadOptions }
                 setOptions          = { setDownloadOptions }
