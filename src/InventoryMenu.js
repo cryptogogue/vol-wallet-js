@@ -3,6 +3,7 @@
 import { InventoryFilterDropdown } from './InventoryFilterDropdown';
 import { InventoryTagsModal } from './InventoryTagsModal';
 import { InventorySearch } from './InventorySearch';
+import { InventoryQuickFilterPanel } from './InventoryQuickFilterPanel';
 import { InventoryTagsManagement } from './InventoryTagsManagement';
 import { OfferAssetsFormController } from './transactions/OfferAssetsFormController';
 import { SendAssetsFormController } from './transactions/SendAssetsFormController';
@@ -256,6 +257,7 @@ export const InventoryMenu = observer((props) => {
         {
             menuItem: { key: '2', icon: 'book', content: 'Deck Building' },
             pane: <Tab.Pane key={2} attached={false}>
+                    <InventoryQuickFilterPanel controller={inventoryViewController} inventory={inventoryViewController.inventory} tags={tags} />
                     <InventorySearch inventory={inventoryViewController.inventory} tags={tags} />
                     <InventoryTagsManagement tags={tags} controller={inventoryViewController} />
                 </Tab.Pane>
