@@ -11,7 +11,7 @@ import * as UI                          from 'semantic-ui-react';
 export const InventorySearch = observer (( props ) => {
 
     const [ searchString, setSearchString ]                               = useState ( '' );
-
+    const [ searchHistory, setSearchHistory ]                               = useState ( [] );
     const { inventory, tags} = props;
 
     const normalize = str => _.toLower(_.deburr(str))
@@ -21,7 +21,7 @@ export const InventorySearch = observer (( props ) => {
     return _.some(obj, v => normalize(v).includes(search));
     }
 
-    const onSearchInputKey = ( key, value) => {
+    const onSearchInputKey = ( key, value, back) => {
         if ( key === 'Enter' ) {
             let search = searchString;
             if(value) {
@@ -44,11 +44,29 @@ export const InventorySearch = observer (( props ) => {
              tags.deleteTag(LAST_SEARCH_RESULTS);
              tags.tagSelection ( foundAssests, LAST_SEARCH_RESULTS , true );
              tags.setFilter ( LAST_SEARCH_RESULTS );
+
+             if(!back) {
+                setSearchHistory( searchHistory => [...searchHistory, searchString]);
+             } else {
+                setSearchString(search);
+             }
         }
     }
 
     return (
         <UI.Menu attached = 'top'>
+            <UI.Menu.Menu position = 'left'>
+                <UI.Menu.Item
+                disabled = {searchHistory.length === 0 && searchString===""}
+                    icon        = 'arrow left'
+                    onClick     = {() => { 
+                        let last = searchHistory.pop();
+                        if(last == undefined) {
+                            last = "";
+                        }
+                        onSearchInputKey("Enter", last , true);}}
+                /> 
+            </UI.Menu.Menu>
             <UI.Menu.Item>
             <UI.Form.Input
             icon='search'
