@@ -21,7 +21,7 @@ import { Dropdown, Icon, Menu, Tab } from 'semantic-ui-react';
 export const InventoryMenu = observer((props) => {
 
 
-    const { accountService, inventoryViewController, printController, craftingFormController, upgradesFormController, tags } = props;
+    const { accountService, inventoryViewController, printController, craftingFormController, upgradesFormController, tags , filters} = props;
     const [transactionController, setTransactionController] = useState(false);
     const [downloadOptions, setDownloadOptions] = useState(false);
     const binding = craftingFormController.binding;
@@ -257,7 +257,7 @@ export const InventoryMenu = observer((props) => {
         {
             menuItem: { key: '2', icon: 'book', content: 'Deck Building' },
             pane: <Tab.Pane key={2} attached={false}>
-                    <InventoryQuickFilterPanel controller={inventoryViewController} inventory={inventoryViewController.inventory} tags={tags} />
+                    <InventoryQuickFilterPanel controller={inventoryViewController} inventory={inventoryViewController.inventory} tags={tags} filtersConroller={filters} />
                     <InventorySearch inventory={inventoryViewController.inventory} tags={tags} />
                     <InventoryTagsManagement tags={tags} controller={inventoryViewController} />
                 </Tab.Pane>

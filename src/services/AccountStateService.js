@@ -4,6 +4,7 @@ import * as AppDB                       from './AppDB';
 import * as entitlements                from '../util/entitlements';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
+import { InventoryFiltersController }   from './InventoryFiltersController';
 import { TransactionQueueService }      from './TransactionQueueService';
 import * as bitcoin                     from 'bitcoinjs-lib';
 import { Inventory }                    from 'cardmotron';
@@ -104,6 +105,7 @@ export class AccountStateService {
         this.inventory              = new Inventory ( this.inventoryProgress );
         this.inventoryService       = new InventoryService ( this, this.inventory, this.inventoryProgress );
         this.inventoryTags          = new InventoryTagsController ( networkService.networkID );
+        this.inventoryFilters       = new InventoryFiltersController ( networkService.networkID );
         this.transactionQueue       = new TransactionQueueService ( this );
     }
 
@@ -131,6 +133,7 @@ export class AccountStateService {
         hooks.finalize ( this.inventory );
         hooks.finalize ( this.inventoryService );
         hooks.finalize ( this.inventoryTags );
+        hooks.finalize ( this.inventoryFilters );
         hooks.finalize ( this.transactionQueue );
     }
 

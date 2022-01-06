@@ -37,6 +37,7 @@ export const InventoryScreen = observer (( props ) => {
     const inventory                 = accountService.inventory;
     const inventoryService          = accountService.inventoryService;
     const tags                      = accountService.inventoryTags;
+    const filters                   = accountService.inventoryFilters;
 
     const viewFilter = ( assetID ) => {
 
@@ -100,6 +101,7 @@ export const InventoryScreen = observer (( props ) => {
                         craftingFormController      = { craftingFormController }
                         upgradesFormController      = { upgradesFormController }
                         tags                        = { tags }
+                        filters                     = {filters}
                     />
                 </SingleColumnContainerView>
             </div>

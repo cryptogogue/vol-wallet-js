@@ -3,6 +3,7 @@
     "version": "0.2.6",
     "dependencies": {
         "@mattkrick/sanitize-svg": "^0.3.1",
+        "alasql":"1.7.3",
         "bcryptjs": "^2.4.3",
         "bip39": "^2.6.0",
         "bitcoinjs-lib": "^5.2.0",
