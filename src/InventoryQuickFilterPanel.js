@@ -22,6 +22,12 @@ export const InventoryQuickFilterPanel = observer((props) => {
         return _.some(obj, v => normalize(v).includes(search));
     }
 
+    const selectAllVisibleAssets = () => {
+        for (const item of controller.assetsArray) {
+            controller.toggleAssetSelection(item);
+        }
+    }
+
     const onFilter = (value) => {
         let results = [];
         if (value.startsWith("SQL:")) {
@@ -92,11 +98,19 @@ export const InventoryQuickFilterPanel = observer((props) => {
                 </UI.Dropdown.Menu>
             </UI.Dropdown>
             <UI.Menu.Menu position='right'>
-                <UI.Menu.Item
-                    icon={hideCollapse ? 'circle outline' : (controller.hideDuplicates ? 'plus square' : 'minus square')}
-                    disabled={hideCollapse}
-                    onClick={() => { controller.setHideDuplicates(!controller.hideDuplicates) }}
-                />
+                <UI.Popup content={controller.hasSelection ? 'Clear selection' : 'Select All'} trigger={
+                    <UI.Menu.Item
+                        icon={controller.hasSelection ? 'circle' : 'circle outline'}
+                        disabled={hideCollapse}
+                        onClick={() => { controller.hasSelection ? controller.clearSelection() : selectAllVisibleAssets(); }}
+                    />
+                } />
+                <UI.Popup content={hideCollapse ? 'No dup' : (controller.hideDuplicates ? 'Show duplicates' : 'Hide duplicates')} trigger={
+                    <UI.Menu.Item
+                        icon={hideCollapse ? 'circle outline' : (controller.hideDuplicates ? 'plus square' : 'minus square')}
+                        disabled={hideCollapse}
+                        onClick={() => { controller.setHideDuplicates(!controller.hideDuplicates) }}
+                    />} />
             </UI.Menu.Menu>
         </UI.Menu>
     );
