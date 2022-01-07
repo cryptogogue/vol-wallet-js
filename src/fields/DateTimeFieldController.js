@@ -23,16 +23,22 @@ export class DateTimeFieldController extends FieldController {
     //----------------------------------------------------------------//
     @action
     setDate ( value ) {
-        const newDate       = DateTime.fromISO ( value );
-        this.dateTime       = DateTime.local ( newDate.year, newDate.month, newDate.day, this.dateTime.hour, this.dateTime.minute );
+        
+        const newDate = DateTime.fromISO ( value );
+        if ( newDate.invalid ) throw new Error ( 'Invalid date format.' );
+
+        this.dateTime = DateTime.local ( newDate.year, newDate.month, newDate.day, this.dateTime.hour, this.dateTime.minute );
         this.update ();
     }
 
     //----------------------------------------------------------------//
     @action
     setTime ( value ) {
-        const duration      = Duration.fromISOTime ( value );
-        this.dateTime       = DateTime.local ( this.dateTime.year, this.dateTime.month, this.dateTime.day, duration.hours, duration.minutes );
+
+        const duration = Duration.fromISOTime ( value );
+        if ( duration.invalid ) throw new Error ( 'Invalid time format.' );
+
+        this.dateTime = DateTime.local ( this.dateTime.year, this.dateTime.month, this.dateTime.day, duration.hours, duration.minutes );
         this.update ();
     }
 
