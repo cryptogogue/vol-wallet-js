@@ -2,70 +2,45 @@
 
 import _ from 'lodash';
 import { observer } from 'mobx-react';
-import React, { useState } from 'react';
+import React from 'react';
 import * as UI from 'semantic-ui-react';
-import { Dropdown } from 'semantic-ui-react';
+import alasql from 'alasql';
+import { InventoryFiltersModal } from './InventoryFiltersModal';
 
 //================================================================//
 // InventoryQuickFilterPanel
 //================================================================//
 export const InventoryQuickFilterPanel = observer((props) => {
-    
+
     let filters = [];
-    const { controller, inventory, tags } = props;
-    const hideCollapse = controller.isPrintLayout || !controller.hasDuplicates;
-    const filtersInfo = [
-        {
-            "icon": "users",
-            "text": "mortal.1",
-            "description": "Mortals"
-        },
-        {
-            "icon": "crop",
-            "text": "trap.1",
-            "description": "Trap"
-        },
-        {
-            "icon": "move",
-            "text": "event.1",
-            "description": "Event"
-        },
-        {
-            "icon": "idea",
-            "text": "standard-mastermind.1",
-            "description": "Standard Mastermind"
-        },
-        {
-            "icon": "gem",
-            "text": "item.1",
-            "description": "Item"
-        },
-        {
-            "icon": "window restore",
-            "text": "standard-resource.1",
-            "description": "Standard Resources"
-        },
-        {
-            "icon": "window restore outline",
-            "text": "resource.1",
-            "description": "All Resources"
-        },
-    ];
+    const { controller, inventory, tags, filtersConroller } = props;
 
     const normalize = str => _.toLower(_.deburr(str))
-
+    const hideCollapse = controller.isPrintLayout || !controller.hasDuplicates;
     const includesValue = (val, obj) => {
         const search = normalize(val)
         return _.some(obj, v => normalize(v).includes(search));
     }
 
     const onFilter = (value) => {
-        const results = _.filter(inventory.inventory.assets, function (o) {
-            var r = _.filter(o.fields, function (item) {
-                return includesValue(value, item);
+        let results = [];
+        if (value.startsWith("SQL:")) {
+            const sqlQuery = value.substring(value.indexOf("SQL:") + 4);
+            if (results.length == 0) {
+                try {
+                    results = alasql(sqlQuery, [inventory.inventory.assetsArray]);
+                } catch (e) {
+                    console.log("@SQL_QUERY_ERROR", e.message);
+                }
+            }
+        } else {
+            results = _.filter(inventory.inventory.assets, function (o) {
+                var r = _.filter(o.fields, function (item) {
+                    return includesValue(value, item);
+                });
+                return r.length;
             });
-            return r.length;
-        });
+        }
 
         const foundAssests = {};
 
@@ -76,28 +51,52 @@ export const InventoryQuickFilterPanel = observer((props) => {
         tags.deleteTag(LAST_SEARCH_RESULTS);
         tags.tagSelection(foundAssests, LAST_SEARCH_RESULTS, true);
         tags.setFilter(LAST_SEARCH_RESULTS);
+        filtersConroller.setFilter(value);
     }
 
-    for (let filter of filtersInfo) {
+    for (let filter of filtersConroller.getFilters()) {
         filters.push(
-            <UI.Popup key={filter.text} content={filter.description} trigger={<UI.Menu.Item
-                icon={filter.icon}
+            <UI.Dropdown.Item
+                icon={<UI.Icon name={filter.icon} color={filter.color ? filter.color : "gray"} />}
                 disabled={false}
+                text={filter.description}
+                active={filtersConroller.getFilter() === filter.text}
                 onClick={() => { onFilter(filter.text); }}
-            />} />
+            />
         );
     }
     return (
         <UI.Menu attached='top'>
             <UI.Menu.Menu position='left'>
-            <UI.Menu.Item
-                            icon={hideCollapse ? 'circle outline' : (controller.hideDuplicates ? 'plus square' : 'minus square')}
-                            disabled={hideCollapse}
-                            onClick={() => { controller.setHideDuplicates(!controller.hideDuplicates) }}
-                        />
-                
-                {filters}
-                
+                <InventoryFiltersModal controller={controller} tags={tags} filters={filtersConroller} />
+            </UI.Menu.Menu>
+            <UI.Dropdown
+                item
+                icon={<UI.Icon name='filter' />
+                }
+            >
+                <UI.Dropdown.Menu >
+                    <UI.Dropdown.Header icon='tags' content='Choose filter' />
+                    <UI.Dropdown.Menu scrolling>
+                        {filtersConroller.getFilters().map((filter) => (
+                            <UI.Dropdown.Item
+                                icon={<UI.Icon name={filter.icon} color={filter.color ? filter.color : "gray"} />}
+                                disabled={false}
+                                key={filter.text}
+                                text={filter.description}
+                                active={filtersConroller.getFilter() === filter.text}
+                                onClick={() => { onFilter(filter.text); }}
+                            />
+                        ))}
+                    </UI.Dropdown.Menu>
+                </UI.Dropdown.Menu>
+            </UI.Dropdown>
+            <UI.Menu.Menu position='right'>
+                <UI.Menu.Item
+                    icon={hideCollapse ? 'circle outline' : (controller.hideDuplicates ? 'plus square' : 'minus square')}
+                    disabled={hideCollapse}
+                    onClick={() => { controller.setHideDuplicates(!controller.hideDuplicates) }}
+                />
             </UI.Menu.Menu>
         </UI.Menu>
     );

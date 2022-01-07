@@ -4,6 +4,7 @@ import _                                from 'lodash';
 import { observer }                     from 'mobx-react';
 import React, { useState }              from 'react';
 import * as UI                          from 'semantic-ui-react';
+import alasql from 'alasql';
 
 //================================================================//
 // InventorySearch
@@ -26,13 +27,24 @@ export const InventorySearch = observer (( props ) => {
         if ( key === 'Enter' ) {
             setLastSearch(searchString);
             setSearchString(value);
-
-            const results = _.filter(inventory.inventory.assets, function(o) { 
-                var r=_.filter(o.fields,function(item){
-                    return includesValue(value, item);
-                });
-                return r.length;
-             });
+            let results = [];
+            if(searchString.startsWith("SQL:")) {
+                const sqlQuery = searchString.substring(searchString.indexOf("SQL:") + 4);
+                if(results.length == 0) {
+                    try {
+                        results = alasql(sqlQuery,[inventory.inventory.assetsArray]);
+                    } catch(e) {
+                       console.log("@SQL_QUERY_ERROR", e.message);
+                    }
+                }
+            } else {
+                results = _.filter(inventory.inventory.assets, function(o) { 
+                    var r=_.filter(o.fields,function(item){
+                        return includesValue(value, item);
+                    });
+                    return r.length;
+                 });
+            }
 
              const foundAssests = {};
 
