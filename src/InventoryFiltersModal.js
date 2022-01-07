@@ -19,7 +19,7 @@ export const InventoryFiltersModalList = observer (( props ) => {
     let filterList = [];
     for ( let filter of filters.getFilters() ) {
 
-        console.log ( 'FILTERS', filter.description, filter.icon, filter.text );
+        console.log ( 'FILTERS', filter.description, filter.icon, filter.color, filter.text );
 
         filterList.push (
             <div
