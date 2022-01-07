@@ -18,7 +18,7 @@ export class InventoryFiltersController {
         this.storageKey = `.vol.NETWORK.${ networkID }.ITEM_FILTERS`;
 
         runInAction (() => {
-            this.filters           = storage.getItem ( this.storageKey, {});
+            this.filters           = storage.getItem ( this.storageKey, []);
         });
     }
 
