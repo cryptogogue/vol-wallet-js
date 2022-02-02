@@ -75,9 +75,9 @@ export const InventoryTagsManagement = observer (( props ) => {
             let results = getItemsForCurrentTag();
             const sortedItemList = _.orderBy(results, [item => item.assetID.toLowerCase()], ['asc']);
             try {
-                //FIXME: change values
+                //TODO: change values to configs or user defined
                 let cardBackUrl = "https://i.imgur.com/4XTFlsu.png";
-                let imageServiceUrl = "https://beta.volitionccg.com/png/assets/";
+                let imageServiceUrl = "https://gallery.volitionccg.com";
                 let ttsDeck = createTtsDeck(sortedItemList, imageServiceUrl, cardBackUrl);
                 const blob = new Blob ([ JSON.stringify ( ttsDeck, null, 4 )], { type: 'text/plain;charset=utf-8' });
                 FileSaver.saveAs ( blob, currentTag + '_tts.json' );

@@ -57,7 +57,7 @@ export function createTtsDeck(cards, imageServiceUrl, cardBackUrl) {
                         "NumWidth": 1,
                             "BackIsHidden": true
             }`);
-        cardInfo.FaceURL = imageServiceUrl + card.assetID;
+        cardInfo.FaceURL = `${imageServiceUrl}/owner/${card.owner}/assets/${card.assetID}/asset.png`;
         cardInfo.BackURL = cardBackUrl;
         currentDeck.ObjectStates[0].CustomDeck[i+1] = cardInfo;
     }
