@@ -6,7 +6,7 @@ import React, { useState }              from 'react';
 import * as UI                          from 'semantic-ui-react';
 import { Dropdown, Icon }                 from 'semantic-ui-react';
 import FileSaver                        from 'file-saver';
-
+import {  createTtsDeck }              from '/util/createTtsDeck';
 //================================================================//
 // InventorySearch
 //================================================================//
@@ -70,6 +70,23 @@ export const InventoryTagsManagement = observer (( props ) => {
         }
     }
 
+    const exportTtsDeck= () => {
+        if (tags.countAssetsByTag ( currentTag ) != 0) {
+            let results = getItemsForCurrentTag();
+            const sortedItemList = _.orderBy(results, [item => item.assetID.toLowerCase()], ['asc']);
+            try {
+                //TODO: change values to configs or user defined
+                let cardBackUrl = "https://i.imgur.com/4XTFlsu.png";
+                let imageServiceUrl = "https://gallery.volitionccg.com";
+                let ttsDeck = createTtsDeck(sortedItemList, imageServiceUrl, cardBackUrl);
+                const blob = new Blob ([ JSON.stringify ( ttsDeck, null, 4 )], { type: 'text/plain;charset=utf-8' });
+                FileSaver.saveAs ( blob, currentTag + '_tts.json' );
+            } catch(e) {
+                console.log(e);
+            }
+        }
+    }
+
     const tagNames = tags.tagNames;
 
     let options = [];
@@ -108,6 +125,7 @@ export const InventoryTagsManagement = observer (( props ) => {
                     <Dropdown.Divider />
                     <Dropdown.Item onClick={() => {exportItemsNames()}} >Export - Names</Dropdown.Item>
                     <Dropdown.Item onClick={() => {exportItems()}} >Export</Dropdown.Item>
+                    <Dropdown.Item onClick={() => {exportTtsDeck()}} >Export TTS Deck</Dropdown.Item>
                 </Dropdown.Menu>
                 </Dropdown>
             </UI.Menu.Menu>
