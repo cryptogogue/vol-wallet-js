@@ -92,7 +92,3 @@ Modifications to VOLWAL's source code are considered derivative works and remain
 If you want to contribue a bug fix or feature implementation, please follow our [code style guide](docs/js-code-style-guide.md) and submit pull requests via GitHub from a fork of the repository.
 
 If you have a bug to report, prepare a clear description of the bug along with a repro case and submit it to us via GitHub [issues](https://github.com/cryptogogue/vol-wallet-js/issues).
-
-### Support
-
-Check the [Volition forum](https://community.volitionccg.com/) for user support.
