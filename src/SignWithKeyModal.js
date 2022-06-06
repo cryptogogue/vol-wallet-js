@@ -9,7 +9,7 @@ import * as UI                              from 'semantic-ui-react';
 //================================================================//
 // DecryptAndSignWithKeyModal
 //================================================================//
-export const DecryptAndSignWithKeyModal = observer (( props ) => {
+export const SignWithKeyModal = observer (( props ) => {
 
     const { accountService, keyName, onClose }      = props;
     const [ encoded, setEncoded ]                   = useState ( '' );
@@ -114,7 +114,6 @@ export const DecryptAndSignWithKeyModal = observer (( props ) => {
                 <UI.Modal.Actions>
                     <UI.Button
                         positive
-                        <!--disabled    = { !canDecrypt }-->
                         onClick     = { onClickSign }
                     >
                         Sign
