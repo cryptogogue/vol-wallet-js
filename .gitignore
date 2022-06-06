@@ -4,6 +4,7 @@
 /node_modules
 /public/meta.json
 /src/consts/consts.js
+/src/consts/consts
 *.zip
 
 # for now
@@ -15,6 +16,7 @@ package-lock.json
 .env.development.local
 .env.test.local
 .env.production.local
+.idea
 
 npm-debug.log*
 yarn-debug.log*

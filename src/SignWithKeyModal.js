@@ -7,7 +7,7 @@ import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
-// DecryptAndSignWithKeyModal
+// SignWitKeyModal
 //================================================================//
 export const SignWithKeyModal = observer (( props ) => {
 
@@ -17,7 +17,7 @@ export const SignWithKeyModal = observer (( props ) => {
     const [ passwordCount, setPasswordCount ]       = useState ( 0 );
 
     const [ msgEnvelope, setMsgEnvelope ]           = useState ( false );
-    const [ plaintext, setPlaintext ]               = useState ( false );
+    const [ plaintext, setPlaintext ]               = useState ( '' );
 
     const [ sigEnvelope, setSigEnvelope ]           = useState ( false );
     const [ sigEncoded, setSigEncoded ]             = useState ( false );
@@ -28,32 +28,8 @@ export const SignWithKeyModal = observer (( props ) => {
     const key           = accountService.account.keys [ keyName ];
 
     const onChange = async ( event ) => {
-        setEncoded ( event.target.value );
+        setPlaintext ( event.target.value );
         setError ( false );
-    }
-
-    const onClickDecrypt = async () => {
-
-        const escaped = encoded.replace ( /(\r\n|\n|\r )/gm, '' );
-        const envelope = JSON.parse ( Buffer.from ( escaped, 'base64' ).toString ( 'utf8' ));
-
-        const keyPair       = await accountService.getKeyPairAsync ( keyName, password );
-        const plaintext     = keyPair.decrypt ( envelope.ciphertext, envelope.fromPublicHex );
-
-        setPasswordCount ( passwordCount + 1 );
-
-        if ( plaintext === false ) {
-            setError ( 'Could not decrypt with this key.' );
-            return;
-        }
-        setMsgEnvelope ( envelope );
-        setPlaintext ( plaintext );
-    }
-
-    const onClosePlaintextModal = () => {
-        setMsgEnvelope ( false );
-        setPlaintext ( false );
-        setPassword ( '' );
     }
 
     const onClickSign = async () => {
@@ -79,13 +55,13 @@ export const SignWithKeyModal = observer (( props ) => {
         onClosePlaintextModal ();
     }
 
-    const canDecrypt = password && encoded;
+    const canSign = password && Boolean(plaintext);
 
     return (
         <React.Fragment>
 
             {/******************************************************************
-                DECRYPT & SIGN MODAL
+                SIGN MODAL
             ******************************************************************/}
             <UI.Modal
                 open
@@ -101,7 +77,7 @@ export const SignWithKeyModal = observer (( props ) => {
                             value           = { plaintext }
                             onChange        = { onChange }
                             error           = { false }
-                            label           = 'String'
+                            label           = 'String to sign'
                             error           = { error }
                         />
                         <PasswordInputField
@@ -114,31 +90,7 @@ export const SignWithKeyModal = observer (( props ) => {
                 <UI.Modal.Actions>
                     <UI.Button
                         positive
-                        onClick     = { onClickSign }
-                    >
-                        Sign
-                    </UI.Button>
-                </UI.Modal.Actions>
-            </UI.Modal>
-
-            {/******************************************************************
-                PLAINTEXT MODAL
-            ******************************************************************/}
-            <UI.Modal
-                closeIcon
-                size        = 'small'
-                onClose     = { onClosePlaintextModal }
-                open        = { plaintext !== false }
-            >
-                <UI.Modal.Header>Message</UI.Modal.Header>
-                <UI.Modal.Content>
-                    <UI.Segment>
-                        { plaintext }
-                    </UI.Segment>
-                </UI.Modal.Content>
-                <UI.Modal.Actions>
-                    <UI.Button
-                        positive
+                        disabled    = { !canSign }
                         onClick     = { onClickSign }
                     >
                         Sign
@@ -152,7 +104,7 @@ export const SignWithKeyModal = observer (( props ) => {
             <UI.Modal
                 closeIcon
                 size        = 'small'
-                onClose     = { onCloseSigModal }
+                onClose     = { onClose }
                 open        = { sigEnvelope !== false }
             >
                 <UI.Modal.Header>Signature</UI.Modal.Header>
