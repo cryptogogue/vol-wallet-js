@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { DecryptAndSignWithKeyModal }       from './DecryptAndSignWithKeyModal';
+import { SignWithKeyModal }                 from './SignWithKeyModal';
 import { EncryptWithKeyModal }              from './EncryptWithKeyModal';
 import { PasswordInputField }               from './PasswordInputField';
 import JSONTree                             from 'react-json-tree';
@@ -11,6 +12,7 @@ import * as UI                              from 'semantic-ui-react';
 const MODALS = {
     ENCRYPT:            'ENCRYPT',
     DECRYPT_AND_SIGN:   'DECRYPT_AND_SIGN',
+    SIGN:               'SIGN',
     EXPORT:             'EXPORT',
     ENTITLEMENTS:       'ENTITLEMENTS',
 };
@@ -155,6 +157,14 @@ export const KeyInfoMessage = observer (( props ) => {
                     />
                 </When>
 
+                <When condition = {( modal === MODALS.SIGN )}>
+                    <SignWithKeyModal
+                        accountService      = { accountService }
+                        keyName             = { keyName }
+                        onClose             = { onClose }
+                    />
+                </When>
+
                 <When condition = {( modal === MODALS.EXPORT )}>
                     <ExportKeyModal
                         accountService      = { accountService }
@@ -200,6 +210,7 @@ export const KeyInfoMessage = observer (( props ) => {
                     <UI.Dropdown.Menu>
                         <UI.Dropdown.Item icon = 'envelope'     text = 'Encrypt'            onClick = {() => { setModal ( MODALS.ENCRYPT ); }}/>
                         <UI.Dropdown.Item icon = 'signup'       text = 'Decrypt & Sign'     onClick = {() => { setModal ( MODALS.DECRYPT_AND_SIGN ); }}/>
+                        <UI.Dropdown.Item icon = 'address card' text = 'Sign'               onClick = {() => { setModal ( MODALS.SIGN ); }}/>
                         <UI.Dropdown.Item icon = 'unlock'       text = 'Export'             onClick = {() => { setModal ( MODALS.EXPORT ); }}/>
                         <UI.Dropdown.Item icon = 'shield'       text = 'Entitlements'       onClick = {() => { setModal ( MODALS.ENTITLEMENTS ); }}/>
                     </UI.Dropdown.Menu>
