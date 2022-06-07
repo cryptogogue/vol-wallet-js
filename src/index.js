@@ -31,7 +31,7 @@ import { SchemaUtilScreen }             from './SchemaUtilScreen';
 import { ServicesScreen }               from './ServicesScreen';
 import { ShopScreen }                   from './ShopScreen';
 import { StampsScreen }                 from './StampsScreen';
-import { AssetJPEGView }                 from './AssetJPEGView';
+import { AssetJPEGView }                from './AssetJPEGView';
 import { TermsOfServiceScreen }         from './TermsOfServiceScreen';
 import { TransactionUtilScreen }        from './TransactionUtilScreen';
 import registerServiceWorker            from './util/registerServiceWorker';

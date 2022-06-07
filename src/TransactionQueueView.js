@@ -36,7 +36,7 @@ export const TransactionStatusModal = observer (( props ) => {
             if ( minerStatus === TX_MINER_STATUS.TIMED_OUT )    return <React.Fragment><UI.Icon name = 'circle notch' loading/> timed out</React.Fragment>;
         }
         else {
-             if ( minerStatus === TX_MINER_STATUS.NEW )         return <React.Fragment><UI.Icon name = 'clock'/> new</React.Fragment>;
+            if ( minerStatus === TX_MINER_STATUS.NEW )          return <React.Fragment><UI.Icon name = 'clock'/> new</React.Fragment>;
             if ( minerStatus === TX_MINER_STATUS.TIMED_OUT )    return <React.Fragment><UI.Icon name = 'question'/> timed out</React.Fragment>;
         }
         return <React.Fragment/>;

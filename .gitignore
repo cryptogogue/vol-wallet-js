@@ -4,7 +4,6 @@
 /node_modules
 /public/meta.json
 /src/consts/consts.js
-/src/consts/consts
 *.zip
 
 # for now
