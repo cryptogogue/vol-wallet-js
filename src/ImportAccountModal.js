@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { KeyAndPasswordForm }               from './KeyAndPasswordForm';
+import { PasswordInputField }               from './PasswordInputField';
+import { PhraseOrKeyField }                 from './PhraseOrKeyField';
 import { hooks, RevocableContext }          from 'fgc';
 import { action, observable, runInAction }  from 'mobx';
 import { observer }                         from 'mobx-react';
@@ -94,11 +95,11 @@ class ImportAccountController {
 }
 
 //================================================================//
-// ImportAccountModalBody
+// ImportAccountModal
 //================================================================//
-const ImportAccountModalBody = observer (( props ) => {
+export const ImportAccountModal = observer (( props ) => {
 
-    const { networkService, open, onClose } = props;
+    const { networkService, onClose } = props;
 
     const controller = hooks.useFinalizable (() => new ImportAccountController ( networkService, onClose ));
     const appState = networkService.appState;
@@ -123,20 +124,24 @@ const ImportAccountModalBody = observer (( props ) => {
 
     return (
         <UI.Modal
-            size = 'small'
+            open
+            size        = 'small'
             closeIcon
-            onClose = {() => { onClose ()}}
-            open = { open }
+            onClose     = {() => { onClose ()}}
         >
             <UI.Modal.Header>Import Account</UI.Modal.Header>
             
             <UI.Modal.Content>
-                <KeyAndPasswordForm
-                    appState        = { appState }
-                    setKey          = { setKey }
-                    setPhraseOrKey  = { setPhraseOrKey }
-                    setPassword     = { setPassword }
-                />
+                <UI.Form>
+                    <PhraseOrKeyField
+                        setKey          = { setKey }
+                        setPhraseOrKey  = { setPhraseOrKey }
+                    />
+                    <PasswordInputField
+                        appState        = { appState }
+                        setPassword     = { setPassword }
+                    />
+                </UI.Form>
             </UI.Modal.Content>
 
             <UI.Modal.Actions>
@@ -150,29 +155,5 @@ const ImportAccountModalBody = observer (( props ) => {
                 </UI.Button>
             </UI.Modal.Actions>
         </UI.Modal>
-    );
-});
-
-//================================================================//
-// ImportAccountModal
-//================================================================//
-export const ImportAccountModal = observer (( props ) => {
-
-    const { networkService, open } = props;
-    const [ counter, setCounter ] = useState ( 0 );
-
-    const onClose = () => {
-        setCounter ( counter + 1 );
-        props.onClose ();
-    }
-
-    return (
-        <div key = { counter }>
-            <ImportAccountModalBody
-                networkService  = { networkService }
-                open            = { open }
-                onClose         = { onClose }
-            />
-        </div>
     );
 });

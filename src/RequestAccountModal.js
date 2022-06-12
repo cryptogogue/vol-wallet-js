@@ -1,7 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { KeyAndPasswordForm }                   from './KeyAndPasswordForm';
+import { PasswordInputField }                   from './PasswordInputField';
+import { PhraseOrKeyField }                     from './PhraseOrKeyField';
 import { TermsOfServiceController }             from './TermsOfServiceController';
+import { TermsOfServiceModal }                  from './TermsOfServiceModal';
 import { hooks, RevocableContext }              from 'fgc';
 import { computed, observable, runInAction }    from 'mobx';
 import { observer }                             from 'mobx-react';
@@ -10,45 +12,11 @@ import ReactMarkdown                            from 'react-markdown'
 import * as UI                                  from 'semantic-ui-react';
 
 //================================================================//
-// TermsOfServiceModal
+// RequestAccountModal
 //================================================================//
-const TermsOfServiceModal = observer (( props ) => {
+export const RequestAccountModal = observer (( props ) => {
 
-    const { controller, onAccept, onDecline } = props;
-
-    return (
-        <UI.Modal
-            size = 'large'
-            closeIcon
-            open        = { true }
-            onClose     = {() => { onDecline ()}}
-        >
-            <UI.Modal.Header>Terms of Service</UI.Modal.Header>
-
-            <UI.Modal.Content>
-                <ReactMarkdown>
-                    { controller.text }
-                </ReactMarkdown>
-            </UI.Modal.Content>
-
-            <UI.Modal.Actions>
-                <UI.Button
-                    positive
-                    onClick         = {() => { onAccept ()}}
-                >
-                    Accept
-                </UI.Button>
-            </UI.Modal.Actions>
-        </UI.Modal>
-    );
-});
-
-//================================================================//
-// RequestAccountModalBody
-//================================================================//
-const RequestAccountModalBody = observer (( props ) => {
-
-    const { networkService, open, onClose } = props;
+    const { networkService, onClose } = props;
 
     const tosController = hooks.useFinalizable (() => new TermsOfServiceController ( networkService ));
 
@@ -90,27 +58,31 @@ const RequestAccountModalBody = observer (( props ) => {
         }
     }
 
-    const submitEnabled     = key && password;
+    const submitEnabled = key && password;
 
     return (
         <React.Fragment>
 
             <UI.Modal
+                open
                 size = 'small'
                 closeIcon
                 onClose = {() => { onClose ()}}
-                open = { open }
             >
                 <UI.Modal.Header>Request Account</UI.Modal.Header>
                 
                 <UI.Modal.Content>
-                    <KeyAndPasswordForm
-                        appState        = { networkService.appState }
-                        setKey          = { setKey }
-                        setPhraseOrKey  = { setPhraseOrKey }
-                        setPassword     = { setPassword }
-                        generate
-                    />
+                    <UI.Form>
+                        <PhraseOrKeyField
+                            setKey          = { setKey }
+                            setPhraseOrKey  = { setPhraseOrKey }
+                            generate
+                        />
+                        <PasswordInputField
+                            appState        = { networkService.appState }
+                            setPassword     = { setPassword }
+                        />
+                    </UI.Form>
                 </UI.Modal.Content>
 
                 <UI.Modal.Actions>
@@ -134,29 +106,5 @@ const RequestAccountModalBody = observer (( props ) => {
             </If>
 
         </React.Fragment>
-    );
-});
-
-//================================================================//
-// RequestAccountModal
-//================================================================//
-export const RequestAccountModal = observer (( props ) => {
-
-    const { networkService, open } = props;
-    const [ counter, setCounter ] = useState ( 0 );
-
-    const onClose = () => {
-        setCounter ( counter + 1 );
-        props.onClose ();
-    }
-
-    return (
-        <div key = { counter }>
-            <RequestAccountModalBody
-                networkService  = { networkService }
-                open            = { open }
-                onClose         = { onClose }
-            />
-        </div>
     );
 });

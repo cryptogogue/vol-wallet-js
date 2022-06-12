@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { KeyAndPasswordForm }                   from './KeyAndPasswordForm';
 import { hooks, RevocableContext }              from 'fgc';
 import { computed, observable, runInAction }    from 'mobx';
 import { observer }                             from 'mobx-react';

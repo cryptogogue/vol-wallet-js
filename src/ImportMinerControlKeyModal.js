@@ -1,6 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { KeyAndPasswordForm }               from './KeyAndPasswordForm';
+import { PasswordInputField }               from './PasswordInputField';
+import { PhraseOrKeyField }                 from './PhraseOrKeyField';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
@@ -38,12 +39,16 @@ const ImportMinerControlKeyModalBody = observer (( props ) => {
             <UI.Modal.Header>Import Miner Control Key</UI.Modal.Header>
             
             <UI.Modal.Content>
-                <KeyAndPasswordForm
-                    appState        = { accountService.appState }
-                    setKey          = { setKey }
-                    setPhraseOrKey  = { setPhraseOrKey }
-                    setPassword     = { setPassword }
-                />
+                <UI.Form>
+                    <PhraseOrKeyField
+                        setKey          = { setKey }
+                        setPhraseOrKey  = { setPhraseOrKey }
+                    />
+                    <PasswordInputField
+                        appState        = { appState }
+                        setPassword     = { setPassword }
+                    />
+                </UI.Form>
             </UI.Modal.Content>
 
             <UI.Modal.Actions>

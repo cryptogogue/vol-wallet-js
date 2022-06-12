@@ -1,17 +1,16 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { PasswordInputField }               from './PasswordInputField';
 import { crypto, FilePickerMenuItem }       from 'fgc';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
 
 //================================================================//
-// KeyAndPasswordForm
+// PhraseOrKeyField
 //================================================================//
-export const KeyAndPasswordForm = observer (( props ) => {
+export const PhraseOrKeyField = observer (( props ) => {
 
-    const { appState, setKey, setPassword, generate } = props;
+    const { setKey, generate } = props;
 
     const [ phraseOrKey, setPhraseOrKey ]       = useState ( '' );
     const [ keyError, setKeyError ]             = useState ( false );
@@ -51,7 +50,7 @@ export const KeyAndPasswordForm = observer (( props ) => {
     }
 
     return (
-        <UI.Form>
+        <React.Fragment>
             <UI.Menu fluid text>
                 <FilePickerMenuItem
                     loadFile = { loadFile }
@@ -69,11 +68,6 @@ export const KeyAndPasswordForm = observer (( props ) => {
                 onChange = {( event ) => { onPhraseOrKey ( event.target.value )}}
                 error = { keyError ? 'Invalid Phrase or Key.' : false }
             />
-
-            <PasswordInputField
-                appState = { appState }
-                setPassword = { setPassword }
-            />
-        </UI.Form>
+        </React.Fragment>
     );
 });

@@ -14,6 +14,7 @@ export const TRANSACTION_TYPE = {
     BUY_ASSETS:                 'BUY_ASSETS',
     CANCEL_OFFER:               'CANCEL_OFFER',
     HARD_RESET:                 'HARD_RESET',
+    IDENTIFY_ACCOUNT:           'IDENTIFY_ACCOUNT',
     KEY_POLICY:                 'KEY_POLICY',
     OPEN_ACCOUNT:               'OPEN_ACCOUNT',
     OFFER_ASSETS:               'OFFER_ASSETS',
@@ -27,6 +28,7 @@ export const TRANSACTION_TYPE = {
     SEND_ASSETS:                'SEND_ASSETS',
     SEND_VOL:                   'SEND_VOL',
     STAMP_ASSETS:               'STAMP_ASSETS',
+    SET_IDENTITY_KEY:           'SET_IDENTITY_KEY',
     SET_MINIMUM_GRATUITY:       'SET_MINIMUM_GRATUITY',
     SET_TERMS_OF_SERVICE:       'SET_TERMS_OF_SERVICE',
     UPGRADE_ASSETS:             'UPGRADE_ASSETS',
@@ -66,6 +68,7 @@ export class Transaction {
             case TRANSACTION_TYPE.BETA_GET_ASSETS:              return 'BETA Get Assets';
             case TRANSACTION_TYPE.BUY_ASSETS:                   return 'Buy Assets';
             case TRANSACTION_TYPE.CANCEL_OFFER:                 return 'Cancel Offer';
+            case TRANSACTION_TYPE.IDENTIFY_ACCOUNT:             return 'Identify Account';
             case TRANSACTION_TYPE.KEY_POLICY:                   return 'Key Policy';
             case TRANSACTION_TYPE.OFFER_ASSETS:                 return 'Sell Assets';
             case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return 'Sponsor Account';
@@ -79,6 +82,7 @@ export class Transaction {
             case TRANSACTION_TYPE.SEND_ASSETS:                  return 'Send Assets';
             case TRANSACTION_TYPE.SEND_VOL:                     return 'Send VOL';
             case TRANSACTION_TYPE.STAMP_ASSETS:                 return 'Stamp Assets';
+            case TRANSACTION_TYPE.SET_IDENTITY_KEY:             return 'Set Identity Key';
             case TRANSACTION_TYPE.SET_MINIMUM_GRATUITY:         return 'Set Minimum Gratuity';
             case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return 'Set Terms of Service';
             case TRANSACTION_TYPE.UPGRADE_ASSETS:               return 'Upgrade Assets';

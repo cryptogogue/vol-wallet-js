@@ -5,6 +5,7 @@ import { AccountPolicyFormController }                      from './AccountPolic
 import { AffirmKeyFormController }                          from './AffirmKeyFormController';
 import { BetaGetAssetsFormController }                      from './BetaGetAssetsFormController';
 import { BetaGetDeckFormController }                        from './BetaGetDeckFormController';
+import { IdentifyAccountFormController }                    from './IdentifyAccountFormController';
 import { KeyPolicyFormController }                          from './KeyPolicyFormController';
 import { OpenAccountFormController }                        from './OpenAccountFormController';
 import { PublishSchemaFormController }                      from './PublishSchemaFormController';
@@ -12,6 +13,7 @@ import { RegisterMinerFormController }                      from './RegisterMine
 import { RenameAccountFormController }                      from './RenameAccountFormController';
 import { ReserveAccountNameFormController }                 from './ReserveAccountNameFormController';
 import { SendVOLFormController }                            from './SendVOLFormController';
+import { SetIdentityKeyFormController }                     from './SetIdentityKeyFormController';
 import { SetTermsOfServiceFormController }                  from './SetTermsOfServiceFormController';
 import { UpdateMinerInfoFormController }                    from './UpdateMinerInfoFormController';
 import { observer }                                         from 'mobx-react';
@@ -22,6 +24,8 @@ import * as UI                                              from 'semantic-ui-re
 export const ACCOUNT_TRANSACTIONS_MENU = [
     TRANSACTION_TYPE.SEND_VOL,
     TRANSACTION_TYPE.OPEN_ACCOUNT,
+    TRANSACTION_TYPE.IDENTIFY_ACCOUNT,
+
     // TRANSACTION_TYPE.ACCOUNT_POLICY,
     TRANSACTION_TYPE.BETA_GET_ASSETS,
     TRANSACTION_TYPE.BETA_GET_DECK,
@@ -32,7 +36,7 @@ export const ACCOUNT_TRANSACTIONS_MENU = [
     TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,
     TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME,
-
+    TRANSACTION_TYPE.SET_IDENTITY_KEY,
     TRANSACTION_TYPE.SET_TERMS_OF_SERVICE,
 ];
 
@@ -49,6 +53,7 @@ function makeControllerForTransactionType ( accountService, transactionType ) {
         case TRANSACTION_TYPE.AFFIRM_KEY:                   return new AffirmKeyFormController ( accountService );
         case TRANSACTION_TYPE.BETA_GET_ASSETS:              return new BetaGetAssetsFormController ( accountService );
         case TRANSACTION_TYPE.BETA_GET_DECK:                return new BetaGetDeckFormController ( accountService );
+        case TRANSACTION_TYPE.IDENTIFY_ACCOUNT:             return new IdentifyAccountFormController ( accountService );
         case TRANSACTION_TYPE.KEY_POLICY:                   return new KeyPolicyFormController ( accountService );
         case TRANSACTION_TYPE.OPEN_ACCOUNT:                 return new OpenAccountFormController ( accountService );
         case TRANSACTION_TYPE.PUBLISH_SCHEMA:               return new PublishSchemaFormController ( accountService );
@@ -57,6 +62,7 @@ function makeControllerForTransactionType ( accountService, transactionType ) {
         case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new RenameAccountFormController ( accountService );
         case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new ReserveAccountNameFormController ( accountService );
         case TRANSACTION_TYPE.SEND_VOL:                     return new SendVOLFormController ( accountService );
+        case TRANSACTION_TYPE.SET_IDENTITY_KEY:             return new SetIdentityKeyFormController ( accountService );
         case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return new SetTermsOfServiceFormController ( accountService );
         case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return new UpdateMinerInfoFormController ( accountService );
     }

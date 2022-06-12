@@ -45,8 +45,18 @@ export const NetworkActionsSegment = observer (( props ) => {
                     attached = 'top'
                     onClick = {() => { setImportAccountModalOpen ( true )}}
                 >
-                    <UI.Icon name = 'cloud download'/>
+                    <UI.Icon name = 'sign in'/>
                     Import Account
+                </UI.Button>
+
+                <UI.Button
+                    fluid
+                    color = 'teal'
+                    attached
+                    onClick = {() => { setRequestAccountModalOpen ( true )}}
+                >
+                    <UI.Icon name = 'envelope'/>
+                    Request Account
                 </UI.Button>
 
                 <UI.Button
@@ -55,23 +65,24 @@ export const NetworkActionsSegment = observer (( props ) => {
                     attached = 'bottom'
                     onClick = {() => { setRequestAccountModalOpen ( true )}}
                 >
-                    <UI.Icon name = 'envelope'/>
-                    Request Account
+                    <UI.Icon name = 'certificate'/>
+                    New Account with Identity
                 </UI.Button>
             </UI.Segment>
 
-            <ImportAccountModal
-                networkService      = { networkService }
-                open                = { importAccountModalOpen }
-                onClose             = {() => { setImportAccountModalOpen ( false )}}
-                disabled            = { !networkService.consensusService.isOnline }
-            />
+            <If condition = { importAccountModalOpen }>
+                <ImportAccountModal
+                    networkService      = { networkService }
+                    onClose             = {() => { setImportAccountModalOpen ( false )}}
+                />
+            </If>
 
-            <RequestAccountModal
-                networkService      = { networkService }
-                open                = { requestAccountModalOpen }
-                onClose             = {() => { setRequestAccountModalOpen ( false )}}
-            />
+            <If condition = { requestAccountModalOpen }>
+                <RequestAccountModal
+                    networkService      = { networkService }
+                    onClose             = {() => { setRequestAccountModalOpen ( false )}}
+                />
+            </If>
         </div>
     );
 });
