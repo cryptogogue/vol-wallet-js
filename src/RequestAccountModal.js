@@ -40,9 +40,7 @@ export const RequestAccountModal = observer (( props ) => {
         networkService.setAccountRequest (
             password,
             phraseOrKey,
-            key.getKeyID (),
-            key.getPrivateHex (),
-            key.getPublicHex (),
+            key,
             signature
         );
         onClose ();

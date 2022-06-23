@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { Transaction, TRANSACTION_TYPE }                    from './Transaction';
 import { AccountPolicyFormController }                      from './AccountPolicyFormController';
 import { AffirmKeyFormController }                          from './AffirmKeyFormController';
 import { BetaGetAssetsFormController }                      from './BetaGetAssetsFormController';
@@ -13,12 +12,13 @@ import { RegisterMinerFormController }                      from './RegisterMine
 import { RenameAccountFormController }                      from './RenameAccountFormController';
 import { ReserveAccountNameFormController }                 from './ReserveAccountNameFormController';
 import { SendVOLFormController }                            from './SendVOLFormController';
-import { SetIdentityKeyFormController }                     from './SetIdentityKeyFormController';
+import { SetIdentityProviderFormController }                from './SetIdentityProviderFormController';
 import { SetTermsOfServiceFormController }                  from './SetTermsOfServiceFormController';
 import { UpdateMinerInfoFormController }                    from './UpdateMinerInfoFormController';
 import { observer }                                         from 'mobx-react';
 import React                                                from 'react';
 import * as UI                                              from 'semantic-ui-react';
+import { Transaction, TRANSACTION_TYPE }                    from 'vol';
 
 //----------------------------------------------------------------//
 export const ACCOUNT_TRANSACTIONS_MENU = [
@@ -36,7 +36,7 @@ export const ACCOUNT_TRANSACTIONS_MENU = [
     TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,
     TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME,
-    TRANSACTION_TYPE.SET_IDENTITY_KEY,
+    TRANSACTION_TYPE.SET_IDENTITY_PROVIDER,
     TRANSACTION_TYPE.SET_TERMS_OF_SERVICE,
 ];
 
@@ -62,7 +62,7 @@ function makeControllerForTransactionType ( accountService, transactionType ) {
         case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new RenameAccountFormController ( accountService );
         case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new ReserveAccountNameFormController ( accountService );
         case TRANSACTION_TYPE.SEND_VOL:                     return new SendVOLFormController ( accountService );
-        case TRANSACTION_TYPE.SET_IDENTITY_KEY:             return new SetIdentityKeyFormController ( accountService );
+        case TRANSACTION_TYPE.SET_IDENTITY_PROVIDER:        return new SetIdentityProviderFormController ( accountService );
         case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return new SetTermsOfServiceFormController ( accountService );
         case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return new UpdateMinerInfoFormController ( accountService );
     }

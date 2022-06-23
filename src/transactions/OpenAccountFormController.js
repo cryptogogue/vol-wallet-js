@@ -1,12 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as Fields                          from '../fields/fields'
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { randomBytes }                      from 'fgc';
 import _                                    from 'lodash';
 import { action }                           from 'mobx';
 import * as vol                             from 'vol';
+import { TRANSACTION_TYPE }                 from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( 'OPEN ACCOUNT CONTROLLER:', ...args ); }

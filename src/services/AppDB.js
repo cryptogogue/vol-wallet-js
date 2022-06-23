@@ -2,8 +2,8 @@
 
 import AppDBWorker                  from './AppDBWorker.worker';
 
-//const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@DB:', ...args ); }
+const debugLog = function () {}
+//const debugLog = function ( ...args ) { console.log ( '@DB:', ...args ); }
 
 debugLog ( 'EXECUTING APP DB' );
 

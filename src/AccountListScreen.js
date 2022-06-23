@@ -3,6 +3,7 @@
 import { AccountList }                      from './AccountList';
 import { ImportAccountModal }               from './ImportAccountModal';
 import { NetworkNavigationBar, NETWORK_TABS } from './NetworkNavigationBar';
+import { NewAccountModal }                  from './NewAccountModal';
 import { PendingAccountList }               from './PendingAccountList';
 import { RequestAccountModal }              from './RequestAccountModal';
 import { AppStateService }                  from './services/AppStateService';
@@ -25,6 +26,7 @@ export const NetworkActionsSegment = observer (( props ) => {
     const segmentRef                                                = useRef ();
     const [ importAccountModalOpen, setImportAccountModalOpen ]     = useState ( false );
     const [ requestAccountModalOpen, setRequestAccountModalOpen ]   = useState ( false );
+    const [ newAccountModalOpen, setNewAccountModalOpen ]           = useState ( false );
 
     const anyModalOpen = importAccountModalOpen || requestAccountModalOpen;
 
@@ -63,7 +65,7 @@ export const NetworkActionsSegment = observer (( props ) => {
                     fluid
                     color = 'teal'
                     attached = 'bottom'
-                    onClick = {() => { setRequestAccountModalOpen ( true )}}
+                    onClick = {() => { setNewAccountModalOpen ( true )}}
                 >
                     <UI.Icon name = 'certificate'/>
                     New Account with Identity
@@ -81,6 +83,13 @@ export const NetworkActionsSegment = observer (( props ) => {
                 <RequestAccountModal
                     networkService      = { networkService }
                     onClose             = {() => { setRequestAccountModalOpen ( false )}}
+                />
+            </If>
+
+            <If condition = { newAccountModalOpen }>
+                <NewAccountModal
+                    networkService      = { networkService }
+                    onClose             = {() => { setNewAccountModalOpen ( false )}}
                 />
             </If>
         </div>

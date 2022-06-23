@@ -18,15 +18,15 @@ import { RenameAccountForm }                    from './RenameAccountForm';
 import { ReserveAccountNameForm }               from './ReserveAccountNameForm';
 import { SendAssetsForm }                       from './SendAssetsForm';
 import { SendVOLForm }                          from './SendVOLForm';
-import { SetIdentityKeyForm }                   from './SetIdentityKeyForm';
+import { SetIdentityProviderForm }              from './SetIdentityProviderForm';
 import { SetTermsOfServiceForm }                from './SetTermsOfServiceForm';
 import { StampAssetsForm }                      from './StampAssetsForm';
-import { TRANSACTION_TYPE }                     from './Transaction';
 import { UpgradeAssetsForm }                    from './UpgradeAssetsForm';
 import { UpdateMinerInfoForm }                  from './UpdateMinerInfoForm';
 import { observer }                             from 'mobx-react';
 import React                                    from 'react';
 import * as UI                                  from 'semantic-ui-react';
+import { TRANSACTION_TYPE }                     from 'vol';
 import * as vol                                 from 'vol';
 
 //================================================================//
@@ -93,7 +93,7 @@ export const TransactionFormBody = observer (({ controller }) => {
         case TRANSACTION_TYPE.RUN_SCRIPT:                   return ( <CraftingForm              controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm            controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm               controller = { controller }/> );
-        case TRANSACTION_TYPE.SET_IDENTITY_KEY:             return ( <SetIdentityKeyForm        controller = { controller }/> );
+        case TRANSACTION_TYPE.SET_IDENTITY_PROVIDER:        return ( <SetIdentityProviderForm   controller = { controller }/> );
         case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return ( <SetTermsOfServiceForm     controller = { controller }/> );
         case TRANSACTION_TYPE.STAMP_ASSETS:                 return ( <StampAssetsForm           controller = { controller }/> );
         case TRANSACTION_TYPE.UPGRADE_ASSETS:               return ( <UpgradeAssetsForm         controller = { controller }/> );

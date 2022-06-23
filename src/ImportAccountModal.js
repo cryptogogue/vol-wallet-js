@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PasswordInputField }               from './PasswordInputField';
-import { PhraseOrKeyField }                 from './PhraseOrKeyField';
+import { PhraseOrKeyField, PhraseOrKeyFieldController } from './PhraseOrKeyField';
 import { hooks, RevocableContext }          from 'fgc';
 import { action, observable, runInAction }  from 'mobx';
 import { observer }                         from 'mobx-react';
@@ -101,17 +101,16 @@ export const ImportAccountModal = observer (( props ) => {
 
     const { networkService, onClose } = props;
 
-    const controller = hooks.useFinalizable (() => new ImportAccountController ( networkService, onClose ));
-    const appState = networkService.appState;
+    const controller                = hooks.useFinalizable (() => new ImportAccountController ( networkService, onClose ));
+    const phraseOrKeyController     = hooks.useFinalizable (() => new PhraseOrKeyFieldController ( true ));
+    const appState                  = networkService.appState;
 
-    const [ key, setKey ]                   = useState ( false );
-    const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
     const [ password, setPassword ]         = useState ( '' );
     const [ busy, setBusy ]                 = useState ( false );
 
     const onSubmit = async () => {
         setBusy ( true );
-        await controller.importAsync ( key, phraseOrKey, password );
+        await controller.importAsync ( controller.key, controller.phraseOrKey, password );
         if ( controller.accountID ) {
             onClose ();
         }
@@ -120,7 +119,7 @@ export const ImportAccountModal = observer (( props ) => {
         }
     }
 
-    const submitEnabled = key && phraseOrKey && password;
+    const submitEnabled = controller.key && password;
 
     return (
         <UI.Modal
@@ -133,10 +132,7 @@ export const ImportAccountModal = observer (( props ) => {
             
             <UI.Modal.Content>
                 <UI.Form>
-                    <PhraseOrKeyField
-                        setKey          = { setKey }
-                        setPhraseOrKey  = { setPhraseOrKey }
-                    />
+                    <PhraseOrKeyField controller = { phraseOrKeyController }/>
                     <PasswordInputField
                         appState        = { appState }
                         setPassword     = { setPassword }

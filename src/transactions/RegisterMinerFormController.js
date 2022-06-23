@@ -1,9 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import _                                    from 'lodash';
 import { action, observable, runInAction }  from 'mobx';
+import { TRANSACTION_TYPE }                 from 'vol';
 
 export const MINER_INFO_STATE = {
     IDLE:   'IDLE',

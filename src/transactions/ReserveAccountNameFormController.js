@@ -1,12 +1,12 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as Fields                          from '../fields/fields'
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { checkName }                        from './RenameAccountFormController';
 import { crypto }                           from 'fgc';
 import _                                    from 'lodash';
 import { action, computed }                 from 'mobx';
+import { TRANSACTION_TYPE }                 from 'vol';
 
 //================================================================//
 // ReserveAccountNameFormController

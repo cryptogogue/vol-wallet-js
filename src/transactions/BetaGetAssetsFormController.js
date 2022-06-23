@@ -1,9 +1,9 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as Fields                          from '../fields/fields'
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import _                                    from 'lodash';
+import { TRANSACTION_TYPE }                 from 'vol';
 
 //================================================================//
 // BetaGetAssetsFormController

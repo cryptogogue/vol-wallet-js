@@ -1,10 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { Binding, MethodBinding, INVENTORY_FILTER_STATUS, InventoryWithFilter } from 'cardmotron';
 import _                                    from 'lodash';
 import { action, computed, extendObservable, observable, reaction } from 'mobx';
+import { TRANSACTION_TYPE }                 from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@CRAFTING:', ...args ); }

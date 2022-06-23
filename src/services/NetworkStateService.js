@@ -4,7 +4,7 @@ import { AccountStateService }          from './AccountStateService';
 import * as AppDB                       from './AppDB';
 import { assert, crypto, hooks, randomBytes, RevocableContext, storage, StorageContext, util } from 'fgc';
 import _                                from 'lodash';
-import { action, computed, observable, runInAction } from 'mobx';
+import { action, computed, observable, runInAction, toJS } from 'mobx';
 import * as vol                         from 'vol';
 
 //const debugLog = function () {}
@@ -19,6 +19,7 @@ export class NetworkStateService {
     @observable consensusService        = false;
     @observable ignoreURLs              = {};
     @observable minersByID              = {};
+    @observable pendingAccountTXs       = {};
     @observable networkID               = '';
 
     @computed get accountIndices        () { return this.network.accountIndices; }
@@ -141,6 +142,8 @@ export class NetworkStateService {
             for ( let accountID in this.accounts ) {
                 this.accounts [ accountID ].startServiceLoopAsync ();
             }
+
+            this.serviceLoopAsync ();
         })();
     }
 
@@ -166,6 +169,7 @@ export class NetworkStateService {
     deleteAccountRequest ( requestID ) {
 
         delete this.pendingAccounts [ requestID ];
+        delete this.pendingAccountTXs [ requestID ];
     }
 
     //----------------------------------------------------------------//
@@ -304,13 +308,14 @@ export class NetworkStateService {
         this.revocable.revokeAll ();
         hooks.finalize ( this.consensusService );
 
-        this.network.height = 0;
-        this.network.digest = this.network.genesis;
-        this.network.minerURLs = [];
+        this.network.height         = 0;
+        this.network.nextHeight     = 0;
+        this.network.digest         = this.network.genesis;
+        this.network.minerURLs      = [];
         
         this.consensusService = new vol.ConsensusService ();
         this.consensusService.load ( this.network );
-        this.startServiceLoopAsync (() => { this.saveConsensusState (); });
+        this.consensusService.startServiceLoopAsync (() => { this.saveConsensusState (); });
     }
 
     //----------------------------------------------------------------//
@@ -321,37 +326,94 @@ export class NetworkStateService {
     }
 
     //----------------------------------------------------------------//
+    async serviceLoopAsync () {
+
+        debugLog ( 'SERVICE LOOP' );
+
+        try {
+
+            for ( let requestID in this.pendingAccounts ) {
+
+                const pendingAccount = this.pendingAccounts [ requestID ];
+                if ( pendingAccount.readyToImport ) continue;
+
+                try {
+
+                    debugLog ( 'pending account:', toJS ( pendingAccount ));
+
+                    const keyID = pendingAccount.keyID;
+                    const data = await this.revocable.fetchJSON ( this.getServiceURL ( `/keys/${ keyID }` ));
+                    const keyInfo = data && data.keyInfo;
+
+                    debugLog ( 'key info:', data );
+
+                    if ( keyInfo ) {
+                        this.importAccountRequest (
+                            requestID,
+                            keyInfo.accountIndex,
+                            keyInfo.accountName,
+                            keyInfo.keyName
+                        );
+                    }
+                    else if ( pendingAccount.txQueueEntry ) {
+
+                        debugLog ( 'SENDING NEW ACCOUNT TX', toJS ( pendingAccount.txQueueEntry ));
+
+                        const entry = this.pendingAccountTXs [ requestID ] || vol.TransactionQueueEntry.load ( pendingAccount.txQueueEntry );
+                        await entry.processAsync ( this.consensusService, false, ( uuid, message ) => { pendingAccount.error = message; });
+
+                        runInAction (() => {
+                            this.pendingAccountTXs [ requestID ] = entry;
+                            pendingAccount.txQueueEntry = toJS ( entry );
+                        });
+                    }
+                }
+                catch ( error ) {
+                    console.log ( error );
+                }
+            }
+
+            this.revocable.timeout (() => { this.serviceLoopAsync ()}, 5000 );
+        }
+        catch ( error ) {
+            debugLog ( error );
+        }
+    }
+
+    //----------------------------------------------------------------//
     @action
-    setAccountRequest ( password, phraseOrKey, keyID, privateKeyHex, publicKeyHex, signature ) {
+    setAccountRequest ( password, phraseOrKey, key, signature, txBody ) {
 
         this.appState.assertPassword ( password );
-
         this.appState.flags.promptFirstAccount = false;
 
-        const phraseOrKeyAES = crypto.aesPlainToCipher ( phraseOrKey, password );
-        if ( phraseOrKey !== crypto.aesCipherToPlain ( phraseOrKeyAES, password )) throw new Error ( 'AES error' );
-
-        const privateKeyHexAES = crypto.aesPlainToCipher ( privateKeyHex, password );
-        if ( privateKeyHex !== crypto.aesCipherToPlain ( privateKeyHexAES, password )) throw new Error ( 'AES error' );
-
-        let requestID;
-        do {
-            requestID = `vol_${ randomBytes ( 6 ).toString ( 'hex' )}`;
-        } while ( _.has ( this.pendingAccounts, requestID ));
-
-        const encoded = vol.util.encodeAccountRequest ( this.genesis, publicKeyHex, signature );
+        const privateKeyHex     = key.getPrivateHex ();
+        const publicKeyHex      = key.getPublicHex ();
 
         const pendingAccount = {
-            requestID:              requestID,
-            encoded:                encoded,
-            keyID:                  keyID, // needed to recover account later
+            requestID:              util.generateUUIDV4 (),
+            keyID:                  key.getKeyID (), // needed to recover account later
             publicKeyHex:           publicKeyHex,
-            privateKeyHexAES:       privateKeyHexAES,
-            phraseOrKeyAES:         phraseOrKeyAES,
-            readyToImport:          false,
+            privateKeyHexAES:       crypto.aesPlainToCipher ( privateKeyHex, password ),
+            phraseOrKeyAES:         crypto.aesPlainToCipher ( phraseOrKey, password ),
+        };
+
+        if ( txBody ) {
+
+            txBody          = _.cloneDeep ( txBody );
+            txBody.uuid     = pendingAccount.requestID;
+
+            const txQueueEntry = new vol.TransactionQueueEntry ( txBody.uuid, txBody.type, vol.util.signTransaction ( key, txBody ));
+            txQueueEntry.submitWithNonce ( txBody.maker.nonce );
+
+            pendingAccount.txQueueEntry = toJS ( txQueueEntry );
+        }
+        else {
+
+            pendingAccount.encoded = vol.util.encodeAccountRequest ( this.genesis, publicKeyHex, signature );
         }
 
-        this.pendingAccounts [ requestID ] = pendingAccount;
+        this.pendingAccounts [ pendingAccount.requestID ] = pendingAccount;
     }
 
     //----------------------------------------------------------------//

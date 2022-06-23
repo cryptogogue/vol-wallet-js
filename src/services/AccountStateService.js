@@ -259,7 +259,7 @@ export class AccountStateService {
         }
         catch ( error ) {
             debugLog ( error );
-        }   
+        }
     }
 
     //----------------------------------------------------------------//
@@ -276,9 +276,8 @@ export class AccountStateService {
                 await this.transactionQueue.serviceStepAsync ();
             }
 
-            const timeout = this.transactionQueue.pendingQueue.length > 0 ? 1000 : 5000;
-
-            this.revocable.timeout (() => { this.serviceLoopAsync ()}, timeout );
+            const delay = this.transactionQueue.pendingQueue.length > 0 ? 1000 : 5000;
+            this.revocable.timeout (() => { this.serviceLoopAsync ()}, delay );
         }
         catch ( error ) {
             debugLog ( error );
@@ -299,7 +298,8 @@ export class AccountStateService {
 
         try {
 
-            const accountID = this.accountID;            
+            const accountID = this.accountID;
+            console.log ( this.networkService.getServiceURL ( `/accounts/${ accountID }` ));
             let data = await this.revocable.fetchJSON ( this.networkService.getServiceURL ( `/accounts/${ accountID }` ));
 
             debugLog ( 'account response:', data );

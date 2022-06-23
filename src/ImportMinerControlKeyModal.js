@@ -1,7 +1,8 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PasswordInputField }               from './PasswordInputField';
-import { PhraseOrKeyField }                 from './PhraseOrKeyField';
+import { PhraseOrKeyField, PhraseOrKeyFieldController } from './PhraseOrKeyField';
+import * as fgc                             from 'fgc';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
@@ -13,21 +14,20 @@ const ImportMinerControlKeyModalBody = observer (( props ) => {
 
     const { accountService, open, onClose } = props;
 
-    const [ key, setKey ]                   = useState ( false );
-    const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
-    const [ password, setPassword ]         = useState ( '' );
+    const phraseOrKeyController         = fgc.hooks.useFinalizable (() => new PhraseOrKeyFieldController ());
+    const [ password, setPassword ]     = useState ( '' );
 
     const onSubmit = async () => {
         accountService.affirmMinerControlKey (
             password,
-            phraseOrKey,
-            key.getPrivateHex (),
-            key.getPublicHex ()
+            phraseOrKeyController.phraseOrKey,
+            phraseOrKeyController.key.getPrivateHex (),
+            phraseOrKeyController.key.getPublicHex ()
         );
         onClose ();
     }
 
-    const submitEnabled = key && phraseOrKey && password;
+    const submitEnabled = phraseOrKeyController.key && password;
 
     return (
         <UI.Modal
@@ -40,12 +40,9 @@ const ImportMinerControlKeyModalBody = observer (( props ) => {
             
             <UI.Modal.Content>
                 <UI.Form>
-                    <PhraseOrKeyField
-                        setKey          = { setKey }
-                        setPhraseOrKey  = { setPhraseOrKey }
-                    />
+                    <PhraseOrKeyField controller = { phraseOrKeyController }/>
                     <PasswordInputField
-                        appState        = { appState }
+                        appState        = { accountService.appState }
                         setPassword     = { setPassword }
                     />
                 </UI.Form>

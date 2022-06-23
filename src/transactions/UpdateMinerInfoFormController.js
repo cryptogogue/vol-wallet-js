@@ -1,10 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import _                                    from 'lodash';
 import { action, observable, runInAction }  from 'mobx';
 import url                                  from 'url';
+import { TRANSACTION_TYPE }                 from 'vol';
 import * as vol                             from 'vol';
 
 export const MINER_INFO_STATE = {

@@ -1,13 +1,14 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { Transaction }                      from './transactions/Transaction';
-import { TX_MINER_STATUS, TX_STATUS }       from './transactions/TransactionQueueEntry';
 import _                                    from 'lodash';
 import JSONTree                             from 'react-json-tree';
 import React, { useState }                  from 'react';
 import { hooks }                            from 'fgc';
+import { toJS }                             from 'mobx';
 import { observer }                         from 'mobx-react';
 import * as UI                              from 'semantic-ui-react';
+import { Transaction }                      from 'vol';
+import { TX_MINER_STATUS, TX_STATUS }       from 'vol';
 import * as vol                             from 'vol';
 
 const ROW_STATUS = {
@@ -20,11 +21,11 @@ const ROW_STATUS = {
 const PAGE_SIZE         = 8;
 
 //================================================================//
-// TransactionStatusModal
+// TransactionMinerStatusTable
 //================================================================//
-export const TransactionStatusModal = observer (( props ) => {
+export const TransactionMinerStatusTable = observer (( props ) => {
 
-    const { transaction, transactionQueue, onClose } = props;
+    const { txQueueEntry } = props;
 
     const getMinerStatusView = ( minerStatus, minerBusy ) => {
 
@@ -54,10 +55,10 @@ export const TransactionStatusModal = observer (( props ) => {
     }
 
     let minerList = [];
-    for ( let minerID in transaction.minerStatus ) {
+    for ( let minerID in txQueueEntry.minerStatus ) {
 
-        const minerStatus   = transaction.minerStatus [ minerID ];
-        const minerBusy     = transaction.minerBusy [ minerID ] || false;
+        const minerStatus   = txQueueEntry.minerStatus [ minerID ];
+        const minerBusy     = txQueueEntry.minerBusy [ minerID ] || false;
         const rowStatus     = getRowStatus ( minerStatus );
 
         minerList.push (
@@ -74,6 +75,29 @@ export const TransactionStatusModal = observer (( props ) => {
     }
 
     return (
+        <UI.Table unstackable>
+            <UI.Table.Header>
+                <UI.Table.Row>
+                    <UI.Table.HeaderCell>MinerID</UI.Table.HeaderCell>
+                    <UI.Table.HeaderCell>Status</UI.Table.HeaderCell>
+                </UI.Table.Row>
+            </UI.Table.Header>
+
+            <UI.Table.Body>
+                { minerList }
+            </UI.Table.Body>
+        </UI.Table>
+    );
+});
+
+//================================================================//
+// TransactionStatusModal
+//================================================================//
+export const TransactionStatusModal = observer (( props ) => {
+
+    const { transaction, transactionQueue, onClose } = props;
+
+    return (
         <UI.Modal
             open
             closeIcon
@@ -83,18 +107,7 @@ export const TransactionStatusModal = observer (( props ) => {
 
             <UI.Modal.Content>
 
-                <UI.Table unstackable>
-                    <UI.Table.Header>
-                        <UI.Table.Row>
-                            <UI.Table.HeaderCell>MinerID</UI.Table.HeaderCell>
-                            <UI.Table.HeaderCell>Status</UI.Table.HeaderCell>
-                        </UI.Table.Row>
-                    </UI.Table.Header>
-
-                    <UI.Table.Body>
-                        { minerList }
-                    </UI.Table.Body>
-                </UI.Table>
+                <TransactionMinerStatusTable txQueueEntry = { transaction }/>
 
                 <div style = {{ textAlign: 'center' }}>
 

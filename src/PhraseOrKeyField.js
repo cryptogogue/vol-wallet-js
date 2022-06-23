@@ -1,73 +1,105 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { crypto, FilePickerMenuItem }       from 'fgc';
+import { action, computed, observable, runInAction } from 'mobx';
 import { observer }                         from 'mobx-react';
 import React, { useState }                  from 'react';
 import * as UI                              from 'semantic-ui-react';
+
+//================================================================//
+// PhraseOrKeyFieldController
+//================================================================//
+export class PhraseOrKeyFieldController {
+
+    @observable     phraseOrKey     = '';
+    @observable     publicHex       = '';
+    @observable     key             = null;
+    @observable     error           = '';
+
+    //----------------------------------------------------------------//
+    constructor ( generate ) {
+
+        if ( generate ) {
+            this.generate = (() => { this.setPhraseOrKey ( crypto.generateMnemonic ()); });
+            this.generate ();
+        }
+    }
+
+    //----------------------------------------------------------------//
+    @action
+    async setPhraseOrKey ( phraseOrKey ) {
+
+        this.phraseOrKey        = phraseOrKey;
+        this.publicHex          = '';
+        this.key                = null;
+        this.error              = '';
+
+        if ( phraseOrKey ) {
+
+            let key     = null;
+            let error   = 'Invalid phrase or key.';
+
+            try {
+                key     = await crypto.loadKeyAsync ( phraseOrKey );
+                error   = '';
+            }
+            catch ( error ) {
+            }
+
+            runInAction (() => {
+                this.key        = key;
+                this.error      = error;
+            });
+        }
+    }
+}
 
 //================================================================//
 // PhraseOrKeyField
 //================================================================//
 export const PhraseOrKeyField = observer (( props ) => {
 
-    const { setKey, generate } = props;
-
-    const [ phraseOrKey, setPhraseOrKey ]       = useState ( '' );
-    const [ keyError, setKeyError ]             = useState ( false );
-
-    const onPhraseOrKey = async ( phraseOrKey ) => {
-
-        if ( !phraseOrKey && generate ) {
-            phraseOrKey = crypto.generateMnemonic ();
-        }
-
-        setKey ( false );
-        props.setPhraseOrKey && props.setPhraseOrKey ( '' );
-        setPhraseOrKey ( phraseOrKey );
-
-        if ( !phraseOrKey ) {
-            setKeyError ( false );
-            return;
-        }
-
-        try {
-            const key = await crypto.loadKeyAsync ( phraseOrKey );
-            setKeyError ( false );
-            setKey ( key );
-            props.setPhraseOrKey && props.setPhraseOrKey ( phraseOrKey );
-        }
-        catch ( error ) {
-            setKeyError ( true );
-        }
-    }
-
-    const loadFile = ( text ) => {
-        onPhraseOrKey ( text )
-    }
-
-    if ( !phraseOrKey && generate ) {
-        onPhraseOrKey ( crypto.generateMnemonic ());
-    }
+    const { controller } = props;
 
     return (
-        <React.Fragment>
-            <UI.Menu fluid text>
+        <UI.Form.Field>
+            <UI.Menu attached = 'top'>
                 <FilePickerMenuItem
-                    loadFile = { loadFile }
+                    loadFile = {( text ) => { controller.setPhraseOrKey ( text ); }}
                     format = 'text'
                     accept = { '.json, .pem' }
                 />
+                <If condition = { controller.generate }>
+                    <UI.Menu.Menu position = 'right'>
+                        <UI.Menu.Item
+                            icon        = 'refresh'
+                            onClick     = { controller.generate }
+                        /> 
+                    </UI.Menu.Menu>
+                </If>
             </UI.Menu>
+            <UI.Segment secondary attached = 'bottom'>
+                <UI.Form.TextArea
+                    label           = 'Mnemonic Phrase or EC Private Key'
+                    placeholder     = 'Mnemonic Phrase or EC Private Key'
+                    style           = {{ fontFamily: 'monospace' }}
+                    rows            = { 8 }
+                    name            = 'phraseOrKey'
+                    value           = { controller.phraseOrKey }
+                    onChange        = {( event ) => { controller.setPhraseOrKey ( event.target.value )}}
+                    error           = { controller.error || false }
+                />
 
-            <UI.Form.TextArea
-                placeholder = 'Mnemonic Phrase or Private Key'
-                style = {{ fontFamily: 'monospace' }}
-                rows = { 8 }
-                name = 'phraseOrKey'
-                value = { phraseOrKey }
-                onChange = {( event ) => { onPhraseOrKey ( event.target.value )}}
-                error = { keyError ? 'Invalid Phrase or Key.' : false }
-            />
-        </React.Fragment>
+                <UI.Form.Input
+                    label           = 'Public EC Key (hex)'
+                    fluid
+                    readOnly
+                    style           = {{ fontFamily: 'monospace' }}
+                    type            = 'string'
+                    placeholder     = 'Public Hex'
+                    value           = { controller.publicHex }
+                />
+            </UI.Segment>
+        </UI.Form.Field>
     );
 });

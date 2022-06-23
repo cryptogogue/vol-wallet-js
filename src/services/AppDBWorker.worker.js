@@ -2,8 +2,8 @@
 
 import Dexie                        from 'dexie';
 
-//const debugLog = function () {}
-const debugLog = function ( ...args ) { console.log ( '@DB WORKER:', ...args ); }
+const debugLog = function () {}
+//const debugLog = function ( ...args ) { console.log ( '@DB WORKER:', ...args ); }
 
 let counter = 0;
 debugLog ( 'EXECUTING APP DB WORKER', counter++ );

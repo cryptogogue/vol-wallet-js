@@ -1,6 +1,5 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { Transaction, TRANSACTION_TYPE } from './transactions/Transaction';
 import _                        from 'lodash';
 import { hooks }                from 'fgc';
 import { DateTime }             from 'luxon';
@@ -8,6 +7,7 @@ import { computed }             from 'mobx';
 import { observer }             from 'mobx-react';
 import React, { useState }      from 'react';
 import * as UI                  from 'semantic-ui-react';
+import { Transaction }          from 'vol';
 
 const PAGE_SIZE         = 8;
 

@@ -1,10 +1,10 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
-import { TRANSACTION_TYPE }                 from './Transaction';
 import { TransactionFormController }        from './TransactionFormController';
 import { INVENTORY_FILTER_STATUS }          from 'cardmotron';
 import _                                    from 'lodash';
 import { action, computed, observable, reaction, runInAction } from 'mobx';
+import { TRANSACTION_TYPE }                 from 'vol';
 
 //================================================================//
 // UpgradeAssetsFormController

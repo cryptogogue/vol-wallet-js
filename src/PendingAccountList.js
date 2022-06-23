@@ -1,5 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
+import { TransactionMinerStatusTable }      from './TransactionQueueView';
 import { WarnAndDeleteModal }               from './WarnAndDeleteModal';
 import { hooks, RevocableContext, util }    from 'fgc';
 import _                                    from 'lodash';
@@ -24,55 +25,6 @@ const REQUEST_DELETE_WARNING_1 = `
 `;
 
 //================================================================//
-// AccountRequestService
-//================================================================//
-export class AccountRequestService {
-
-    //----------------------------------------------------------------//
-    constructor ( networkService ) {
-        
-        this.revocable = new RevocableContext ();
-        this.checkPendingRequests ( networkService, 5000 );
-    }
-
-    //----------------------------------------------------------------//
-    checkPendingRequests ( networkService, delay ) {
-
-        const _fetch = async () => {
-
-            for ( let requestID in networkService.pendingAccounts ) {
-
-                const pendingAccount = networkService.pendingAccounts [ requestID ];
-                if ( pendingAccount.readyToImport ) continue;
-
-                try {
-
-                    const keyID = pendingAccount.keyID;
-                    const data = await this.revocable.fetchJSON ( networkService.getServiceURL ( `/keys/${ keyID }` ));
-
-                    const keyInfo = data && data.keyInfo;
-
-                    if ( keyInfo ) {
-                        networkService.importAccountRequest (
-                            requestID,
-                            keyInfo.accountIndex,
-                            keyInfo.accountName,
-                            keyInfo.keyName
-                        );
-                    }
-                }
-                catch ( error ) {
-                    console.log ( error );
-                }
-            }
-
-            this.revocable.timeout (() => { this.checkPendingRequests ( networkService, delay )}, delay );
-        }
-        _fetch ();
-    }
-}
-
-//================================================================//
 // PendingAccountView
 //================================================================//
 const PendingAccountView = observer (( props ) => {
@@ -91,6 +43,10 @@ const PendingAccountView = observer (( props ) => {
         networkService.deleteAccountRequest ( pending.requestID );
     }
 
+    const title         = pending.encoded ? 'Account Request' : 'New Account';
+    const text          = pending.encoded || pending.publicKeyHex;
+    const txQueueEntry  = networkService.pendingAccountTXs [ pending.requestID ]
+
     return (
         <React.Fragment>
 
@@ -101,7 +57,7 @@ const PendingAccountView = observer (( props ) => {
                 inverted
             >
                 <UI.Menu.Item>
-                    <UI.Menu.Header as = 'h5'>Account Request</UI.Menu.Header>
+                    <UI.Menu.Header as = 'h5'>{ title }</UI.Menu.Header>
                 </UI.Menu.Item>
 
                 <WarnAndDeleteModal
@@ -126,14 +82,19 @@ const PendingAccountView = observer (( props ) => {
                     }}
                     onClick = { onCopy }
                 >
-                    { pending.encoded }
+                    { text }
                 </UI.Segment>
+
+                <If condition = { txQueueEntry && txQueueEntry.isPending }>
+                    <TransactionMinerStatusTable txQueueEntry = { txQueueEntry }/>
+                </If>
+
             </UI.Segment>
 
             <textarea
                 readOnly
                 ref     = { textAreaRef }
-                value   = { util.wrapLines ( pending.encoded, 32 )}
+                value   = { util.wrapLines ( text, 32 )}
                 style   = {{ position: 'absolute', top: '-1000px' }}
             />
 
@@ -147,8 +108,6 @@ const PendingAccountView = observer (( props ) => {
 export const PendingAccountList = observer (( props ) => {
 
     const { networkService } = props;
-
-    const service = hooks.useFinalizable (() => new AccountRequestService ( networkService ));
 
     let requests = [];
     for ( let requestID in networkService.pendingAccounts ) {
