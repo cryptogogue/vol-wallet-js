@@ -48,6 +48,7 @@ export class PhraseOrKeyFieldController {
 
             runInAction (() => {
                 this.key        = key;
+                this.publicHex  = key ? key.getPublicHex () : '';
                 this.error      = error;
             });
         }

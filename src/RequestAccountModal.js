@@ -1,7 +1,7 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import { PasswordInputField }                   from './PasswordInputField';
-import { PhraseOrKeyField }                     from './PhraseOrKeyField';
+import { PhraseOrKeyField, PhraseOrKeyFieldController } from './PhraseOrKeyField';
 import { TermsOfServiceController }             from './TermsOfServiceController';
 import { TermsOfServiceModal }                  from './TermsOfServiceModal';
 import { hooks, RevocableContext }              from 'fgc';
@@ -18,10 +18,9 @@ export const RequestAccountModal = observer (( props ) => {
 
     const { networkService, onClose } = props;
 
-    const tosController = hooks.useFinalizable (() => new TermsOfServiceController ( networkService ));
+    const tosController             = hooks.useFinalizable (() => new TermsOfServiceController ( networkService ));
+    const phraseOrKeyController     = hooks.useFinalizable (() => new PhraseOrKeyFieldController ( true ));
 
-    const [ key, setKey ]                   = useState ( false );
-    const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
     const [ password, setPassword ]         = useState ( '' );
     const [ busy, setBusy ]                 = useState ( false );
     const [ showTOS, setShowTOS ]           = useState ( false );
@@ -39,8 +38,8 @@ export const RequestAccountModal = observer (( props ) => {
 
         networkService.setAccountRequest (
             password,
-            phraseOrKey,
-            key,
+            phraseOrKeyController.phraseOrKey,
+            phraseOrKeyController.key,
             signature
         );
         onClose ();
@@ -56,7 +55,7 @@ export const RequestAccountModal = observer (( props ) => {
         }
     }
 
-    const submitEnabled = key && password;
+    const submitEnabled = phraseOrKeyController.key && password;
 
     return (
         <React.Fragment>
@@ -72,9 +71,7 @@ export const RequestAccountModal = observer (( props ) => {
                 <UI.Modal.Content>
                     <UI.Form>
                         <PhraseOrKeyField
-                            setKey          = { setKey }
-                            setPhraseOrKey  = { setPhraseOrKey }
-                            generate
+                            controller      = { phraseOrKeyController }
                         />
                         <PasswordInputField
                             appState        = { networkService.appState }

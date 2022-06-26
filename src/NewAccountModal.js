@@ -71,6 +71,7 @@ export const NewAccountModal = observer (( props ) => {
 
     const [ tab, setTab ]                   = useState ( NEW_ACCOUNT_TAB.KEY_PAIR );
     const [ key, setKey ]                   = useState ( false );
+    const [ accountName, setAccountName ]   = useState ( '' );
     const [ phraseOrKey, setPhraseOrKey ]   = useState ( '' );
     const [ identity, setIdentity ]         = useState ();
     const [ password, setPassword ]         = useState ( '' );
@@ -97,6 +98,7 @@ export const NewAccountModal = observer (( props ) => {
 
             const txBody = {
                 type:               'NEW_ACCOUNT',
+                accountName:        accountName,
                 genesis:            networkService.genesis,
                 key: {
                     type:           'EC_HEX',
@@ -122,7 +124,6 @@ export const NewAccountModal = observer (( props ) => {
                 gratuity:       0,
                 profitShare:    fees.profitShare,
                 transferTax:    fees.transferTax,
-                
             }
 
             networkService.setAccountRequest (
@@ -176,6 +177,14 @@ export const NewAccountModal = observer (( props ) => {
                                 Identity
                             </UI.Menu.Item>
                         </UI.Menu>
+
+                        <UI.Form.Input
+                            fluid
+                            type            = 'string'
+                            placeholder     = 'Account Name (Optional)'
+                            value           = { accountName }
+                            onChange        = {( event ) => { setAccountName ( event.target.value ); }}
+                        />
 
                         <Choose>
                             <When condition = { tab === NEW_ACCOUNT_TAB.KEY_PAIR }>

@@ -110,7 +110,7 @@ export const ImportAccountModal = observer (( props ) => {
 
     const onSubmit = async () => {
         setBusy ( true );
-        await controller.importAsync ( controller.key, controller.phraseOrKey, password );
+        await controller.importAsync ( phraseOrKeyController.key, phraseOrKeyController.phraseOrKey, password );
         if ( controller.accountID ) {
             onClose ();
         }
@@ -119,7 +119,7 @@ export const ImportAccountModal = observer (( props ) => {
         }
     }
 
-    const submitEnabled = controller.key && password;
+    const submitEnabled = phraseOrKeyController.key && password;
 
     return (
         <UI.Modal
