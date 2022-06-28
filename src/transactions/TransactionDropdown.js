@@ -12,6 +12,7 @@ import { RegisterMinerFormController }                      from './RegisterMine
 import { RenameAccountFormController }                      from './RenameAccountFormController';
 import { ReserveAccountNameFormController }                 from './ReserveAccountNameFormController';
 import { SendVOLFormController }                            from './SendVOLFormController';
+import { SetEntitlementsFormController }                    from './SetEntitlementsFormController';
 import { SetIdentityProviderFormController }                from './SetIdentityProviderFormController';
 import { SetTermsOfServiceFormController }                  from './SetTermsOfServiceFormController';
 import { UpdateMinerInfoFormController }                    from './UpdateMinerInfoFormController';
@@ -36,6 +37,7 @@ export const ACCOUNT_TRANSACTIONS_MENU = [
     TRANSACTION_TYPE.REGISTER_MINER,
     TRANSACTION_TYPE.RENAME_ACCOUNT,
     TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME,
+    TRANSACTION_TYPE.SET_ENTITLEMENTS,
     TRANSACTION_TYPE.SET_IDENTITY_PROVIDER,
     TRANSACTION_TYPE.SET_TERMS_OF_SERVICE,
 ];
@@ -62,6 +64,7 @@ function makeControllerForTransactionType ( accountService, transactionType ) {
         case TRANSACTION_TYPE.RENAME_ACCOUNT:               return new RenameAccountFormController ( accountService );
         case TRANSACTION_TYPE.RESERVE_ACCOUNT_NAME:         return new ReserveAccountNameFormController ( accountService );
         case TRANSACTION_TYPE.SEND_VOL:                     return new SendVOLFormController ( accountService );
+        case TRANSACTION_TYPE.SET_ENTITLEMENTS:             return new SetEntitlementsFormController ( accountService );
         case TRANSACTION_TYPE.SET_IDENTITY_PROVIDER:        return new SetIdentityProviderFormController ( accountService );
         case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return new SetTermsOfServiceFormController ( accountService );
         case TRANSACTION_TYPE.UPDATE_MINER_INFO:            return new UpdateMinerInfoFormController ( accountService );
@@ -89,6 +92,10 @@ export const TransactionDropdown = observer (( props ) => {
     for ( let transactionType of menu ) {
 
         if ( controller && ( controller.type === transactionType )) continue;
+
+        // TODO: fix this insane hack; needed to enable SET_ENTITLEMENTS for open beta
+        const txTypeForCheck = transactionType === 'SET_ENTITLEMENTS' ? 'PUBLISH_SCHEMA' : transactionType;
+
         if ( !accountService.checkTransactionEntitlements ( transactionType )) continue;
 
         const item = (

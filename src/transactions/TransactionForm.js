@@ -18,6 +18,7 @@ import { RenameAccountForm }                    from './RenameAccountForm';
 import { ReserveAccountNameForm }               from './ReserveAccountNameForm';
 import { SendAssetsForm }                       from './SendAssetsForm';
 import { SendVOLForm }                          from './SendVOLForm';
+import { SetEntitlementsForm }                  from './SetEntitlementsForm';
 import { SetIdentityProviderForm }              from './SetIdentityProviderForm';
 import { SetTermsOfServiceForm }                from './SetTermsOfServiceForm';
 import { StampAssetsForm }                      from './StampAssetsForm';
@@ -93,6 +94,7 @@ export const TransactionFormBody = observer (({ controller }) => {
         case TRANSACTION_TYPE.RUN_SCRIPT:                   return ( <CraftingForm              controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_ASSETS:                  return ( <SendAssetsForm            controller = { controller }/> );
         case TRANSACTION_TYPE.SEND_VOL:                     return ( <SendVOLForm               controller = { controller }/> );
+        case TRANSACTION_TYPE.SET_ENTITLEMENTS:             return ( <SetEntitlementsForm       controller = { controller }/> );
         case TRANSACTION_TYPE.SET_IDENTITY_PROVIDER:        return ( <SetIdentityProviderForm   controller = { controller }/> );
         case TRANSACTION_TYPE.SET_TERMS_OF_SERVICE:         return ( <SetTermsOfServiceForm     controller = { controller }/> );
         case TRANSACTION_TYPE.STAMP_ASSETS:                 return ( <StampAssetsForm           controller = { controller }/> );

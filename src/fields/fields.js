@@ -15,6 +15,8 @@ module.exports = {
     InputFieldController:               require ( './FieldController.js' ).InputFieldController,
     IntegerField:                       require ( './IntegerField.js' ).IntegerField,
     IntegerFieldController:             require ( './IntegerFieldController.js' ).IntegerFieldController,
+    JSONField:                          require ( './JSONField.js' ).JSONField,
+    JSONFieldController:                require ( './JSONFieldController.js' ).JSONFieldController,
     SchemaField:                        require ( './SchemaField.js' ).SchemaField,
     SchemaFieldController:              require ( './SchemaFieldController.js' ).SchemaFieldController,
     StringField:                        require ( './StringField.js' ).StringField,
