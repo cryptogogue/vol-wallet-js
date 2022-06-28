@@ -95,8 +95,7 @@ export const TransactionDropdown = observer (( props ) => {
 
         // TODO: fix this insane hack; needed to enable SET_ENTITLEMENTS for open beta
         const txTypeForCheck = transactionType === 'SET_ENTITLEMENTS' ? 'PUBLISH_SCHEMA' : transactionType;
-
-        if ( !accountService.checkTransactionEntitlements ( transactionType )) continue;
+        if ( !accountService.checkTransactionEntitlements ( txTypeForCheck )) continue;
 
         const item = (
             <UI.Dropdown.Item
