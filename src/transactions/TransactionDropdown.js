@@ -92,10 +92,7 @@ export const TransactionDropdown = observer (( props ) => {
     for ( let transactionType of menu ) {
 
         if ( controller && ( controller.type === transactionType )) continue;
-
-        // TODO: fix this insane hack; needed to enable SET_ENTITLEMENTS for open beta
-        const txTypeForCheck = transactionType === 'SET_ENTITLEMENTS' ? 'PUBLISH_SCHEMA' : transactionType;
-        if ( !accountService.checkTransactionEntitlements ( txTypeForCheck )) continue;
+        if ( !accountService.checkTransactionEntitlements ( transactionType )) continue;
 
         const item = (
             <UI.Dropdown.Item
