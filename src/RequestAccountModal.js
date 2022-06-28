@@ -32,7 +32,7 @@ export const RequestAccountModal = observer (( props ) => {
         if ( tosController.text ) {
             signature = {
                 hashAlgorithm:  'SHA256',
-                signature:      key.sign ( tosController.text ),
+                signature:      phraseOrKeyController.key.sign ( tosController.text ),
             };
         }
 

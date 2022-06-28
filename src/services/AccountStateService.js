@@ -1,7 +1,6 @@
 // Copyright (c) 2020 Cryptogogue, Inc. All Rights Reserved.
 
 import * as AppDB                       from './AppDB';
-import * as entitlements                from '../util/entitlements';
 import { InventoryService }             from './InventoryService';
 import { InventoryTagsController }      from './InventoryTagsController';
 import { InventoryFiltersController }   from './InventoryFiltersController';
@@ -11,6 +10,7 @@ import { Inventory }                    from 'cardmotron';
 import { assert, crypto, hooks, ProgressController, RevocableContext, StorageContext } from 'fgc';
 import _                                from 'lodash';
 import { action, computed, observable, runInAction } from 'mobx';
+import { Transaction }                  from 'vol';
 
 //const debugLog = function () {}
 const debugLog = function ( ...args ) { console.log ( '@ACCOUNT STATE:', ...args ); }
@@ -65,14 +65,11 @@ export class AccountStateService {
     //----------------------------------------------------------------//
     checkTransactionEntitlements ( transactionType ) {
 
-        // TODO: fix this insane hack; needed to enable SET_ENTITLEMENTS for open beta
-        const txTypeForCheck = transactionType === 'SET_ENTITLEMENTS' ? 'PUBLISH_SCHEMA' : transactionType;
-
         const account = this.account;
         if ( account ) {
             for ( let keyName in account.keys ) {
                 const key = account.keys [ keyName ];
-                if ( key.entitlements && entitlements.check ( key.entitlements.policy, txTypeForCheck )) return true;
+                if ( key.entitlements && Transaction.checkEntitlement ( transactionType, key.entitlements.policy )) return true;
             }
         }
         return false;
@@ -174,16 +171,13 @@ export class AccountStateService {
     //----------------------------------------------------------------//
     getKeyNamesForTransaction ( transactionType ) {
 
-        // TODO: fix this insane hack; needed to enable SET_ENTITLEMENTS for open beta
-        const txTypeForCheck = transactionType === 'SET_ENTITLEMENTS' ? 'PUBLISH_SCHEMA' : transactionType;
-
         const keyNames = [];
 
         const account = this.account;
         if ( account ) {
             for ( let keyName in account.keys ) {
                 const key = account.keys [ keyName ];
-                if ( entitlements.check ( key.entitlements.policy, txTypeForCheck )) {
+                if ( Transaction.checkEntitlement ( transactionType, key.entitlements.policy )) {
                     keyNames.push ( keyName );
                 }
             }
