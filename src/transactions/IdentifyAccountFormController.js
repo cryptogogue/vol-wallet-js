@@ -17,6 +17,7 @@ export class IdentifyAccountFormController extends TransactionFormController {
 
         const fieldsArray = [
             new Fields.StringFieldController    ( 'gamercert' ),
+            new Fields.VOLFieldController       ( 'grant', 0 ),
         ];
         this.initialize ( accountService, TRANSACTION_TYPE.IDENTIFY_ACCOUNT, fieldsArray );
     }
@@ -39,7 +40,9 @@ export class IdentifyAccountFormController extends TransactionFormController {
 
         // TODO: make a JSON field type; this is silly
         return {
-            gamercert:  JSON.parse ( this.fields.gamercert.value ),
+            provider:   'gamercert',
+            grant:      this.fields.grant.value,
+            identity:   JSON.parse ( this.fields.gamercert.value ),
         };
     }
 }

@@ -21,6 +21,8 @@ export const IdentifyAccountForm = observer (({ controller }) => {
     return (
         <React.Fragment>
 
+            <Fields.VOLField placeholder = 'Expected Grant' field = { controller.fields.grant }/>
+
              <UI.Menu fluid text>
                 <FilePickerMenuItem
                     loadFile            = { loadFile }

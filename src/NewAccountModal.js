@@ -96,6 +96,9 @@ export const NewAccountModal = observer (( props ) => {
                 };
             }
 
+            const identityProviderResult = await revocable.fetchJSON ( networkService.getServiceURL ( '/providers/gamercert' ));
+            const identityProvider = identityProviderResult.provider;
+
             const txBody = {
                 type:               'NEW_ACCOUNT',
                 accountName:        accountName,
@@ -106,11 +109,9 @@ export const NewAccountModal = observer (( props ) => {
                     publicKey:      phraseOrKeyController.publicHex,
                 },
                 provider:           'gamercert',
+                grant:              identityProvider.grant,
                 identity:           identity,
             };
-
-            const identityProviderResult = await revocable.fetchJSON ( networkService.getServiceURL ( '/providers/gamercert' ));
-            const identityProvider = identityProviderResult.provider;
 
             const networkInfoResult = await revocable.fetchJSON ( networkService.getServiceURL ( '/' ));
             const feeSchedule = networkInfoResult.feeSchedule;
